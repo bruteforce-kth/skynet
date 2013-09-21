@@ -11,3 +11,6 @@
 *.lai
 *.la
 *.a
+
+#  System specific files
+.DS_Store
