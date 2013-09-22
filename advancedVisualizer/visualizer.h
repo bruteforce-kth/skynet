@@ -11,8 +11,11 @@ struct coordinate{
 };
 
 struct coordinate* playerPos;
-char* maze;
+struct coordinate** goalPositions;
+char** maze;
 int rowLength;
 int colLength;
+char lastVisited;
+int nrOfGoals;
 
-int absolutePosition(int row, int col){ return (row*rowLength)+col; }
+//int absolutePosition(int row, int col){ return (row*rowLength)+col; }
