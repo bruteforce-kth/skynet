@@ -18,3 +18,6 @@
 # binary files
 main
 *.out
+
+# Solution file
+Path.txt
