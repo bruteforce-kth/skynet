@@ -17,25 +17,32 @@
 #define MOVE_RIGHT      'R'
 
 #include <vector>
-#include <map>
 
 class board {
 
     public:
         board(const std::vector<std::vector<char> > &chars);
-        std::vector<std::pair<int,int> > getGoalPositions()
+        const std::vector<std::pair<int,int> > getGoalPositions() const
         { return mGoalPositions; }
-        std::pair<int,int> getPlayerPosition() 
+        const std::pair<int,int> getPlayerPosition() const
         { return mPlayerPos; }
-        int getIndex(int row, int col);
-        bool isAccessible(int row, int col);
-        bool isGoal(int row, int col);
-        std::vector<std::pair<std::pair<int,int>,char> > getAllValidMoves(int row, int col);
+        const int getLongestRow() const
+        { return mLongestRow; }
+        const int getNumRows() const
+        { return mNumRows; }
+        const int getBoardSize() const
+        { return mBoardSize; }
+        bool isAccessible(int row, int col, int prevRow, int prevCol) const;
+        bool isWalkable(int row, int col) const;
+        bool isGoal(int row, int col) const;
+        bool isBox(int row, int col) const;
+        std::vector<std::pair<std::pair<int,int>,char> > getAllValidMoves(int row, int col) const;
 
     private:
+        int mLongestRow;
+        int mNumRows;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         std::vector<std::vector<char> > mBoard;
-        std::map<std::pair<int,int>, int> mBoardIndexes;
         int mBoardSize;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::pair<int,int> mPlayerPos;
