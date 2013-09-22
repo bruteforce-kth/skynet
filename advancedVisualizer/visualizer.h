@@ -10,8 +10,15 @@ struct coordinate{
     int col;
 };
 
+struct goalPos{
+
+    struct coordinate coordinate;
+    struct goalPos* next;
+
+};
+
 struct coordinate* playerPos;
-struct coordinate** goalPositions;
+struct goalPos* goalPositions;
 char** maze;
 int rowLength;
 int colLength;

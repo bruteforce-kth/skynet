@@ -12,7 +12,11 @@ void initalizeScreen(){
     cbreak();
     noecho();
     curs_set(0);
-    
+    start_color();
+    init_pair(1, COLOR_GREEN, COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_YELLOW, COLOR_RED);
 }
 
 void teardown(){
@@ -29,7 +33,6 @@ void printMaze(WINDOW *win, char *fileName){
     int col = 0;
     int counter = 0;
     FILE *file = fopen(fileName, "r");
-    struct coordinate* goalPos;
     
     if(!file){
         perror("Unable to open file");
@@ -50,11 +53,11 @@ void printMaze(WINDOW *win, char *fileName){
                     if(currentChar != '\n'){
                         maze[row][col] = currentChar;
                     }
-                    if(currentChar == '.' || '+' || '*'){
+                    if(currentChar == '.' || '+' || '*'){/*
                         goalPos = (struct coordinate*)malloc(sizeof(struct coordinate));
                         goalPos->row = row;
                         goalPos->col = col;
-                        goalPositions[nrOfGoals] = goalPos;
+                        goalPositions[nrOfGoals] = goalPos;*/
                     }
                 }
                 if(position >= bufferSize - 1){
@@ -85,15 +88,56 @@ char getCell(int row, int col){
 void actuallyPrint(WINDOW *win, struct coordinate* box){
     lastVisited = maze[playerPos->row][playerPos->col];
     wmove(win, playerPos->row, playerPos->col);
-    wprintw(win, "%c", '@');
+    attron(COLOR_PAIR(1));
+    if(maze[playerPos->row][playerPos->col] == '.')
+        wprintw(win, "%c", '+');
+    else
+        wprintw(win, "%c", '@');
+
+    attroff(COLOR_PAIR(1));
     if(lastVisited == '$'){
-                wmove(win, box->row, box->col);
-                wprintw(win, "%c", '$');
-                maze[box->row][box->col] = '$';
-                if(lastVisited != '.')
-                    lastVisited = ' ';
-                else
-                    lastVisited = '.';
+                
+        wmove(win, box->row, box->col);
+        if(maze[box->row][box->col] == '.'){
+            attron(COLOR_PAIR(3));
+            wprintw(win, "%c", '*');
+            attroff(COLOR_PAIR(3)); 
+            maze[box->row][box->col] = '*';
+        }
+        else{
+            attron(COLOR_PAIR(2));
+            wprintw(win, "%c", '$');
+            attroff(COLOR_PAIR(2));
+            maze[box->row][box->col] = '$';
+        }
+        
+        if(lastVisited != '.')
+            lastVisited = ' ';
+        else
+            lastVisited = '.';
+    }
+
+    else if(lastVisited == '*'){
+        wmove(win, box->row, box->col);
+        if(maze[box->row][box->col] == '.'){
+            attron(COLOR_PAIR(3));
+            wprintw(win, "%c", '*');
+            attroff(COLOR_PAIR(3)); 
+            maze[box->row][box->col] = '.';
+        }
+        else if(maze[box->row][box->col] == ' '){
+            attron(COLOR_PAIR(2));
+            wprintw(win, "%c", '$');
+            attroff(COLOR_PAIR(2));
+            maze[box->row][box->col] = '.';
+        }
+        lastVisited = '.';
+    }
+    else if(lastVisited == '#'){
+        wmove(win, playerPos->row, playerPos->col);
+        attron(COLOR_PAIR(4));
+        wprintw(win, "%c", '#');
+        attroff(COLOR_PAIR(4));
     }
     maze[playerPos->row][playerPos->col] = lastVisited;
 }
@@ -134,6 +178,7 @@ void printStep(WINDOW *win, char direction, int time){
     free(box);
     wmove(win, rowLength+2, time*2);
     wprintw(win, "%c%c", direction, ' ');
+
     wrefresh(win);
     refresh();
     
@@ -153,7 +198,9 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
     while(true){
         currentChar = fgetc(file);
         if(currentChar == EOF || currentChar == '\n'){
+            attron(COLOR_PAIR(2));
             mvwprintw(win, rowLength+3, 0, "%s", "END OF PATH\n");
+            attroff(COLOR_PAIR(2));
             wrefresh(win);
             refresh();
             getch();
@@ -174,7 +221,7 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
 int main(int argc, char **argv){
 
     playerPos = (struct coordinate*)malloc(sizeof(struct coordinate));
-    goalPositions = (struct coordinate**)malloc(sizeof(struct coordinate*)*20);
+    goalPositions = (struct goalPos*)malloc(sizeof(struct goalPos));
     lastVisited = ' ';
     char *mazeFileName = NULL;
     char *solutionFileName = NULL;
