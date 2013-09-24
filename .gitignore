@@ -12,8 +12,12 @@
 *.la
 *.a
 
-# Binary
-main
+#  System specific files
+.DS_Store
 
-# Binary
+# binary files
 main
+*.out
+
+# Solution file
+Path.txt
