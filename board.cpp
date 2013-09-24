@@ -186,6 +186,7 @@ bool board::isFinished() const{
         boxOnGoal = false;    
     }
 
+    std::cout << "FINISHED!" << std::endl;
     return true;
 }
 

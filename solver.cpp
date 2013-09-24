@@ -109,6 +109,7 @@ bool solver::aStar(const board &b) {
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
             if (current_g > 0 && current_g <= temp_g ) {
+                std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
                 continue;
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
@@ -126,6 +127,7 @@ bool solver::aStar(const board &b) {
             }
         }
     }
+    std::cout << "Queue empty, exiting." << std::endl;
     return false;
 }
 
