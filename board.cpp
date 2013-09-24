@@ -1,16 +1,33 @@
 #include <iostream>
 #include "board.h"
-
+#include <string.h>
 using std::cout;
 using std::endl;
 using std::pair;
 using std::vector;
 using std::make_pair;
 
-board::board (const vector<vector<char> > &chars){
+board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere){
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
+    mWasPush = wasPush;
+    mWhatGotMeHere = whatGotMeHere;
 }
+/*
+board::board (const board &source, bool wasPush, 
+    char whatGotMeHere, std::pair<int,int> playerPos,std::vector<std::pair<int,int> > boxPositions){
+
+    mLongestRow = source.mLongestRow;
+    mNumRows = source.mNumRows;
+    mWasPush = wasPush;
+    mWhatGotMeHere = whatGotMeHere;
+    //memcpy((void*)&mGoalPositions, (void*)&source.mGoalPositions, sizeof(source.mGoalPositions));
+    mGoalPositions = source.mGoalPositions;
+    mBoard = source.mBoard;
+    mBoxPositions = boxPositions;
+    mPlayerPos = playerPos;
+    mBoardSize = source.mBoardSize;
+}*/
 
 /*
  * Loops over the 2d vector of chars and initializes
@@ -28,13 +45,17 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
         for (int j = 0; j < chars[i].size(); j++) {
             char c = chars[i][j];
             // Store goal positions
-            if (c == GOAL) {
+            if (c == GOAL || c == BOX_ON_GOAL || c == PLAYER_ON_GOAL) {
                 mGoalPositions.push_back(make_pair(i,j));
             }
             // Store player position
             else if (c == PLAYER || c == PLAYER_ON_GOAL) {
                 mPlayerPos = make_pair(i,j);
-            }/*
+            }
+            else if(c == BOX || c == BOX_ON_GOAL){
+                mBoxPositions.push_back(make_pair(i,j));
+            }
+            /*
             else if (c == PLAYER_ON_GOAL) {
                 this->playerPos = make_pair(i,j);
                 return false;
@@ -46,6 +67,47 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
     mLongestRow = longestRow;
     mNumRows = chars.size();
     return;
+}
+
+
+board* board::doMove(std::pair<int,int> newPlayerPos, char direction){
+    bool boxPush = false;
+    std::vector<std::vector<char> > newMap = mBoard;
+    if( isAccessible(mPlayerPos.first, mPlayerPos.second,newPlayerPos.first,
+        newPlayerPos.second) ){
+        if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
+            newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+        else
+            newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+        if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+            newMap[newPlayerPos.first][newPlayerPos.second] = '.';
+        else
+            newMap[newPlayerPos.first][newPlayerPos.second] = ' ';
+
+        if(isBox(newPlayerPos.first, mPlayerPos.second)){
+            boxPush = true;
+            std::pair<int,int> boxPos = make_pair(newPlayerPos.first,newPlayerPos.second);
+            switch(direction){            
+                case 'U':
+                    boxPos.first--;
+                    break;
+                case 'D':
+                    boxPos.first++;
+                    break;
+                case 'L':
+                    boxPos.second--;
+                    break;
+                case 'R':
+                    boxPos.second++;
+                    break;
+            }
+            if(newMap[boxPos.first][boxPos.second] == '.')
+                newMap[boxPos.first][boxPos.second] = '*';
+            else
+                newMap[boxPos.first][boxPos.second] = '$';
+        }
+    }
+    return new board(newMap, boxPush, direction);
 }
 
 /*
@@ -63,6 +125,26 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     return false;
 }
 
+
+
+/*
+ * Checks if all boxes are on goals (finish state).
+ */
+bool board::isFinished() const{
+    bool boxOnGoal = false;
+    for(int i = 0; i < mBoxPositions.size(); i++){
+        for(int j = 0; j < mGoalPositions.size() && !boxOnGoal; j++){
+            if(mBoxPositions.at(i) == mGoalPositions.at(j) ){
+                boxOnGoal = true;
+            }
+        }
+        if(!boxOnGoal)
+            return false;
+        boxOnGoal = false;    
+    }
+
+    return true;
+}
 
 bool board::isWalkable(int row, int col) const {
     char t = mBoard[row][col];
@@ -90,19 +172,19 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
-vector<pair<pair<int,int>,char> > board::getAllValidMoves(int row, int col) const{
-    vector<pair<pair<int,int>,char> > validMoves;
+vector<board*> board::getAllValidMoves(int row, int col) const{
+    vector<board*> validMoves;
     if (isAccessible(row-1, col, row, col)) {
-        validMoves.push_back(make_pair(make_pair(row-1,col), MOVE_UP));
+        validMoves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        validMoves.push_back(make_pair(make_pair(row+1,col), MOVE_DOWN));
+        validMoves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN)));
     }
     if (isAccessible(row, col-1, row, col)) {
-        validMoves.push_back(make_pair(make_pair(row,col-1), MOVE_LEFT));
+        validMoves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT)));
     }
     if (isAccessible(row, col+1, row, col)) {
-        validMoves.push_back(make_pair(make_pair(row,col+1), MOVE_RIGHT));
+        validMoves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT)));
     }
     return validMoves;
 }
