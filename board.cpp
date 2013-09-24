@@ -80,7 +80,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
 
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
-    std::cout << "doMove" << std::endl;
+    std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -126,13 +126,18 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
  */
 bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // Check regular move
-    if (isWalkable(row, col))
+    if (isWalkable(row, col)){
+        std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
         return true;
+    }
     // Check box push
     else if (isBox(row, col)) {
-        if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2))
+        if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
+            std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
             return true;
+        }
     }
+    std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): no" << std::endl;
     return false;
 }
 
@@ -158,11 +163,14 @@ bool board::isFinished() const{
 }
 
 bool board::isWalkable(int row, int col) const {
+    std::cout << "isWalkable(" << row << ", " << col << "): ";
     char t = mBoard[row][col];
     // Check regular move
     if(t == FLOOR || t == GOAL){
+        std::cout << "yes" << std::endl;
         return true;    
     }    
+    std::cout << "no" << std::endl;
     return false;
 }
 
@@ -184,28 +192,21 @@ bool board::isBox(int row, int col) const{
  * Returns all valid moves from the specified position
  */
 void board::getAllValidMoves(vector<board> &moves) const{
-    std::cout << "getAllValidMoves" << std::endl;
     int row = getPlayerPosition().first;
-    std::cout << "getPlayerPosition().first" << std::endl;
     int col = getPlayerPosition().second;
-    std::cout << "getPlayerPosition().second" << std::endl;
+    std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
-        std::cout << "up" << std::endl;
         moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        std::cout << "down" << std::endl;
         moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        std::cout << "left" << std::endl;
         moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        std::cout << "right" << std::endl;
         moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
-    std::cout << "no ifs in getAllValidMoves" << std::endl;
 }
 
 

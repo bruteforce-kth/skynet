@@ -157,7 +157,7 @@ int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
  * Returns the estimated distance between two positions
  */
 int solver::distance(int i1, int j1, int i2, int j2) {
-    std::cout << "distance" << std::endl;
+    std::cout << "distance(" << i1 << ", " << j1 << ", " << i2 << ", " << j2 << ")" << std::endl;
     // Manhattan method (10 instead of 1)
     return 1*abs(i2-i1) + abs(j2-j1);
     // Diagonal shortcut
