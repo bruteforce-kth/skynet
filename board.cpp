@@ -118,6 +118,14 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
             else
                 newMap[boxPos.first][boxPos.second] = '$';
 
+            /* REMOVE OLD PLAYER */
+            /* DID WE LEAVE A GOAL POSITION */
+            if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+                newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+            /* PREVIOUS POSITION WAS NORMAL */
+            else
+                newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
+
         //Just a normal move        
         }else{
             /* DID WE LAND ON A GOAL */
