@@ -7,6 +7,14 @@ using std::pair;
 using std::vector;
 using std::make_pair;
 
+board::board (const vector<vector<char> > &chars) {
+    this->mBoard = chars;
+    initializeIndexAndPositions(chars);
+    mWasPush = false;
+    mWhatGotMeHere = '\0';
+
+}
+
 board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere){
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
@@ -70,7 +78,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
 }
 
 
-board* board::doMove(std::pair<int,int> newPlayerPos, char direction){
+board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(mPlayerPos.first, mPlayerPos.second,newPlayerPos.first,
@@ -178,13 +186,13 @@ vector<board*> board::getAllValidMoves(int row, int col) const{
         validMoves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        validMoves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN)));
+        validMoves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        validMoves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT)));
+        validMoves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        validMoves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT)));
+        validMoves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
     return validMoves;
 }

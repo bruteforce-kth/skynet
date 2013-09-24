@@ -21,6 +21,7 @@
 class board {
 
     public:
+        board (const std::vector<std::vector<char> > &chars);
         board(const std::vector<std::vector<char> > &chars, 
             bool wasPush, char whatGotMeHere);
         board (const board &source, bool wasPush, 
@@ -59,7 +60,7 @@ class board {
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
-        board* doMove(std::pair<int,int> newPlayerPos, char direction);
+        board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
 };
 
 #endif
