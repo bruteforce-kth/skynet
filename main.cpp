@@ -24,7 +24,6 @@ int main(int argc, char **argv)
     solver s;
 
     std::string solution = s.solve(b1);
-
     cout << solution << "\n";
 
     ofstream myfile;

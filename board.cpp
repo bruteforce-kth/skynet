@@ -85,17 +85,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
          mPlayerPos.first, mPlayerPos.second) ){
-        if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
-            newMap[newPlayerPos.first][newPlayerPos.second] = '+';
-        else
-            newMap[newPlayerPos.first][newPlayerPos.second] = '@';
-
-        if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
-            newMap[mPlayerPos.first][mPlayerPos.second] = '.';
-        else
-            newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
-
-        if(isBox(newPlayerPos.first, mPlayerPos.second)){
+        // Has the player "moved into" a box (trying to push)?
+        if(isBox(newPlayerPos.first, newPlayerPos.second)){
             boxPush = true;
             std::pair<int,int> boxPos = make_pair(newPlayerPos.first,newPlayerPos.second);
             switch(direction){            
@@ -112,11 +103,39 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
                     boxPos.second++;
                     break;
             }
+
+            /* IF PLAYER ON GOAL */
+            if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL)
+                newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+            /* NORMAL PUSH */
+            else 
+                newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+
+            /* IF BOX LANDED ON GOAL */                
             if(newMap[boxPos.first][boxPos.second] == '.')
                 newMap[boxPos.first][boxPos.second] = '*';
+            /* NORMAL BOX MOVE */
             else
                 newMap[boxPos.first][boxPos.second] = '$';
+
+        //Just a normal move        
+        }else{
+            /* DID WE LAND ON A GOAL */
+            if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
+                newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+            /* NORMAL MOVE */
+            else
+                newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+            
+            /* DID WE LEAVE A GOAL POSITION */
+            if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+                newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+            /* PREVIOUS POSITION WAS NORMAL */
+            else
+                newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
+
+        
     }
     return new board(newMap, boxPush, direction);
 }
