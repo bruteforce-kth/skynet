@@ -43,7 +43,7 @@ class board {
         bool isWalkable(int row, int col) const;
         bool isGoal(int row, int col) const;
         bool isBox(int row, int col) const;
-        std::vector<board*> getAllValidMoves(int row, int col) const;
+        void getAllValidMoves(std::vector<board> &moves) const;
         bool isFinished() const;
         bool isPush() const
         { return mWasPush; }

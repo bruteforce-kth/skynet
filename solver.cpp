@@ -100,7 +100,7 @@ bool solver::aStar(const board &b) {
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                previous[tempX][tempY] = make_pair(make_pair(x,y), tempBoard.getWhatGotmeHere());
+                previous[tempX][tempY] = make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere());
                 if (b.isFinished()) {
                     backtrack(previous, tempX, tempY);
                     return true;

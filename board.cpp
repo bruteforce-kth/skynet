@@ -180,19 +180,19 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
-vector<board*> board::getAllValidMoves(int row, int col) const{
-    vector<board*> validMoves;
+void board::getAllValidMoves(vector<board> &moves) const{
+    int row = getPlayerPosition().first;
+    int col = getPlayerPosition().second;
     if (isAccessible(row-1, col, row, col)) {
-        validMoves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        validMoves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        validMoves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        validMoves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
-    return validMoves;
 }
