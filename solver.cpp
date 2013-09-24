@@ -91,8 +91,10 @@ bool solver::aStar(const board &b) {
         vector<board> moves;
         currentBoard.getAllValidMoves(moves);
         cout << "Number of possible moves: " << moves.size() << endl;
+        std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            std::cout << "valid move:" << std::endl;
             tempBoard.printBoard();
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             int tempX = tempPlayerPos.first;
@@ -119,7 +121,7 @@ bool solver::aStar(const board &b) {
                 }
                 g_score[tempX][tempY] = temp_g;
                 f_score[tempX][tempY] = temp_g + heuristicDistance(tempBoard.getBoxPositions());
-                std::cout << "g_score: " << g_score[tempX][tempY] << " f_score: " << f_score[tempX][tempY] << std::endl;
+                std::cout << "pushing move to position (" << tempX << ", " << tempY << ")" << std::endl;
                 openQueue.push(make_pair(tempBoard, f_score[tempX][tempY]));
             }
         }

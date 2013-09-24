@@ -58,10 +58,10 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
                 mGoalPositions.push_back(make_pair(i,j));
             }
             // Store player position
-            else if (c == PLAYER || c == PLAYER_ON_GOAL) {
+            if (c == PLAYER || c == PLAYER_ON_GOAL) {
                 mPlayerPos = make_pair(i,j);
             }
-            else if(c == BOX || c == BOX_ON_GOAL){
+            if(c == BOX || c == BOX_ON_GOAL){
                 mBoxPositions.push_back(make_pair(i,j));
             }
             /*
