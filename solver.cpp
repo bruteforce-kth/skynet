@@ -89,10 +89,11 @@ bool solver::aStar(const board &b) {
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
-        b.getAllValidMoves(moves);
+        currentBoard.getAllValidMoves(moves);
         cout << "Number of possible moves: " << moves.size() << endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            tempBoard.printBoard();
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
@@ -118,6 +119,7 @@ bool solver::aStar(const board &b) {
                 }
                 g_score[tempX][tempY] = temp_g;
                 f_score[tempX][tempY] = temp_g + heuristicDistance(tempBoard.getBoxPositions());
+                std::cout << "g_score: " << g_score[tempX][tempY] << " f_score: " << f_score[tempX][tempY] << std::endl;
                 openQueue.push(make_pair(tempBoard, f_score[tempX][tempY]));
             }
         }
@@ -132,6 +134,7 @@ bool solver::aStar(const board &b) {
  * Returns the diagonal distance to the closest goal
  */
 int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
+    std::cout << "heuristicDistance" << std::endl;
     int totalDistances = 0;
 
     for (int i = 0; i < boxPositions.size(); ++i) {
@@ -154,6 +157,7 @@ int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
  * Returns the estimated distance between two positions
  */
 int solver::distance(int i1, int j1, int i2, int j2) {
+    std::cout << "distance" << std::endl;
     // Manhattan method (10 instead of 1)
     return 1*abs(i2-i1) + abs(j2-j1);
     // Diagonal shortcut

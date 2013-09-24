@@ -80,6 +80,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
 
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
+    std::cout << "doMove" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -183,25 +184,34 @@ bool board::isBox(int row, int col) const{
  * Returns all valid moves from the specified position
  */
 void board::getAllValidMoves(vector<board> &moves) const{
+    std::cout << "getAllValidMoves" << std::endl;
     int row = getPlayerPosition().first;
+    std::cout << "getPlayerPosition().first" << std::endl;
     int col = getPlayerPosition().second;
+    std::cout << "getPlayerPosition().second" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
+        std::cout << "up" << std::endl;
         moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
+        std::cout << "down" << std::endl;
         moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
+        std::cout << "left" << std::endl;
         moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
+        std::cout << "right" << std::endl;
         moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
+    std::cout << "no ifs in getAllValidMoves" << std::endl;
 }
 
 
 
 void board::printBoard() {
+    std::cout << "printBoard" << std::endl;
     for (int i = 0; i < mBoard.size(); i++) {
         for (int j = 0; j < mBoard[i].size(); j++) {
             cout << mBoard[i][j];
