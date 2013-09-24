@@ -23,13 +23,14 @@ solver::solver() {}
  * The solver method. It takes a board as a parameter and returns a solution
  */
 string solver::solve(const board &b) {
+    g_score_map.reserve(600000);
     // Initialize 2d vectors g_score and f_score for aStar.
     g_score.resize(b.getNumRows(), vector<int>(b.getLongestRow(),0));
-    f_score.resize(b.getNumRows(), vector<float>(b.getLongestRow(),0));
+    // f_score.resize(b.getNumRows(), vector<float>(b.getLongestRow(),0));
     // A 2d-vector of positions and their corresponding move char.
     // At position [i][j] we have the parent for [i][j] and the direction we came from. Used in backtrack
-    previous.resize(b.getNumRows(), vector< pair<pair<int,int>,char> >(b.getLongestRow(),
-        make_pair(make_pair(-1,-1),'\0')));
+    vector< pair<pair<int,int>,char> > filler;
+    previous.resize(b.getNumRows(), vector<vector< pair<pair<int,int>,char> > >(b.getLongestRow(), filler));
 
     //mStartingPos = b.getPlayerPosition();
     mBoardSize = b.getBoardSize();
@@ -68,11 +69,12 @@ bool solver::aStar(const board &b) {
     pair<int,int> playerPos = b.getPlayerPosition();
     int px = playerPos.first;
     int py = playerPos.second;
-    previous[px][py] = make_pair(make_pair(-1,-1), '\0');
-    g_score[px][py] = 1;
-    f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
+    previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
+    g_score_map.insert(make_pair(b.getBoardString(), 1));
+    // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
-    openQueue.push(make_pair(b,f_score[px][py]));
+    float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
+    openQueue.push(make_pair(b, starting_heuristic));
 
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
@@ -80,9 +82,11 @@ bool solver::aStar(const board &b) {
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
-        cout << "Popped coordinate: ";
-        printCoordinates(x,y);
-        cout << endl;
+        // currentBoard.printBoard();
+
+        // cout << "Popped coordinate: ";
+        // printCoordinates(x,y);
+        // cout << endl;
 
 
         // Iterate through all valid moves (neighbours)
@@ -90,44 +94,49 @@ bool solver::aStar(const board &b) {
         // direction taken to reach it from the current node.
         vector<board> moves;
         currentBoard.getAllValidMoves(moves);
-        cout << "Number of possible moves: " << moves.size() << endl;
-        std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
+        std::unordered_map<std::string,int>::const_iterator map_it;
+        // cout << "Number of possible moves: " << moves.size() << endl;
+        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
-            std::cout << "valid move:" << std::endl;
-            tempBoard.printBoard();
+            // std::cout << "valid move:" << std::endl;
+            // tempBoard.printBoard();
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
-            int temp_g = g_score[x][y] + 1;
-            int current_g = g_score[tempX][tempY];
+            int temp_g = g_score_map.at(currentBoard.getBoardString());
+            int current_g;
+            map_it = g_score_map.find(tempBoard.getBoardString());
+            if ( map_it != g_score_map.end() )
+                current_g = map_it->second;
+            else
+                current_g = 0;
 
-            cout << "Proposed move is: ";
-            printCoordinates(tempX, tempY);
-            cout << endl;
+            // cout << "Proposed move is: ";
+            // printCoordinates(tempX, tempY);
+            // cout << endl;
             
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
             if (current_g > 0 && current_g <= temp_g ) {
-                std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
+                // std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
                 continue;
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                previous[tempX][tempY] = make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere());
-                if (b.isFinished()) {
-                    cout << "Board solved! Backtracking!" << endl;
+                previous[tempX][tempY].push_back(make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere()));
+                if (tempBoard.isFinished()) {
+                    // cout << "Board solved! Backtracking!" << endl;
                     backtrack(previous, tempX, tempY);
                     return true;
                 }
-                g_score[tempX][tempY] = temp_g;
-                f_score[tempX][tempY] = temp_g + heuristicDistance(tempBoard.getBoxPositions());
-                std::cout << "pushing move to position (" << tempX << ", " << tempY << ")" << std::endl;
-                openQueue.push(make_pair(tempBoard, f_score[tempX][tempY]));
+                g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
+                // g_score[tempX][tempY] = temp_g;
+                // std::cout << "pushing move to position (" << tempX << ", " << tempY << ")" << std::endl;
+                openQueue.push(make_pair(tempBoard, temp_g + heuristicDistance(tempBoard.getBoxPositions())));
             }
         }
     }
-    std::cout << "Queue empty, exiting." << std::endl;
     return false;
 }
 
@@ -138,7 +147,6 @@ bool solver::aStar(const board &b) {
  * Returns the diagonal distance to the closest goal
  */
 int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
-    std::cout << "heuristicDistance" << std::endl;
     int totalDistances = 0;
 
     for (int i = 0; i < boxPositions.size(); ++i) {
@@ -188,17 +196,21 @@ int solver::distance(int i1, int j1, int i2, int j2) {
  * to the start coordinates, adding direction chars to our string
  * along the way.
  */
-void solver::backtrack(const vector<vector<pair<pair<int,int>, char> > > &previous, int i, int j) {
+void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&previous, int i, int j) {
     std::ostringstream s1;
     char direction;
-    pair<pair<int,int>, char> previousMove = previous[i][j];
+    pair<pair<int,int>, char> previousMove = previous[i][j].back();
+    if (!previous[i][j].empty())
+        previous[i][j].pop_back();
     while(!(previousMove.second == '\0')) {
         s1 << previousMove.second;
         // Get index for the previous coordinates' previousPos
         int currentX = previousMove.first.first;
         int currentY = previousMove.first.second;
         // Update position using the calculated index
-        previousMove = previous[currentX][currentY];
+        previousMove = previous[currentX][currentY].back();
+        if (!previous[currentX][currentY].empty())
+            previous[currentX][currentY].pop_back();
     }
     string reversedString = s1.str();
     mPath = string(reversedString.rbegin(),reversedString.rend());
@@ -227,4 +239,10 @@ bool isPushable(board &b, pair<int,int> fromPosition) {
  void solver::printCoordinates(int x, int y) {
     cout << "(" << x << ", " << y << ")";
  }
+
+string previousMapHash(board &b, int x, int y) {
+    string hash = b.getBoardString();
+    hash = hash + std::to_string(x) + " " + std::to_string(y);
+    return hash;
+}
 

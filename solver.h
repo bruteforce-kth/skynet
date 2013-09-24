@@ -2,6 +2,7 @@
 #include <vector>
 #include <utility>
 #include "board.h"
+#include <unordered_map>
 
 class solver {
     public:
@@ -18,9 +19,12 @@ class solver {
         std::vector<std::pair<int,int> > mBoxPositions;
         std::vector< std::vector<float> > f_score;    // Heuristic cost used in A*
         std::vector< std::vector<int> > g_score;    // Number of steps taken, used in A*
-        std::vector< std::vector<std::pair<std::pair<int,int>, char> > > previous;
+        std::unordered_map<std::string, int> g_score_map;
+        std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
+        // std::unordered_map<std::string, std::pair<std::pair<int,int>, char> > previous_map;
+        std::string previousMapHash(board &b, int x, int y);
         bool aStar(const board &b);
-        void backtrack(const std::vector<std::vector<std::pair<std::pair<int,int>, char> > >&previous, int i, int j);
+        void backtrack(std::vector<std::vector<std::vector<std::pair<std::pair<int,int>, char> > > >&previous, int i, int j);
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const std::vector< std::pair<int,int> > &boxPositions);
         void printCoordinates(int x, int y);

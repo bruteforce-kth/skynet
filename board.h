@@ -39,6 +39,8 @@ class board {
         { return mNumRows; }
         const int getBoardSize() const
         { return mBoardSize; }
+        std::string getBoardString() const
+        { return mBoardString; }
         bool isAccessible(int row, int col, int prevRow, int prevCol) const;
         bool isWalkable(int row, int col) const;
         bool isGoal(int row, int col) const;
@@ -51,10 +53,12 @@ class board {
         { return mWhatGotMeHere; }
         void printBoard();
     private:
+
         int mLongestRow;
         int mNumRows;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         std::vector<std::vector<char> > mBoard;
+        std::string mBoardString;
         int mBoardSize;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;

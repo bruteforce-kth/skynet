@@ -12,7 +12,7 @@ board::board (const vector<vector<char> > &chars) {
     initializeIndexAndPositions(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
-    printBoard();
+    // printBoard();
 
 }
 
@@ -43,6 +43,7 @@ board::board (const board &source, bool wasPush,
  * player position, goal positions and indexes.
  */
 void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
+    std::string boardString = "";
     int index = 0;
     int size = 0;
     int longestRow = -1;
@@ -52,6 +53,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
         if (longestRow < currentRowSize)
             longestRow = currentRowSize;
         for (int j = 0; j < chars[i].size(); j++) {
+            boardString += chars[i][j];
             char c = chars[i][j];
             // Store goal positions
             if (c == GOAL || c == BOX_ON_GOAL || c == PLAYER_ON_GOAL) {
@@ -72,6 +74,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
             ++index;
         }
     }
+    mBoardString = boardString;
     mBoardSize = size;
     mLongestRow = longestRow;
     mNumRows = chars.size();
@@ -80,7 +83,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
 
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
-    std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
+    // std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -154,17 +157,17 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // Check regular move
     if (isWalkable(row, col)){
-        std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
+        // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
         return true;
     }
     // Check box push
     else if (isBox(row, col)) {
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
-            std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
+            // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
             return true;
         }
     }
-    std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): no" << std::endl;
+    // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): no" << std::endl;
     return false;
 }
 
@@ -174,31 +177,36 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
  * Checks if all boxes are on goals (finish state).
  */
 bool board::isFinished() const{
-    bool boxOnGoal = false;
-    for(int i = 0; i < mBoxPositions.size(); i++){
-        for(int j = 0; j < mGoalPositions.size() && !boxOnGoal; j++){
-            if(mBoxPositions.at(i) == mGoalPositions.at(j) ){
-                boxOnGoal = true;
-            }
-        }
-        if(!boxOnGoal)
-            return false;
-        boxOnGoal = false;    
-    }
 
-    std::cout << "FINISHED!" << std::endl;
+    if (mBoardString.find('$')!= std::string::npos)
+        return false;
     return true;
+
+    // bool boxOnGoal = false;
+    // for(int i = 0; i < mBoxPositions.size(); i++){
+    //     for(int j = 0; j < mGoalPositions.size() && !boxOnGoal; j++){
+    //         if(mBoxPositions.at(i) == mGoalPositions.at(j) ){
+    //             boxOnGoal = true;
+    //         }
+    //     }
+    //     if(!boxOnGoal)
+    //         return false;
+    //     boxOnGoal = false;    
+    // }
+
+    // std::cout << "FINISHED!" << std::endl;
+    // return true;
 }
 
 bool board::isWalkable(int row, int col) const {
-    std::cout << "isWalkable(" << row << ", " << col << "): ";
+    // std::cout << "isWalkable(" << row << ", " << col << "): ";
     char t = mBoard[row][col];
     // Check regular move
     if(t == FLOOR || t == GOAL){
-        std::cout << "yes" << std::endl;
+        // std::cout << "yes" << std::endl;
         return true;    
     }    
-    std::cout << "no" << std::endl;
+    // std::cout << "no" << std::endl;
     return false;
 }
 
@@ -222,7 +230,7 @@ bool board::isBox(int row, int col) const{
 void board::getAllValidMoves(vector<board> &moves) const{
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
-    std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
+    // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
         moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
     }
@@ -238,9 +246,8 @@ void board::getAllValidMoves(vector<board> &moves) const{
 }
 
 
-
 void board::printBoard() {
-    std::cout << "printBoard" << std::endl;
+    // std::cout << "printBoard" << std::endl;
     for (int i = 0; i < mBoard.size(); i++) {
         for (int j = 0; j < mBoard[i].size(); j++) {
             cout << mBoard[i][j];

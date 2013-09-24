@@ -26,11 +26,11 @@ int main(int argc, char **argv)
     std::string solution = s.solve(b1);
     cout << solution << "\n";
 
-    ofstream myfile;
-    myfile.open ("Path.txt");
-    cout << "Writing solution to file 'Path.txt'.\n";
-    myfile << solution << "\n";
-    myfile.close();
+    // ofstream myfile;
+    // myfile.open ("Path.txt");
+    // cout << "Writing solution to file 'Path.txt'.\n";
+    // myfile << solution << "\n";
+    // myfile.close();
 
     return 0;
 }
