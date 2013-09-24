@@ -96,7 +96,8 @@ bool solver::aStar(const board &b) {
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
-        vector<board> moves = b.getAllValidMoves(x, y);
+        vector<board> moves;
+        b.getAllValidMoves(moves);
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
