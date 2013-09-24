@@ -80,11 +80,17 @@ bool solver::aStar(const board &b) {
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
+        cout << "Popped coordinate: ";
+        printCoordinates(x,y);
+        cout << endl;
+
+
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
         b.getAllValidMoves(moves);
+        cout << "Number of possible moves: " << moves.size() << endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
@@ -92,6 +98,10 @@ bool solver::aStar(const board &b) {
             int tempY = tempPlayerPos.second;
             int temp_g = g_score[x][y] + 1;
             int current_g = g_score[tempX][tempY];
+
+            cout << "Proposed move is: ";
+            printCoordinates(tempX, tempY);
+            cout << endl;
             
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
@@ -102,6 +112,7 @@ bool solver::aStar(const board &b) {
             else {
                 previous[tempX][tempY] = make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere());
                 if (b.isFinished()) {
+                    cout << "Board solved! Backtracking!" << endl;
                     backtrack(previous, tempX, tempY);
                     return true;
                 }
@@ -208,5 +219,4 @@ bool isPushable(board &b, pair<int,int> fromPosition) {
  void solver::printCoordinates(int x, int y) {
     cout << "(" << x << ", " << y << ")";
  }
-
 

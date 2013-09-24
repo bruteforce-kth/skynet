@@ -49,6 +49,7 @@ class board {
         { return mWasPush; }
         char getWhatGotMeHere() const
         { return mWhatGotMeHere; }
+        void printBoard();
     private:
         int mLongestRow;
         int mNumRows;

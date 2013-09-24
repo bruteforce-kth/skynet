@@ -12,6 +12,7 @@ board::board (const vector<vector<char> > &chars) {
     initializeIndexAndPositions(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
+    printBoard();
 
 }
 
@@ -81,16 +82,17 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
-    if( isAccessible(mPlayerPos.first, mPlayerPos.second,newPlayerPos.first,
-        newPlayerPos.second) ){
+    if( isAccessible(newPlayerPos.first, newPlayerPos.second,
+         mPlayerPos.first, mPlayerPos.second) ){
         if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
             newMap[newPlayerPos.first][newPlayerPos.second] = '+';
         else
             newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+
         if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
-            newMap[newPlayerPos.first][newPlayerPos.second] = '.';
+            newMap[mPlayerPos.first][mPlayerPos.second] = '.';
         else
-            newMap[newPlayerPos.first][newPlayerPos.second] = ' ';
+            newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
 
         if(isBox(newPlayerPos.first, mPlayerPos.second)){
             boxPush = true;
@@ -196,3 +198,24 @@ void board::getAllValidMoves(vector<board> &moves) const{
         moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
+
+
+
+void board::printBoard() {
+    for (int i = 0; i < mBoard.size(); i++) {
+        for (int j = 0; j < mBoard[i].size(); j++) {
+            cout << mBoard[i][j];
+        }
+        cout << '\n';
+    }
+}
+
+
+
+
+
+
+
+
+
+
