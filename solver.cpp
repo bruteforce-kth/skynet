@@ -29,7 +29,14 @@ string solver::solve(const board &b) {
     f_score.resize(b.getNumRows(), vector<float>(b.getLongestRow(),0));
     mBoardSize = b.getBoardSize();
     std::vector<std::pair<int,int> > mGoalPositions = b.getGoalPositions();
-    return aStar(b);
+    string boxWalk = aStar(b);
+    cout << "Box at ";
+    printCoordinates(mBoxPos.first,mBoxPos.second);
+    cout << " can be pushed: "  << boxWalk.back() << endl;
+    cout << "Player at ";
+    printCoordinates(mPlayerPos.first,mPlayerPos.second);
+    cout << endl;
+    return boxWalk;
 }
 
 /*
@@ -92,6 +99,9 @@ string solver::aStar(const board &b) {
                 previous[tempX][tempY] = make_pair(currentPos, moves[k].second);
                 // If we found a pushable box, backtrack!
                 if (b.isBox(tempX,tempY)) {
+                    mBoxPos = make_pair(tempX,tempY);
+                    mPlayerPos = make_pair(x,y);
+                    // Currently skips the actual push
                     return backtrack(previous, tempX, tempY);
                 }
                 g_score[tempX][tempY] = temp_g;
@@ -111,12 +121,12 @@ string solver::aStar(const board &b) {
  */
 int solver::heuristicDistanceToGoal(pair<int,int> p) {
     int shortestDistance = mBoardSize;
-    int distance;
+    int d;
     
     for (int k = 0; k < mGoalPositions.size(); ++k) {
-        distance = diagonalDistance(p.first, p.second, mGoalPositions[k].first, mGoalPositions[k].second);
-        if (distance < shortestDistance) {
-            shortestDistance = distance;
+        d = distance(p.first, p.second, mGoalPositions[k].first, mGoalPositions[k].second);
+        if (d < shortestDistance) {
+            shortestDistance = d;
         }
     }
     return shortestDistance;
@@ -124,9 +134,9 @@ int solver::heuristicDistanceToGoal(pair<int,int> p) {
 
 
 /*
- * Returns the distance between two positions
+ * Returns the estimated distance between two positions
  */
-int solver::diagonalDistance(int i1, int j1, int i2, int j2) {
+int solver::distance(int i1, int j1, int i2, int j2) {
     // Manhattan method (10 instead of 1)
     return 1*abs(i2-i1) + abs(j2-j1);
     // Diagonal shortcut
@@ -153,7 +163,7 @@ int solver::diagonalDistance(int i1, int j1, int i2, int j2) {
  * to the start coordinates, adding direction chars to our string
  * along the way.
  */
-string solver::backtrack(const vector<vector<pair<pair<int,int>, char> > >&previous, int i, int j) {
+string solver::backtrack(const vector<vector<pair<pair<int,int>, char> > > &previous, int i, int j) {
     std::ostringstream s1;
     char direction;
     pair<pair<int,int>, char> previousMove = previous[i][j];
@@ -169,5 +179,29 @@ string solver::backtrack(const vector<vector<pair<pair<int,int>, char> > >&previ
     return string(reversedString.rbegin(),reversedString.rend());
 }
 
+
+/*
+ * Find all possible directions we can push a box.
+ * Uses the global variables mBoxPos and mPlayerPos
+ * (We originally set these variables with an aStar search)
+ */
+/*vector< std::pair<int,int> > solver::getPushDirections(board &b) {
+    vector< std::pair<int,int> > pushDirections;
+    // This direction is pushable after an A*. Not true
+    // If we want to call this method in some recursion.
+    pushDirections.push_back(mPlayerPos);
+}
+
+
+bool isPushable(board &b, pair<int,int> fromPosition) {
+
+}*/
+
+/*
+ * Debug printing of a pair of coordinates
+ */
+ void solver::printCoordinates(int x, int y) {
+    cout << "(" << x << ", " << y << ")";
+ }
 
 
