@@ -8,13 +8,10 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
-using std::string;
-using std::pair;
 using std::priority_queue;
 using std::pair;
 using std::make_pair;
 
-        
 
 /*
  * c-tor
@@ -26,66 +23,85 @@ solver::solver() {}
  * The solver method. It takes a board as a parameter and returns a solution
  */
 string solver::solve(const board &b) {
+    // Initialize 2d vectors g_score and f_score for aStar.
+    g_score.resize(b.getNumRows(), vector<int>(b.getLongestRow(),0));
     f_score.resize(b.getNumRows(), vector<float>(b.getLongestRow(),0));
+    // A 2d-vector of positions and their corresponding move char.
+    // At position [i][j] we have the parent for [i][j] and the direction we came from. Used in backtrack
+    previous.resize(b.getNumRows(), vector< pair<pair<int,int>,char> >(b.getLongestRow(),
+        make_pair(make_pair(-1,-1),'\0')));
+
+    mStartingPos = b.getPlayerPosition();
     mBoardSize = b.getBoardSize();
-    std::vector<std::pair<int,int> > mGoalPositions = b.getGoalPositions();
-    string boxWalk = aStar(b);
+    mGoalPositions = b.getGoalPositions();
+    mBoxPositions = b.getGoalPositions();
+
+    bool solved = aStar(b);
+    if (solved)
+        cout << "Solved!" << endl;
+    else 
+        cout << "Not solved :(" << endl;
     cout << "Box at ";
     printCoordinates(mBoxPos.first,mBoxPos.second);
-    cout << " can be pushed: "  << boxWalk.back() << endl;
+    cout << " can be pushed: "  << mPath.back() << endl;
     cout << "Player at ";
     printCoordinates(mPlayerPos.first,mPlayerPos.second);
     cout << endl;
-    return boxWalk;
+    return mPath;
 }
 
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
  */
 struct fcomparison {
-    bool operator() (pair<pair<int,int>,float> a, pair<pair<int,int>,float> b) {
-        return a.second >= b.second ? true : false;
+    bool operator() (pair<board,float> a, pair<board,float> b) {
+        return  a.second >= b.second ? true : false;
     }
 };
 
 
 /*
+ * IDA*
+ */
+
+
+// cutoff at g() or f() ? 
+// this one has for f() http://www.informatik.uni-osnabrueck.de/papers_html/ai_94/node2.html 
+// also, make some local vectors member variables to avoid reinitialization
+ 
+
+
+/*
  * Finds pushable boxes using A*
  */
-string solver::aStar(const board &b) {
+bool solver::aStar(const board &b) {
     // A priority queue of moves that are sorted based on their f_score
-    priority_queue<pair<pair<int,int>,float>, vector<pair<pair<int,int>,float> >, fcomparison> openQueue;
-    // A 2d-vector of g_scores.
-    vector< vector<int> > g_score(b.getNumRows(), vector<int>(b.getLongestRow(),0));
-    // A 2d-vector of positions and their corresponding move char.
-    // At position [i][j] we have the parent for [i][j] and the direction we came from. Used in backtrack
-    vector< vector<pair<pair<int,int>, char> > > previous(b.getNumRows(), vector< pair<pair<int,int>,char> >(b.getLongestRow(),
-        make_pair(make_pair(-1,-1),'\0')));
-
-    pair<int,int> playerPos = b.getPlayerPosition();
+    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     // Set starting position with null char to let backtrack know we're finished.
-    previous[playerPos.first][playerPos.second] = make_pair(make_pair(playerPos.first,playerPos.second), '\0');
-    g_score[playerPos.first][playerPos.second] = 1;
-    f_score[playerPos.first][playerPos.second] = 1 + heuristicDistanceToGoal(playerPos);
+    pair<int,int> playerPos = b.getPlayerPosition();
+    int px = playerPos.first;
+    int py = playerPos.second;
+    previous[px][py] = make_pair(make_pair(-1,-1), '\0');
+    g_score[px][py] = 1;
+    f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
-    openQueue.push(make_pair(playerPos,f_score[playerPos.first][playerPos.second]));
-
-    pair<int,int> currentPos;
+    openQueue.push(make_pair(b,f_score[px][py]));
 
     while(!openQueue.empty()) {
-        currentPos = openQueue.top().first;
+        board currentBoard = openQueue.top().first;
         openQueue.pop();
-        int x = currentPos.first;
-        int y = currentPos.second;
+        int x = currentBoard.getPlayerPosition().first;
+        int y = currentBoard.getPlayerPosition().second;
 
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
-        vector<pair<pair<int,int>,char> > moves = b.getAllValidMoves(x, y);
+        vector<board> moves = b.getAllValidMoves(x, y);
         for (int k = 0; k < moves.size(); ++k) {
-            pair<int,int> tempPos = moves[k].first;
-            int tempX = tempPos.first;
-            int tempY = tempPos.second;
+            board tempBoard = moves[k];
+            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            int tempX = tempPlayerPos.first;
+            int tempY = tempPlayerPos.second;
             int temp_g = g_score[x][y] + 1;
             int current_g = g_score[tempX][tempY];
             
@@ -96,21 +112,18 @@ string solver::aStar(const board &b) {
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                previous[tempX][tempY] = make_pair(currentPos, moves[k].second);
-                // If we found a pushable box, backtrack!
-                if (b.isBox(tempX,tempY)) {
-                    mBoxPos = make_pair(tempX,tempY);
-                    mPlayerPos = make_pair(x,y);
-                    // Currently skips the actual push
-                    return backtrack(previous, tempX, tempY);
+                previous[tempX][tempY] = make_pair(make_pair(x,y), tempBoard.getWhatGotmeHere());
+                if (b.isFinished()) {
+                    backtrack(previous, tempX, tempY);
+                    return true;
                 }
                 g_score[tempX][tempY] = temp_g;
-                f_score[tempX][tempY] = temp_g + heuristicDistanceToGoal(tempPos);
-                openQueue.push(make_pair(tempPos,f_score[tempX][tempY]));
+                f_score[tempX][tempY] = temp_g + heuristicDistance(tempBoard.getBoxPositions());
+                openQueue.push(make_pair(tempBoard, f_score[tempX][tempY]));
             }
         }
     }
-    return "no path";
+    return false;
 }
 
 /*
@@ -119,17 +132,22 @@ string solver::aStar(const board &b) {
  *
  * Returns the diagonal distance to the closest goal
  */
-int solver::heuristicDistanceToGoal(pair<int,int> p) {
-    int shortestDistance = mBoardSize;
-    int d;
-    
-    for (int k = 0; k < mGoalPositions.size(); ++k) {
-        d = distance(p.first, p.second, mGoalPositions[k].first, mGoalPositions[k].second);
-        if (d < shortestDistance) {
-            shortestDistance = d;
+int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
+    int totalDistances = 0;
+
+    for (int i = 0; i < boxPositions.size(); ++i) {
+        int shortestDistance = mBoardSize;
+        int x = boxPositions[i].first;
+        int y = boxPositions[i].second;
+        for (int j = 0; j < mGoalPositions.size(); ++j) {
+            int d = distance(x, y, mGoalPositions[j].first, mGoalPositions[j].second);
+            if (d < shortestDistance) {
+                shortestDistance = d;
+            }
         }
+        totalDistances += shortestDistance;
     }
-    return shortestDistance;
+    return totalDistances;
 }
 
 
@@ -163,7 +181,7 @@ int solver::distance(int i1, int j1, int i2, int j2) {
  * to the start coordinates, adding direction chars to our string
  * along the way.
  */
-string solver::backtrack(const vector<vector<pair<pair<int,int>, char> > > &previous, int i, int j) {
+void solver::backtrack(const vector<vector<pair<pair<int,int>, char> > > &previous, int i, int j) {
     std::ostringstream s1;
     char direction;
     pair<pair<int,int>, char> previousMove = previous[i][j];
@@ -176,9 +194,8 @@ string solver::backtrack(const vector<vector<pair<pair<int,int>, char> > > &prev
         previousMove = previous[currentX][currentY];
     }
     string reversedString = s1.str();
-    return string(reversedString.rbegin(),reversedString.rend());
+    mPath = string(reversedString.rbegin(),reversedString.rend());
 }
-
 
 /*
  * Find all possible directions we can push a box.
