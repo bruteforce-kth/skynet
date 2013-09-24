@@ -31,22 +31,11 @@ string solver::solve(const board &b) {
     previous.resize(b.getNumRows(), vector< pair<pair<int,int>,char> >(b.getLongestRow(),
         make_pair(make_pair(-1,-1),'\0')));
 
-    mStartingPos = b.getPlayerPosition();
+    //mStartingPos = b.getPlayerPosition();
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
-    mBoxPositions = b.getGoalPositions();
 
     bool solved = aStar(b);
-    if (solved)
-        cout << "Solved!" << endl;
-    else 
-        cout << "Not solved :(" << endl;
-    cout << "Box at ";
-    printCoordinates(mBoxPos.first,mBoxPos.second);
-    cout << " can be pushed: "  << mPath.back() << endl;
-    cout << "Player at ";
-    printCoordinates(mPlayerPos.first,mPlayerPos.second);
-    cout << endl;
     return mPath;
 }
 
@@ -63,8 +52,6 @@ struct fcomparison {
 /*
  * IDA*
  */
-
-
 // cutoff at g() or f() ? 
 // this one has for f() http://www.informatik.uni-osnabrueck.de/papers_html/ai_94/node2.html 
 // also, make some local vectors member variables to avoid reinitialization
