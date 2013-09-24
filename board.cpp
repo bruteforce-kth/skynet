@@ -209,13 +209,3 @@ void board::printBoard() {
         cout << '\n';
     }
 }
-
-
-
-
-
-
-
-
-
-
