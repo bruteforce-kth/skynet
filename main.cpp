@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     cout << solution << "\n";
 
     // ofstream myfile;
-    // myfile.open ("Path.txt");
+    // myfile.open ("advancedVisualizer/Path.txt");
     // cout << "Writing solution to file 'Path.txt'.\n";
     // myfile << solution << "\n";
     // myfile.close();

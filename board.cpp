@@ -6,6 +6,7 @@ using std::endl;
 using std::pair;
 using std::vector;
 using std::make_pair;
+using std::string;
 
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
@@ -17,12 +18,13 @@ board::board (const vector<vector<char> > &chars) {
 
 }
 
-board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere, vector<pair<int,int> > deadPositions){
+board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere, vector<pair<int,int> > deadPositions, string path){
     this->mBoard = chars;
     this->mDeadPositions = deadPositions;
     initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
+    mPath = path;
 }
 /*
 board::board (const board &source, bool wasPush, 
@@ -117,7 +119,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 }
 
 
-board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
+board* board::doMove(std::pair<int,int> newPlayerPos, char direction, string prevPath) const{
     // std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
@@ -183,7 +185,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 
         
     }
-    return new board(newMap, boxPush, direction, mDeadPositions);
+    prevPath = prevPath + direction;
+    return new board(newMap, boxPush, direction, mDeadPositions, prevPath);
 }
 
 /*
@@ -197,9 +200,9 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     }
     // Check box push
     else if (isBox(row, col)) {
-        std::cout << "looking for (" << prevRow+(row-prevRow)*2 << ", " << prevCol+(col-prevCol)*2 << ")" << std::endl;
+        // std::cout << "looking for (" << prevRow+(row-prevRow)*2 << ", " << prevCol+(col-prevCol)*2 << ")" << std::endl;
         if (std::find(mDeadPositions.begin(), mDeadPositions.end(), make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)) != mDeadPositions.end()) {
-            std::cout << "Deadlock found, not pushing!" << std::endl;
+            // std::cout << "Deadlock found, not pushing!" << std::endl;
             return false;
         }
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
@@ -267,21 +270,21 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
-void board::getAllValidMoves(vector<board> &moves) const{
+void board::getAllValidMoves(vector<board> &moves, string prevPath) const{
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP, prevPath));
     }
     if (isAccessible(row+1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN, prevPath));
     }
     if (isAccessible(row, col-1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT, prevPath));
     }
     if (isAccessible(row, col+1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT, prevPath));
     }
 }
 
@@ -294,9 +297,9 @@ void board::printBoard() {
         }
         cout << '\n';
     }
-    cout << "Dead positions: ";
-    for(int i = 0; i < mDeadPositions.size(); i++) {
-        cout << "(" << mDeadPositions[i].first << ", " << mDeadPositions[i].second << ") ";
-    }
-    cout << std::endl;
+    // cout << "Dead positions: ";
+    // for(int i = 0; i < mDeadPositions.size(); i++) {
+    //     cout << "(" << mDeadPositions[i].first << ", " << mDeadPositions[i].second << ") ";
+    // }
+    // cout << std::endl;
 }

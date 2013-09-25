@@ -23,7 +23,7 @@ class solver {
         std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
         // std::unordered_map<std::string, std::pair<std::pair<int,int>, char> > previous_map;
         std::string previousMapHash(board &b, int x, int y);
-        bool aStar(const board &b);
+        std::string aStar(const board &b);
         void backtrack(std::vector<std::vector<std::vector<std::pair<std::pair<int,int>, char> > > >&previous, int i, int j);
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const std::vector< std::pair<int,int> > &boxPositions);

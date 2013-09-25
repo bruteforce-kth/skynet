@@ -30,14 +30,13 @@ string solver::solve(const board &b) {
     // A 2d-vector of positions and their corresponding move char.
     // At position [i][j] we have the parent for [i][j] and the direction we came from. Used in backtrack
     vector< pair<pair<int,int>,char> > filler;
-    previous.resize(b.getNumRows(), vector<vector< pair<pair<int,int>,char> > >(b.getLongestRow(), filler));
+    // previous.resize(b.getNumRows(), vector<vector< pair<pair<int,int>,char> > >(b.getLongestRow(), filler));
 
     //mStartingPos = b.getPlayerPosition();
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
 
-    bool solved = aStar(b);
-    return mPath;
+    return aStar(b);
 }
 
 /*
@@ -62,14 +61,14 @@ struct fcomparison {
 /*
  * Finds pushable boxes using A*
  */
-bool solver::aStar(const board &b) {
+string solver::aStar(const board &b) {
     // A priority queue of moves that are sorted based on their f_score
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     // Set starting position with null char to let backtrack know we're finished.
     pair<int,int> playerPos = b.getPlayerPosition();
     int px = playerPos.first;
     int py = playerPos.second;
-    previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
+    // previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
     g_score_map.insert(make_pair(b.getBoardString(), 1));
     // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
@@ -82,7 +81,7 @@ bool solver::aStar(const board &b) {
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
-        currentBoard.printBoard();
+        // currentBoard.printBoard();
 
         numTested++;
 
@@ -94,7 +93,7 @@ bool solver::aStar(const board &b) {
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
-        currentBoard.getAllValidMoves(moves);
+        currentBoard.getAllValidMoves(moves, currentBoard.getPath());
         std::unordered_map<std::string,int>::const_iterator map_it;
         // cout << "Number of possible moves: " << moves.size() << endl;
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
@@ -127,11 +126,11 @@ bool solver::aStar(const board &b) {
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                previous[tempX][tempY].push_back(make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere()));
+                // previous[tempX][tempY].push_back(make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere()));
                 if (tempBoard.isFinished()) {
                     // cout << "Board solved! Backtracking!" << endl;
-                    backtrack(previous, tempX, tempY);
-                    return true;
+                    // backtrack(previous, tempX, tempY);
+                    return tempBoard.getPath();
                 }
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
                 // g_score[tempX][tempY] = temp_g;
@@ -140,14 +139,13 @@ bool solver::aStar(const board &b) {
             }
         }
     }
-    return false;
+    return "no path";
 }
 
 /*
- * OBS Old heuristic. Update with distance to boxes!
- * Estimate of distance to goal used in the aStar() algorithm
- *
- * Returns the diagonal distance to the closest goal
+ * Heuristic for A* search. 
+ * The heuristic value is the sum of 
+ * all boxes shortest distance to a goal.
  */
 int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
     int totalDistances = 0;
@@ -199,26 +197,26 @@ int solver::distance(int i1, int j1, int i2, int j2) {
  * to the start coordinates, adding direction chars to our string
  * along the way.
  */
-void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&previous, int i, int j) {
-    std::ostringstream s1;
-    char direction;
-    pair<pair<int,int>, char> previousMove = previous[i][j].back();
-    // if (previous[i][j].size() > 1)
-    //     previous[i][j].pop_back();
-    while(!(previousMove.second == '\0')) {
-        s1 << previousMove.second;
-        // Get index for the previous coordinates' previousPos
-        int currentX = previousMove.first.first;
-        int currentY = previousMove.first.second;
-        // Update position using the calculated index
-        previousMove = previous[currentX][currentY].back();
+// void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&previous, int i, int j) {
+//     std::ostringstream s1;
+//     char direction;
+//     pair<pair<int,int>, char> previousMove = previous[i][j].back();
+//     // if (previous[i][j].size() > 1)
+//     //     previous[i][j].pop_back();
+//     while(!(previousMove.second == '\0')) {
+//         s1 << previousMove.second;
+//         // Get index for the previous coordinates' previousPos
+//         int currentX = previousMove.first.first;
+//         int currentY = previousMove.first.second;
+//         // Update position using the calculated index
+//         previousMove = previous[currentX][currentY].back();
 
-        if (previous[currentX][currentY].size() > 1)
-            previous[currentX][currentY].pop_back();
-    }
-    string reversedString = s1.str();
-    mPath = string(reversedString.rbegin(),reversedString.rend());
-}
+//         if (previous[currentX][currentY].size() > 1)
+//             previous[currentX][currentY].pop_back();
+//     }
+//     string reversedString = s1.str();
+//     mPath = string(reversedString.rbegin(),reversedString.rend());
+// }
 
 bool solver::isRepeatedMove(char a, char b) {
     if(

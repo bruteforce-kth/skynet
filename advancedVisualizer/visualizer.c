@@ -177,7 +177,8 @@ void printStep(WINDOW *win, char direction, int time){
     }
     free(box);
     wmove(win, rowLength+2, time*2);
-    wprintw(win, "%c%c", direction, ' ');
+    // Long solutions need linebreaks. Overflows into board
+    // wprintw(win, "%c%c", direction, ' ');
 
     wrefresh(win);
     refresh();
