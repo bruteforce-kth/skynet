@@ -10,14 +10,16 @@ using std::make_pair;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
+    findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     // printBoard();
 
 }
 
-board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere){
+board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere, vector<pair<int,int> > deadPositions){
     this->mBoard = chars;
+    this->mDeadPositions = deadPositions;
     initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
@@ -79,6 +81,39 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
     mLongestRow = longestRow;
     mNumRows = chars.size();
     return;
+}
+
+void board::findDeadlocks(const vector<vector<char> > &chars) {
+    for (int i = 0; i < chars.size(); i++) {
+        for (int j = 0; j < chars[i].size(); j++) {
+            char c = chars[i][j];
+            // DEADLOCK CHECK
+            if(c == PLAYER || c == FLOOR){
+                char up;
+                char down;
+                char left;
+                char right;
+                if(i > 0){
+                    up = chars[i-1][j];
+                }else{ up = WALL;}
+                if(i < chars.size() - 1){
+                    down = chars[i+1][j];
+                }else{ down = WALL;}
+                if(j > 0){
+                    left = chars[i][j-1];
+                }else{ left = WALL;}
+                if(j < chars[i].size() - 1){
+                    right = chars[i][j+1];
+                }else{ right = WALL;}
+                if(up == WALL && (left == WALL || right == WALL)) {
+                    mDeadPositions.push_back(make_pair(i,j));
+                }
+                if(down == WALL && (left == WALL || right == WALL)) {
+                    mDeadPositions.push_back(make_pair(i,j));
+                }
+            }
+        }
+    }
 }
 
 
@@ -148,7 +183,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 
         
     }
-    return new board(newMap, boxPush, direction);
+    return new board(newMap, boxPush, direction, mDeadPositions);
 }
 
 /*
@@ -162,6 +197,11 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     }
     // Check box push
     else if (isBox(row, col)) {
+        std::cout << "looking for (" << prevRow+(row-prevRow)*2 << ", " << prevCol+(col-prevCol)*2 << ")" << std::endl;
+        if (std::find(mDeadPositions.begin(), mDeadPositions.end(), make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)) != mDeadPositions.end()) {
+            std::cout << "Deadlock found, not pushing!" << std::endl;
+            return false;
+        }
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
             return true;
@@ -254,4 +294,9 @@ void board::printBoard() {
         }
         cout << '\n';
     }
+    cout << "Dead positions: ";
+    for(int i = 0; i < mDeadPositions.size(); i++) {
+        cout << "(" << mDeadPositions[i].first << ", " << mDeadPositions[i].second << ") ";
+    }
+    cout << std::endl;
 }
