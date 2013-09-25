@@ -45,7 +45,7 @@ string solver::solve(const board &b) {
  */
 struct fcomparison {
     bool operator() (pair<board,float> a, pair<board,float> b) {
-        return  a.second >= b.second ? true : false;
+        return  a.second > b.second ? true : false;
     }
 };
 
@@ -75,19 +75,20 @@ bool solver::aStar(const board &b) {
 
     float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
     openQueue.push(make_pair(b, starting_heuristic));
-
+    int numTested = 0;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
-        // currentBoard.printBoard();
+        currentBoard.printBoard();
+
+        numTested++;
 
         // cout << "Popped coordinate: ";
         // printCoordinates(x,y);
         // cout << endl;
-
 
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
@@ -99,6 +100,8 @@ bool solver::aStar(const board &b) {
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
+                continue;
             // std::cout << "valid move:" << std::endl;
             // tempBoard.printBoard();
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
@@ -200,8 +203,8 @@ void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&pre
     std::ostringstream s1;
     char direction;
     pair<pair<int,int>, char> previousMove = previous[i][j].back();
-    if (!previous[i][j].empty())
-        previous[i][j].pop_back();
+    // if (previous[i][j].size() > 1)
+    //     previous[i][j].pop_back();
     while(!(previousMove.second == '\0')) {
         s1 << previousMove.second;
         // Get index for the previous coordinates' previousPos
@@ -209,29 +212,25 @@ void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&pre
         int currentY = previousMove.first.second;
         // Update position using the calculated index
         previousMove = previous[currentX][currentY].back();
-        if (!previous[currentX][currentY].empty())
+
+        if (previous[currentX][currentY].size() > 1)
             previous[currentX][currentY].pop_back();
     }
     string reversedString = s1.str();
     mPath = string(reversedString.rbegin(),reversedString.rend());
 }
 
-/*
- * Find all possible directions we can push a box.
- * Uses the global variables mBoxPos and mPlayerPos
- * (We originally set these variables with an aStar search)
- */
-/*vector< std::pair<int,int> > solver::getPushDirections(board &b) {
-    vector< std::pair<int,int> > pushDirections;
-    // This direction is pushable after an A*. Not true
-    // If we want to call this method in some recursion.
-    pushDirections.push_back(mPlayerPos);
+bool solver::isRepeatedMove(char a, char b) {
+    if(
+        a == 'U' && b == 'D' ||
+        a == 'D' && b == 'U' ||
+        a == 'L' && b == 'R' ||
+        a == 'R' && b == 'L') {
+        return true;
+    }
+    return false;
 }
 
-
-bool isPushable(board &b, pair<int,int> fromPosition) {
-
-}*/
 
 /*
  * Debug printing of a pair of coordinates
@@ -240,9 +239,9 @@ bool isPushable(board &b, pair<int,int> fromPosition) {
     cout << "(" << x << ", " << y << ")";
  }
 
-string previousMapHash(board &b, int x, int y) {
-    string hash = b.getBoardString();
-    hash = hash + std::to_string(x) + " " + std::to_string(y);
-    return hash;
-}
+// string previousMapHash(board &b, int x, int y) {
+//     string hash = b.getBoardString();
+//     hash = hash + std::to_string(x) + " " + std::to_string(y);
+//     return hash;
+// }
 

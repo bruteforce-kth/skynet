@@ -27,6 +27,7 @@ class solver {
         void backtrack(std::vector<std::vector<std::vector<std::pair<std::pair<int,int>, char> > > >&previous, int i, int j);
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const std::vector< std::pair<int,int> > &boxPositions);
+        bool isRepeatedMove(char a, char b);
         void printCoordinates(int x, int y);
         //std::vector< std::pair<int,int> > getPushDirections(board &b);
 };
