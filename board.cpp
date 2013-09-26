@@ -15,7 +15,6 @@ board::board (const vector<vector<char> > &chars) {
     mWasPush = false;
     mWhatGotMeHere = '\0';
     // printBoard();
-
 }
 
 board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere, std::set<pair<int,int> > deadPositions, string path){
@@ -91,6 +90,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
         }
     }
     findWallDeadlocks();
+    //cout << "Size of mDeadPositions: " << mDeadPositions.size() << endl;
 }
 
 pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
@@ -129,7 +129,7 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
     position = getRelativePosition(direction, position);
     if(position.first >= mBoard.size() || position.second >= mBoard[position.first].size())
         return false; //Outside of map
-    if(position.first < 1 || position.second < 1)
+    if(position.first < 0 || position.second < 0)
         return false; 
     
     if(mBoard[position.first][position.second] == GOAL || mBoard[position.first][position.second] == BOX_ON_GOAL)
@@ -141,7 +141,7 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
     
     if(investigateWall(direction, wallDirection, position)){
         mDeadPositions.insert(position);
-        cout << "Inserted: " << position.first << ", " << position.second << endl;
+        //cout << "Inserted: " << position.first << ", " << position.second << endl;
     }
 }
 
