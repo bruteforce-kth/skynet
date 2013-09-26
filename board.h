@@ -50,7 +50,8 @@ class board {
         bool isWalkable(int row, int col) const;
         bool isGoal(int row, int col) const;
         bool isBox(int row, int col) const;
-        void getAllValidMoves(std::vector<board> &moves, std::string prevPath) const;
+        void getAllValidMoves(std::vector<board> &moves) const;
+        void getAllValidWalkMoves(std::vector<board> &moves) const;
         bool isFinished() const;
         bool isPush() const
         { return mWasPush; }
@@ -70,7 +71,7 @@ class board {
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
-        board* doMove(std::pair<int,int> newPlayerPos, char direction, std::string prevPath) const;
+        board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
 };
 
 #endif

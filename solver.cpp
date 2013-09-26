@@ -30,18 +30,18 @@ string solver::solve(const board &b) {
     return aStar(b);
 }
 
-board solver::getLockedDownBoxesBoard(const board &boardToConvert){
-    vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
-    for(int row = 0; row < boardChars.size(); row++){
-        for(int col = 0; col < boardChars[row].size(); col++){
-            if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
-                boardChars[row][col] = '#';
-        }
-    }
-    return board(boardChars, boardToConvert.isPush(), 
-                 boardToConvert.getWhatGotMeHere(), 
-                 boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
-}
+// board solver::getLockedDownBoxesBoard(const board &boardToConvert){
+//     vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
+//     for(int row = 0; row < boardChars.size(); row++){
+//         for(int col = 0; col < boardChars[row].size(); col++){
+//             if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
+//                 boardChars[row][col] = '#';
+//         }
+//     }
+//     return board(boardChars, boardToConvert.isPush(), 
+//                  boardToConvert.getWhatGotMeHere(), 
+//                  boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
+// }
 
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
@@ -94,7 +94,7 @@ string solver::aStar(const board &b) {
     g_score_map.insert(make_pair(b.getBoardString(), 1));
     // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
-    float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
+    float starting_heuristic = 1 + heuristicDistance(b);
     openQueue.push(make_pair(b, starting_heuristic));
     std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
     while(!openQueue.empty()) {
@@ -110,39 +110,16 @@ string solver::aStar(const board &b) {
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
-        currentBoard.getAllValidMoves(moves, currentBoard.getPath());
+        currentBoard.getAllValidMoves(moves);
         std::unordered_map<std::string,int>::const_iterator map_it;
-        // cout << "Number of possible moves: " << moves.size() << endl;
-        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
 
             if (tempBoard.isFinished()) {
                 return tempBoard.getPath();
             }
-            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
-            if(tempBoard.isPush()) {
-                visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
-                if ( visited_it != visited.end() ) {
-                    if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
-                        continue;
-                    }
-                    else { // This is a new unique state
-                        vector<pair<int,int> > currentPlayerPositions = visited_it->second;
-                        currentPlayerPositions.push_back(tempPlayerPos);
-                        visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), currentPlayerPositions));
-                    }
-                }
-                else{ //If the boxes havent been in this position previously
-                    vector<pair<int,int> > tempPlayerPos;
-                    tempPlayerPos.push_back(tempBoard.getPlayerPosition());
-                    visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
-                }
-            }
-            if (tempBoard.isPush()) {
-                if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-                    continue;
-            }
+
             // std::cout << "valid move:" << std::endl;
             // tempBoard.printBoard();
             int tempX = tempPlayerPos.first;
@@ -150,25 +127,44 @@ string solver::aStar(const board &b) {
             int temp_g = g_score_map.at(currentBoard.getBoardString()) + 1;
             int current_g;
             map_it = g_score_map.find(tempBoard.getBoardString());
-            if ( map_it != g_score_map.end() )
+            if ( map_it != g_score_map.end() ) {
                 current_g = map_it->second;
-            else
+            }
+            else {
                 current_g = 0;
+            }
 
-            // cout << "Proposed move is: ";
-            // printCoordinates(tempX, tempY);
-            // cout << endl;
-            
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
             if (current_g > 0 && current_g <= temp_g ) {
                 continue;
             }
-            // Calculate path-cost, set parent (previous) position and add to possible moves
-            else {
-                g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, heuristicDistance(tempBoard.getBoxPositions())));
+            if (!tempBoard.isPush() && !currentBoard.isPush()) {
+                if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
+                    continue;    
             }
+            if (tempBoard.getPath().size() > 40) {
+                if(tempBoard.isPush() ) {
+                    visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
+                    if ( visited_it != visited.end() ) {
+                        if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
+                            continue;
+                        }
+                        else { // This is a new unique state
+                            vector<pair<int,int> > currentPlayerPositions = visited_it->second;
+                            currentPlayerPositions.push_back(tempPlayerPos);
+                            visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), currentPlayerPositions));
+                        }
+                    }
+                    else{ //If the boxes havent been in this position previously
+                        vector<pair<int,int> > tempPlayerPos;
+                        tempPlayerPos.push_back(tempBoard.getPlayerPosition());
+                        visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
+                    }
+                }
+            }
+            g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
+            openQueue.push(make_pair(tempBoard, heuristicDistance(tempBoard)));    
         }
     }
     return "no path";
@@ -187,9 +183,8 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
     std::vector<std::pair<int,int> > boxPositions = b.getBoxPositions();
 
     float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
-    board noBoxBoard = getLockedDownBoxesBoard(b);
-    g_score.insert(make_pair(noBoxBoard.getBoardString(), 1));
-    openQueue.push(make_pair(noBoxBoard, starting_heuristic));
+    g_score.insert(make_pair(b.getBoardString(), 1));
+    openQueue.push(make_pair(b, starting_heuristic));
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
@@ -203,68 +198,63 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
-        currentBoard.getAllValidMoves(moves, currentBoard.getPath());
+        currentBoard.getAllValidWalkMoves(moves);
         std::unordered_map<std::string,int>::const_iterator map_it;
-        // cout << "Number of possible moves: " << moves.size() << endl;
-        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
-            if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-                continue;
             // std::cout << "valid move:" << std::endl;
             // tempBoard.printBoard();
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            if (tempPlayerPos == goal) {
+                return true;
+            }
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
 
             int temp_g = g_score.at(currentBoard.getBoardString()) + 1; 
             int current_g;
             map_it = g_score.find(tempBoard.getBoardString());
-            if ( map_it != g_score.end() )
+            if ( map_it != g_score.end() ) {
                 current_g = map_it->second;
-            else
+            }
+            else {
                 current_g = 0;
-
-            // cout << "Proposed move is: ";
-            // printCoordinates(tempX, tempY);
-            // cout << endl;
-            
+            }
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
             if (current_g > 0 && current_g <= temp_g ) {
-                // std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
                 continue;
             }
-            // Calculate path-cost, set parent (previous) position and add to possible moves
-            else {
-                if (tempPlayerPos == goal) {
-                    return true;
-                }
-                g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, temp_g + heuristicPlayerDistance(tempPlayerPos, goal)));
-            }
+            g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
+            openQueue.push(make_pair(tempBoard, heuristicPlayerDistance(tempPlayerPos, goal)));
         }
     }
     return false;
 }
-
 
 /*
  * Heuristic for A* search. 
  * The heuristic value is the sum of 
  * all boxes shortest distance to a goal.
  */
-int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
+int solver::heuristicDistance(const board &b) {
     int totalDistances = 0;
-
+    vector< pair<int,int> > boxPositions = b.getBoxPositions();
+    vector<vector<char> > chars = b.getBoardCharVector();
     for (int i = 0; i < boxPositions.size(); ++i) {
         int shortestDistance = mBoardSize;
         int x = boxPositions[i].first;
         int y = boxPositions[i].second;
-        for (int j = 0; j < mGoalPositions.size(); ++j) {
-            int d = distance(x, y, mGoalPositions[j].first, mGoalPositions[j].second);
-            if (d < shortestDistance) {
-                shortestDistance = d;
+        if (chars[x][y] == BOX_ON_GOAL)
+            continue;
+        else {
+            for (int j = 0; j < mGoalPositions.size(); ++j) {
+                int d = distance(x, y, mGoalPositions[j].first, mGoalPositions[j].second);
+                if (d < shortestDistance) {
+                    shortestDistance = d;
+                    if (d == 1)
+                        break;
+                }   
             }
         }
         totalDistances += shortestDistance;
@@ -279,7 +269,6 @@ int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
 int solver::heuristicPlayerDistance(pair<int,int> from, pair<int,int> to) {
     return distance(from.first,from.second, to.first, to.second);
 }
-
 
 
 /*

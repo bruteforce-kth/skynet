@@ -25,7 +25,7 @@ class solver {
         std::string aStar(const board &b);
         bool aStarPlayer(const board &b, std::pair<int,int> goal);
         int distance(int i1, int j1, int i2, int j2);
-        int heuristicDistance(const std::vector< std::pair<int,int> > &boxPositions);
+        int heuristicDistance(const board &b);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
         bool isRepeatedMove(char a, char b);
         void printCoordinates(int x, int y);
