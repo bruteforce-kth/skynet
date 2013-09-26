@@ -162,7 +162,7 @@ void board::findWallDeadlocks(){
 }
 
 
-board* board::doMove(std::pair<int,int> newPlayerPos, char direction, string prevPath) const{
+board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     // std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
@@ -228,8 +228,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction, string pre
 
         
     }
-    prevPath = prevPath + direction;
-    return new board(newMap, boxPush, direction, mDeadPositions, prevPath);
+    return new board(newMap, boxPush, direction, mDeadPositions, getPath() + direction);
 }
 
 /*
@@ -371,23 +370,42 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
-void board::getAllValidMoves(vector<board> &moves, string prevPath) const{
+void board::getAllValidMoves(vector<board> &moves) const{
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP, prevPath));
+        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN, prevPath));
+        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT, prevPath));
+        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT, prevPath));
+        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
+
+void board::getAllValidWalkMoves(vector<board> &moves) const{
+    int row = getPlayerPosition().first;
+    int col = getPlayerPosition().second;
+    // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
+    if (isWalkable(row-1, col)) {
+        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+    }
+    if (isWalkable(row+1, col)) {
+        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+    }
+    if (isWalkable(row, col-1)) {
+        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+    }
+    if (isWalkable(row, col+1)) {
+        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+    }
+}
+
 
 void board::printBoard() {
     // std::cout << "printBoard" << std::endl;
