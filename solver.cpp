@@ -30,18 +30,17 @@ string solver::solve(const board &b) {
     return aStar(b);
 }
 
-board solver::getLockedDownBoxesBoard(const board *boardToConvert){
-    vector<vector<char> > boardChars = boardToConvert->getBoardCharVector();
+board solver::getLockedDownBoxesBoard(const board &boardToConvert){
+    vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
     for(int row = 0; row < boardChars.size(); row++){
-        vector<char> boardRow = boardChars[row];
-        for(int col = 0; col < boardRow.size(); col++){
-            if(boardRow[col] == '*' || boardRow[col] == '$')
-                boardRow[col] = '#';        
+        for(int col = 0; col < boardChars[row].size(); col++){
+            if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
+                boardChars[row][col] = '#';
         }
     }
-    return board(boardChars, boardToConvert->isPush(), 
-                 boardToConvert->getWhatGotMeHere(), 
-                 boardToConvert->getDeadPositions(), boardToConvert->getPath()); 
+    return board(boardChars, boardToConvert.isPush(), 
+                 boardToConvert.getWhatGotMeHere(), 
+                 boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
 }
 
 /*
@@ -100,12 +99,8 @@ string solver::aStar(const board &b) {
     std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
-        
-        
         openQueue.pop();
-        if (currentBoard.getPath().size() > 480) {
-            continue;
-        }
+
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
@@ -121,14 +116,15 @@ string solver::aStar(const board &b) {
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+
+            if (tempBoard.isFinished()) {
+                return tempBoard.getPath();
+            }
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
-            if(tempBoard.isPush()){
+            if(tempBoard.isPush()) {
                 visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
                 if ( visited_it != visited.end() ) {
-                    tempBoard.printBoard();
-                    cout << hashState(tempBoard.getBoxPositions());
                     if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
-                        cout << "continuing" << endl;
                         continue;
                     }
                     else { // This is a new unique state
@@ -143,13 +139,15 @@ string solver::aStar(const board &b) {
                     visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
                 }
             }
-            if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-                continue;
+            if (tempBoard.isPush()) {
+                if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
+                    continue;
+            }
             // std::cout << "valid move:" << std::endl;
             // tempBoard.printBoard();
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
-            int temp_g = g_score_map.at(currentBoard.getBoardString());
+            int temp_g = g_score_map.at(currentBoard.getBoardString()) + 1;
             int current_g;
             map_it = g_score_map.find(tempBoard.getBoardString());
             if ( map_it != g_score_map.end() )
@@ -164,16 +162,12 @@ string solver::aStar(const board &b) {
             // Skip move if the position is in the open or closed set with a lower g_score
             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
             if (current_g > 0 && current_g <= temp_g ) {
-                // std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
                 continue;
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                if (tempBoard.isFinished()) {
-                    return tempBoard.getPath();
-                }
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, temp_g + heuristicDistance(tempBoard.getBoxPositions())));
+                openQueue.push(make_pair(tempBoard, heuristicDistance(tempBoard.getBoxPositions())));
             }
         }
     }
@@ -190,11 +184,12 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
     pair<int,int> playerPos = b.getPlayerPosition();
     int px = playerPos.first;
     int py = playerPos.second;
-    g_score.insert(make_pair(b.getBoardString(), 1));
     std::vector<std::pair<int,int> > boxPositions = b.getBoxPositions();
 
     float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
-    openQueue.push(make_pair(b, starting_heuristic));
+    board noBoxBoard = getLockedDownBoxesBoard(b);
+    g_score.insert(make_pair(noBoxBoard.getBoardString(), 1));
+    openQueue.push(make_pair(noBoxBoard, starting_heuristic));
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
@@ -221,7 +216,8 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
-            int temp_g = g_score.at(currentBoard.getBoardString());
+
+            int temp_g = g_score.at(currentBoard.getBoardString()) + 1; 
             int current_g;
             map_it = g_score.find(tempBoard.getBoardString());
             if ( map_it != g_score.end() )

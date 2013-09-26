@@ -31,6 +31,6 @@ class solver {
         void printCoordinates(int x, int y);
         std::string hashState(const std::vector<std::pair<int,int> > boxPositions) const;
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
-        board getLockedDownBoxesBoard(const board *boardToConvert);
+        board getLockedDownBoxesBoard(const board &boardToConvert);
         //std::vector< std::pair<int,int> > getPushDirections(board &b);
 };
