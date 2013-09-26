@@ -107,20 +107,23 @@ string solver::aStar(const board &b) {
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
-            visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
-            if ( visited_it != visited.end() ) {
-                cout << "continuing" << endl;
-                if(isReachable(tempBoard, visited_it->second)) //If we can reach a state with the same box positions without pushing
-                    continue;
-                else{ // This is a new unique state
-                    vector<pair<int,int> > currentPlayerPositions;
-                    currentPlayerPositions.push_back(tempBoard.getPlayerPosition());
+            if(tempBoard.isPush()){
+                visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
+                if ( visited_it != visited.end() ) {
+                    cout << "continuing" << endl;
+                    cout << hashState(tempBoard.getBoxPositions());
+                    if(isReachable(tempBoard, visited_it->second)) //If we can reach a state with the same box positions without pushing
+                        continue;
+                    else{ // This is a new unique state
+                        vector<pair<int,int> > currentPlayerPositions;
+                        currentPlayerPositions.push_back(tempBoard.getPlayerPosition());
+                    }
                 }
-            }
-            else{ //If the boxes havent been in this position previously
-                vector<pair<int,int> > tempPlayerPos;
-                tempPlayerPos.push_back(tempBoard.getPlayerPosition());
-                visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
+                else{ //If the boxes havent been in this position previously
+                    vector<pair<int,int> > tempPlayerPos;
+                    tempPlayerPos.push_back(tempBoard.getPlayerPosition());
+                    visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
+                }
             }
             if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
                 continue;
