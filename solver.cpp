@@ -24,18 +24,8 @@ solver::solver() {}
  */
 string solver::solve(const board &b) {
     g_score_map.reserve(600000);
-    // Initialize 2d vectors g_score and f_score for aStar.
-    g_score.resize(b.getNumRows(), vector<int>(b.getLongestRow(),0));
-    // f_score.resize(b.getNumRows(), vector<float>(b.getLongestRow(),0));
-    // A 2d-vector of positions and their corresponding move char.
-    // At position [i][j] we have the parent for [i][j] and the direction we came from. Used in backtrack
-    vector< pair<pair<int,int>,char> > filler;
-    // previous.resize(b.getNumRows(), vector<vector< pair<pair<int,int>,char> > >(b.getLongestRow(), filler));
-
-    //mStartingPos = b.getPlayerPosition();
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
-
     return aStar(b);
 }
 
@@ -57,7 +47,6 @@ struct fcomparison {
 // also, make some local vectors member variables to avoid reinitialization
  
 
-
 /*
  * Finds pushable boxes using A*
  */
@@ -74,7 +63,6 @@ string solver::aStar(const board &b) {
 
     float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
     openQueue.push(make_pair(b, starting_heuristic));
-    int numTested = 0;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
@@ -82,12 +70,6 @@ string solver::aStar(const board &b) {
         int y = currentBoard.getPlayerPosition().second;
 
         // currentBoard.printBoard();
-
-        numTested++;
-
-        // cout << "Popped coordinate: ";
-        // printCoordinates(x,y);
-        // cout << endl;
 
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
@@ -126,15 +108,10 @@ string solver::aStar(const board &b) {
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                // previous[tempX][tempY].push_back(make_pair(make_pair(x,y), tempBoard.getWhatGotMeHere()));
                 if (tempBoard.isFinished()) {
-                    // cout << "Board solved! Backtracking!" << endl;
-                    // backtrack(previous, tempX, tempY);
                     return tempBoard.getPath();
                 }
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                // g_score[tempX][tempY] = temp_g;
-                // std::cout << "pushing move to position (" << tempX << ", " << tempY << ")" << std::endl;
                 openQueue.push(make_pair(tempBoard, temp_g + heuristicDistance(tempBoard.getBoxPositions())));
             }
         }
@@ -185,39 +162,6 @@ int solver::distance(int i1, int j1, int i2, int j2) {
 */
  }
 
-
-/*
- * Backtracks from the specified position to find a path
- * from the player's starting position to the goal
- *
- * 'previous' is a vector containing pairs of coordinates.
- * it is indexed using the function 'position' which
- * maps two coordinates to a unique index in the vector.
- * Using this hash we find our way from the end coordinates
- * to the start coordinates, adding direction chars to our string
- * along the way.
- */
-// void solver::backtrack(vector<vector<vector<pair<pair<int,int>, char> > >  >&previous, int i, int j) {
-//     std::ostringstream s1;
-//     char direction;
-//     pair<pair<int,int>, char> previousMove = previous[i][j].back();
-//     // if (previous[i][j].size() > 1)
-//     //     previous[i][j].pop_back();
-//     while(!(previousMove.second == '\0')) {
-//         s1 << previousMove.second;
-//         // Get index for the previous coordinates' previousPos
-//         int currentX = previousMove.first.first;
-//         int currentY = previousMove.first.second;
-//         // Update position using the calculated index
-//         previousMove = previous[currentX][currentY].back();
-
-//         if (previous[currentX][currentY].size() > 1)
-//             previous[currentX][currentY].pop_back();
-//     }
-//     string reversedString = s1.str();
-//     mPath = string(reversedString.rbegin(),reversedString.rend());
-// }
-
 bool solver::isRepeatedMove(char a, char b) {
     if(
         a == 'U' && b == 'D' ||
@@ -237,9 +181,7 @@ bool solver::isRepeatedMove(char a, char b) {
     cout << "(" << x << ", " << y << ")";
  }
 
-// string previousMapHash(board &b, int x, int y) {
-//     string hash = b.getBoardString();
-//     hash = hash + std::to_string(x) + " " + std::to_string(y);
-//     return hash;
-// }
+
+
+
 

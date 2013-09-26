@@ -26,21 +26,6 @@ board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHe
     mWhatGotMeHere = whatGotMeHere;
     mPath = path;
 }
-/*
-board::board (const board &source, bool wasPush, 
-    char whatGotMeHere, std::pair<int,int> playerPos,std::vector<std::pair<int,int> > boxPositions){
-
-    mLongestRow = source.mLongestRow;
-    mNumRows = source.mNumRows;
-    mWasPush = wasPush;
-    mWhatGotMeHere = whatGotMeHere;
-    //memcpy((void*)&mGoalPositions, (void*)&source.mGoalPositions, sizeof(source.mGoalPositions));
-    mGoalPositions = source.mGoalPositions;
-    mBoard = source.mBoard;
-    mBoxPositions = boxPositions;
-    mPlayerPos = playerPos;
-    mBoardSize = source.mBoardSize;
-}*/
 
 /*
  * Loops over the 2d vector of chars and initializes
@@ -50,12 +35,8 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
     std::string boardString = "";
     int index = 0;
     int size = 0;
-    int longestRow = -1;
     for (int i = 0; i < chars.size(); i++) {
-        int currentRowSize = chars[i].size();
-        size += currentRowSize;
-        if (longestRow < currentRowSize)
-            longestRow = currentRowSize;
+        size += chars[i].size();
         for (int j = 0; j < chars[i].size(); j++) {
             boardString += chars[i][j];
             char c = chars[i][j];
@@ -70,18 +51,11 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
             if(c == BOX || c == BOX_ON_GOAL){
                 mBoxPositions.push_back(make_pair(i,j));
             }
-            /*
-            else if (c == PLAYER_ON_GOAL) {
-                this->playerPos = make_pair(i,j);
-                return false;
-            }*/
             ++index;
         }
     }
     mBoardString = boardString;
     mBoardSize = size;
-    mLongestRow = longestRow;
-    mNumRows = chars.size();
     return;
 }
 
@@ -220,25 +194,9 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
  * Checks if all boxes are on goals (finish state).
  */
 bool board::isFinished() const{
-
     if (mBoardString.find('$')!= std::string::npos)
         return false;
     return true;
-
-    // bool boxOnGoal = false;
-    // for(int i = 0; i < mBoxPositions.size(); i++){
-    //     for(int j = 0; j < mGoalPositions.size() && !boxOnGoal; j++){
-    //         if(mBoxPositions.at(i) == mGoalPositions.at(j) ){
-    //             boxOnGoal = true;
-    //         }
-    //     }
-    //     if(!boxOnGoal)
-    //         return false;
-    //     boxOnGoal = false;    
-    // }
-
-    // std::cout << "FINISHED!" << std::endl;
-    // return true;
 }
 
 bool board::isWalkable(int row, int col) const {
@@ -287,7 +245,6 @@ void board::getAllValidMoves(vector<board> &moves, string prevPath) const{
         moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT, prevPath));
     }
 }
-
 
 void board::printBoard() {
     // std::cout << "printBoard" << std::endl;

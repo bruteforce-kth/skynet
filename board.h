@@ -38,10 +38,6 @@ class board {
         { return mPlayerPos; }
         const std::vector<std::pair<int,int> > getDeadPositions() const
         { return mDeadPositions; }
-        const int getLongestRow() const
-        { return mLongestRow; }
-        const int getNumRows() const
-        { return mNumRows; }
         const int getBoardSize() const
         { return mBoardSize; }
         std::string getBoardString() const
@@ -60,9 +56,6 @@ class board {
         { return mWhatGotMeHere; }
         void printBoard();
     private:
-
-        int mLongestRow;
-        int mNumRows;
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         void findDeadlocks(const std::vector<std::vector<char> > &chars);
