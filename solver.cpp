@@ -121,6 +121,7 @@ string solver::aStar(const board &b) {
                 return tempBoard.getPath();
             }
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+
             if(tempBoard.isPush()) {
                 visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
                 if ( visited_it != visited.end() ) {

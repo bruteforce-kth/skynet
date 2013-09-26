@@ -237,11 +237,82 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     }
     // Check box push
     else if (isBox(row, col)) {
+        pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2);
          //std::cout << "looking for (" << prevRow+(row-prevRow)*2 << ", " << prevCol+(col-prevCol)*2 << ")" << std::endl;
-        if (std::find(mDeadPositions.begin(), mDeadPositions.end(), make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)) != mDeadPositions.end()) {
+        if (std::find(mDeadPositions.begin(), mDeadPositions.end(), boxPos) != mDeadPositions.end()) {
            // std::cout << "Deadlock found, not pushing!" << std::endl;
             return false;
-        }/*
+        }
+        //DYNAMIC DEADLOCK
+        char up = WALL;
+        char upr = WALL;
+        char upl = WALL;
+        char down = WALL;
+        char downr = WALL;
+        char downl = WALL;
+        char left = WALL;
+        char right = WALL;
+        if(row > 0){                            // SET UP
+            up = mBoard[row-1][col];
+            if(col > 0){                        // SET UP LEFT CORNER
+                upl = mBoard[row-1][col-1];
+            }
+            if(col < mBoard[row-1].size() - 1){ // SET UP RIGHT CORNER
+                upr = mBoard[row-1][col+1];
+            }
+        }
+        if(row < mBoard.size() - 1){            // SET DOWN
+            down = mBoard[row+1][col];
+            if(col > 0){                        // SET DOWN LEFT CORNER
+                downl = mBoard[row+1][col-1];
+            }
+            if(col < mBoard[row+1].size() - 1) {
+                downr = mBoard[row+1][col+1];
+            }
+        }
+        if(col > 0){                            // SET LEFT
+            left = mBoard[row][col-1];
+        }
+        if(col < mBoard[row].size() - 1){       // SET RIGHT
+            right = mBoard[row][col+1];
+        }
+
+        //cout << "checking:" << endl;
+        //cout << upl << up << upr << endl;
+        //cout << left << BOX << right << endl;
+        //cout << downl << down << downr << endl;
+
+        if(up == WALL || up == BOX) {
+            if(upl == WALL || upl == BOX) {
+                if(left == WALL || left == BOX) {
+                    //cout << "found deadlock!" << endl;
+                    return false;
+                }
+            }
+            if(upr == WALL || upr == BOX) {
+                if(right == WALL || right == BOX) {
+                    //cout << "found deadlock!" << endl;
+                    return false;
+                }
+            }
+        }
+        if(down == WALL || down == BOX){
+            if(downl == WALL || downl == BOX) {
+                if(left == WALL || left == BOX) {
+                    //cout << "found deadlock!" << endl;
+                    return false;
+                }
+            }
+            if(downr == WALL || downr == BOX) {
+                if(right == WALL || right == BOX) {
+                    //cout << "found deadlock!" << endl;
+                    return false;
+                }
+            }
+        }
+        // END DYNAMIC DEADLOCK
+
+        /*
         std::set<pair<int,int> >::iterator it = mDeadPositions.find(make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2));
         if(it == mDeadPositions.end())
             return false;*/
