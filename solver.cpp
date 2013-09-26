@@ -30,6 +30,20 @@ string solver::solve(const board &b) {
     return aStar(b);
 }
 
+board solver::getLockedDownBoxesBoard(const board *boardToConvert){
+    vector<vector<char> > boardChars = boardToConvert->getBoardCharVector();
+    for(int row = 0; row < boardChars.size(); row++){
+        vector<char> boardRow = boardChars[row];
+        for(int col = 0; col < boardRow.size(); col++){
+            if(boardRow[col] == '*' || boardRow[col] == '$')
+                boardRow[col] = '#';        
+        }
+    }
+    return board(boardChars, boardToConvert->isPush(), 
+                 boardToConvert->getWhatGotMeHere(), 
+                 boardToConvert->getDeadPositions(), boardToConvert->getPath()); 
+}
+
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
  */
