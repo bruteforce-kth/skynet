@@ -115,6 +115,10 @@ pair<int,int> board::getRelativePosition(char direction, pair<int,int> position)
 
 bool board::stillHuggingWall(char wallDirection, pair<int,int> position){
     pair<int,int> wallPosition = getRelativePosition(wallDirection, position);
+    if(wallPosition.first >= mBoard.size() || position.second >= mBoard[position.first].size())
+        return false;
+    if(wallPosition.first < 0 || wallPosition.second < 0)
+        return false;
     if(mBoard[wallPosition.first][wallPosition.second] == WALL)
         return true;
     return false;
@@ -122,12 +126,12 @@ bool board::stillHuggingWall(char wallDirection, pair<int,int> position){
 
 bool board::investigateWall(char direction, char wallDirection, pair<int,int> position){
     
-    
+    position = getRelativePosition(direction, position);
     if(position.first >= mBoard.size() || position.second >= mBoard[position.first].size())
         return false; //Outside of map
     if(position.first < 1 || position.second < 1)
         return false; 
-    position = getRelativePosition(direction, position);
+    
     if(mBoard[position.first][position.second] == GOAL || mBoard[position.first][position.second] == BOX_ON_GOAL)
         return false;
     if(!stillHuggingWall(wallDirection, position))
@@ -137,7 +141,7 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
     
     if(investigateWall(direction, wallDirection, position)){
         mDeadPositions.insert(position);
-        //cout << "Inserted: " << position.first << ", " << position.second << endl;
+        cout << "Inserted: " << position.first << ", " << position.second << endl;
     }
 }
 
