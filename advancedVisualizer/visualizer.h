@@ -24,5 +24,6 @@ int rowLength;
 int colLength;
 char lastVisited;
 int nrOfGoals;
+int speed;
 
 //int absolutePosition(int row, int col){ return (row*rowLength)+col; }

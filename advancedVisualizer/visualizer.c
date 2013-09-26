@@ -217,10 +217,10 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
                 line++; // Overflow fix;
                 time = 0;    
             }
-            if(interactive)
+            if(speed == 0)
                 getch();
             else
-                sleep(1);  
+                usleep(speed);  
         }
     }
     fclose(file);
@@ -229,11 +229,13 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
 
 int main(int argc, char **argv){
 
+    speed = 0;
     playerPos = (struct coordinate*)malloc(sizeof(struct coordinate));
     goalPositions = (struct goalPos*)malloc(sizeof(struct goalPos));
     lastVisited = ' ';
     char *mazeFileName = NULL;
     char *solutionFileName = NULL;
+    bool fast = false;
     bool interactive = false;
     maze = (char**)malloc(64);
     int c;
@@ -241,10 +243,10 @@ int main(int argc, char **argv){
     colLength = 0;
     nrOfGoals = 0;
     
-    while ((c = getopt(argc, argv, "im:s:")) != -1){
+    while ((c = getopt(argc, argv, "fm:s:")) != -1){
         switch(c){
-            case 'i':
-                interactive = true;
+            case 'f':
+                fast = true;
                 break;
             case 'm':
                 mazeFileName = optarg;
@@ -255,7 +257,14 @@ int main(int argc, char **argv){
             default:
                 abort();   
         }
+    } 
+    if(fast){
+        speed = 100000;
+        
     }
+    
+    else
+        speed = 0;
 
     initalizeScreen();
     printStart();

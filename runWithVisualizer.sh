@@ -4,4 +4,4 @@ cat $1 | ./main > Path.txt
 
 cd advancedVisualizer
 
-./visualizer.out -m ../$1 -s ../Path.txt -i
+./visualizer.out -m ../$1 -s ../Path.txt $2
