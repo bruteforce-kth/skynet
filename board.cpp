@@ -123,9 +123,9 @@ bool board::stillHuggingWall(char wallDirection, pair<int,int> position){
 bool board::investigateWall(char direction, char wallDirection, pair<int,int> position){
     
     
-    if(position.first >= mBoard.size() - 1 || position.second >= mBoard[position.first].size() - 1)
+    if(position.first >= mBoard.size() || position.second >= mBoard[position.first].size())
         return false; //Outside of map
-    if(position.first <= 1 || position.second <= 1)
+    if(position.first < 1 || position.second < 1)
         return false; 
     position = getRelativePosition(direction, position);
     if(mBoard[position.first][position.second] == GOAL || mBoard[position.first][position.second] == BOX_ON_GOAL)
@@ -135,8 +135,10 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
     if(mBoard[position.first][position.second] == WALL)
         return true;
     
-    if(investigateWall(direction, wallDirection, position))
+    if(investigateWall(direction, wallDirection, position)){
         mDeadPositions.insert(position);
+        //cout << "Inserted: " << position.first << ", " << position.second << endl;
+    }
 }
 
 void board::findWallDeadlocks(){
