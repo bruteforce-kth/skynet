@@ -142,7 +142,7 @@ void actuallyPrint(WINDOW *win, struct coordinate* box){
     maze[playerPos->row][playerPos->col] = lastVisited;
 }
 
-void printStep(WINDOW *win, char direction, int time){
+void printStep(WINDOW *win, char direction, int time, int line){
     wmove(win, playerPos->row, playerPos->col);
     wprintw(win, "%c", lastVisited);
     struct coordinate* box = (struct coordinate*)malloc(sizeof(struct coordinate));
@@ -176,9 +176,10 @@ void printStep(WINDOW *win, char direction, int time){
             abort();
     }
     free(box);
-    wmove(win, rowLength+2, time*2);
+    wmove(win, rowLength+2+line, time);
     // Long solutions need linebreaks. Overflows into board
-    // wprintw(win, "%c%c", direction, ' ');
+    wprintw(win, "%c%c", direction, ' ');
+    
 
     wrefresh(win);
     refresh();
@@ -190,6 +191,7 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
 
     char currentChar;
     int time = 0;
+    int line = 0;
     FILE *file = fopen(fileName, "r");
     if(!file){
         perror("Unable to open file");
@@ -200,7 +202,7 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
         currentChar = fgetc(file);
         if(currentChar == EOF || currentChar == '\n'){
             attron(COLOR_PAIR(2));
-            mvwprintw(win, rowLength+3, 0, "%s", "END OF PATH\n");
+            mvwprintw(win, rowLength+3+line, 0, "%s", "END OF PATH\n");
             attroff(COLOR_PAIR(2));
             wrefresh(win);
             refresh();
@@ -208,7 +210,11 @@ void printPath(WINDOW *win, char *fileName, bool interactive){
             break;
         }
         if(currentChar != ' '){
-            printStep(win, currentChar, time++);
+            printStep(win, currentChar, time++, line);
+            if(time > LINES){
+                line++; // Overflow fix;
+                time = 0;    
+            }
             if(interactive)
                 getch();
             else
