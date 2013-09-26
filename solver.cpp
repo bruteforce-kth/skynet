@@ -11,7 +11,7 @@ using std::vector;
 using std::priority_queue;
 using std::pair;
 using std::make_pair;
-
+using std::stringstream;
 
 /*
  * c-tor
@@ -39,6 +39,17 @@ struct fcomparison {
     }
 };
 
+std::string solver::hashState(const std::vector<std::pair<int,int> > boxPositions) const{
+    std::stringstream stream;
+    for(int i = 0; i < boxPositions.size(); i++){
+        stream << boxPositions[i].first;
+        stream << boxPositions[i].second;
+    }
+    return stream.str();
+}
+
+
+
 /*
  * IDA*
  */
@@ -46,6 +57,15 @@ struct fcomparison {
 // this one has for f() http://www.informatik.uni-osnabrueck.de/papers_html/ai_94/node2.html 
 // also, make some local vectors member variables to avoid reinitialization
  
+bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions){
+    bool res = false;
+    for(int i = 0; i < playerPositions.size(); i++){
+        res = aStarPlayer(b, playerPositions[i]);
+        if(res)
+            return true;
+    }
+    return false;
+}
 
 /*
  * Finds pushable boxes using A*
@@ -63,15 +83,11 @@ string solver::aStar(const board &b) {
 
     float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
     openQueue.push(make_pair(b, starting_heuristic));
-    std::unordered_map<std::string,int>::const_iterator visited_it;
+    std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
-        visited_it = visited.find(currentBoard.getBoardString());
-        if ( visited_it != visited.end() ) {
-            cout << "continuing" << endl;
-            continue;
-        }
-        visited.insert(make_pair(currentBoard.getBoardString(), 0));
+        
+        
         openQueue.pop();
         if (currentBoard.getPath().size() > 480) {
             continue;
@@ -91,6 +107,21 @@ string solver::aStar(const board &b) {
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
+            if ( visited_it != visited.end() ) {
+                cout << "continuing" << endl;
+                if(isReachable(tempBoard, visited_it->second)) //If we can reach a state with the same box positions without pushing
+                    continue;
+                else{ // This is a new unique state
+                    vector<pair<int,int> > currentPlayerPositions;
+                    currentPlayerPositions.push_back(tempBoard.getPlayerPosition());
+                }
+            }
+            else{ //If the boxes havent been in this position previously
+                vector<pair<int,int> > tempPlayerPos;
+                tempPlayerPos.push_back(tempBoard.getPlayerPosition());
+                visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
+            }
             if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
                 continue;
             // std::cout << "valid move:" << std::endl;
@@ -144,13 +175,11 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
 
     float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
     openQueue.push(make_pair(b, starting_heuristic));
-    std::unordered_map<std::string,int>::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
         if (currentBoard.getBoxPositions() != boxPositions)
             continue;
-        visited.insert(make_pair(currentBoard.getBoardString(), 0));
         openQueue.pop();
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;

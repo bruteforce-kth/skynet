@@ -20,7 +20,7 @@ class solver {
         std::vector< std::vector<float> > f_score;    // Heuristic cost used in A*
         std::vector< std::vector<int> > g_score;    // Number of steps taken, used in A*
         std::unordered_map<std::string, int> g_score_map;
-        std::unordered_map<std::string, int> visited;
+        std::unordered_map<std::string, std::vector<std::pair<int,int> > > visited;
         std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
         std::string aStar(const board &b);
         bool aStarPlayer(const board &b, std::pair<int,int> goal);
@@ -29,5 +29,7 @@ class solver {
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
         bool isRepeatedMove(char a, char b);
         void printCoordinates(int x, int y);
+        std::string hashState(const std::vector<std::pair<int,int> > boxPositions) const;
+        bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
         //std::vector< std::pair<int,int> > getPushDirections(board &b);
 };
