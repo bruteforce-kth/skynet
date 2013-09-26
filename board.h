@@ -44,6 +44,8 @@ class board {
         { return mBoardString; }
         std::string getPath() const 
         { return mPath; }
+        std::vector<std::vector<char> > getBoardCharVector() const
+        {return mBoard; }
         bool isAccessible(int row, int col, int prevRow, int prevCol) const;
         bool isWalkable(int row, int col) const;
         bool isGoal(int row, int col) const;
