@@ -4,8 +4,8 @@
 
 `-m` specify map file
 `-s` specify path file (solution string)
-`-i` if you want to control speed
+`-f` if you want to fast forward (leave out for interactive)
 
 Example
 
-`./visualizer.out -m mazeTest.txt -s pathTest.txt -i`
+`./visualizer.out -m mazeTest.txt -s pathTest.txt -f`
