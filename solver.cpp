@@ -24,6 +24,7 @@ solver::solver() {}
  */
 string solver::solve(const board &b) {
     g_score_map.reserve(600000);
+    visited.reserve(600000);
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     return aStar(b);
@@ -37,7 +38,6 @@ struct fcomparison {
         return  a.second > b.second ? true : false;
     }
 };
-
 
 /*
  * IDA*
@@ -63,9 +63,19 @@ string solver::aStar(const board &b) {
 
     float starting_heuristic = 1 + heuristicDistance(b.getBoxPositions());
     openQueue.push(make_pair(b, starting_heuristic));
+    std::unordered_map<std::string,int>::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
+        visited_it = visited.find(currentBoard.getBoardString());
+        if ( visited_it != visited.end() ) {
+            cout << "continuing" << endl;
+            continue;
+        }
+        visited.insert(make_pair(currentBoard.getBoardString(), 0));
         openQueue.pop();
+        if (currentBoard.getPath().size() > 480) {
+            continue;
+        }
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
 
@@ -119,6 +129,83 @@ string solver::aStar(const board &b) {
     return "no path";
 }
 
+
+/*
+ * Finds pushable boxes using A*
+ */
+bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
+    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
+    std::unordered_map<std::string, int> g_score;
+    pair<int,int> playerPos = b.getPlayerPosition();
+    int px = playerPos.first;
+    int py = playerPos.second;
+    g_score.insert(make_pair(b.getBoardString(), 1));
+    std::vector<std::pair<int,int> > boxPositions = b.getBoxPositions();
+
+    float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
+    openQueue.push(make_pair(b, starting_heuristic));
+    std::unordered_map<std::string,int>::const_iterator visited_it;
+    while(!openQueue.empty()) {
+        board currentBoard = openQueue.top().first;
+
+        if (currentBoard.getBoxPositions() != boxPositions)
+            continue;
+        visited.insert(make_pair(currentBoard.getBoardString(), 0));
+        openQueue.pop();
+        int x = currentBoard.getPlayerPosition().first;
+        int y = currentBoard.getPlayerPosition().second;
+
+        // currentBoard.printBoard();
+
+        // Iterate through all valid moves (neighbours)
+        // A move is a pair consisting of a pair of coordinates and the 
+        // direction taken to reach it from the current node.
+        vector<board> moves;
+        currentBoard.getAllValidMoves(moves, currentBoard.getPath());
+        std::unordered_map<std::string,int>::const_iterator map_it;
+        // cout << "Number of possible moves: " << moves.size() << endl;
+        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
+        for (int k = 0; k < moves.size(); ++k) {
+            board tempBoard = moves[k];
+            if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
+                continue;
+            // std::cout << "valid move:" << std::endl;
+            // tempBoard.printBoard();
+            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            int tempX = tempPlayerPos.first;
+            int tempY = tempPlayerPos.second;
+            int temp_g = g_score.at(currentBoard.getBoardString());
+            int current_g;
+            map_it = g_score.find(tempBoard.getBoardString());
+            if ( map_it != g_score.end() )
+                current_g = map_it->second;
+            else
+                current_g = 0;
+
+            // cout << "Proposed move is: ";
+            // printCoordinates(tempX, tempY);
+            // cout << endl;
+            
+            // Skip move if the position is in the open or closed set with a lower g_score
+            // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
+            if (current_g > 0 && current_g <= temp_g ) {
+                // std::cout << "bad g_score " << temp_g << ", continuing" << std::endl;
+                continue;
+            }
+            // Calculate path-cost, set parent (previous) position and add to possible moves
+            else {
+                if (tempPlayerPos == goal) {
+                    return true;
+                }
+                g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
+                openQueue.push(make_pair(tempBoard, temp_g + heuristicPlayerDistance(tempPlayerPos, goal)));
+            }
+        }
+    }
+    return false;
+}
+
+
 /*
  * Heuristic for A* search. 
  * The heuristic value is the sum of 
@@ -141,6 +228,15 @@ int solver::heuristicDistance(const vector< pair<int,int> > &boxPositions) {
     }
     return totalDistances;
 }
+
+
+/*
+ * Heuristic for A* player search. 
+ */
+int solver::heuristicPlayerDistance(pair<int,int> from, pair<int,int> to) {
+    return distance(from.first,from.second, to.first, to.second);
+}
+
 
 
 /*
@@ -180,6 +276,7 @@ bool solver::isRepeatedMove(char a, char b) {
  void solver::printCoordinates(int x, int y) {
     cout << "(" << x << ", " << y << ")";
  }
+
 
 
 
