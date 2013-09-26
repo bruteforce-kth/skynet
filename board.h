@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <set>
 
 class board {
 
@@ -26,7 +27,7 @@ class board {
         board (const std::vector<std::vector<char> > &chars);
         board(const std::vector<std::vector<char> > &chars, 
             bool wasPush, char whatGotMeHere,
-             std::vector<std::pair<int,int> > deadPositions, std::string path);
+             std::set<std::pair<int,int> > deadPositions, std::string path);
         board (const board &source, bool wasPush, 
              char whatGotMeHere, std::pair<int,int> playerPos,
              std::vector<std::pair<int,int> > boxPositions);
@@ -36,7 +37,7 @@ class board {
         { return mBoxPositions; }
         const std::pair<int,int> getPlayerPosition() const
         { return mPlayerPos; }
-        const std::vector<std::pair<int,int> > getDeadPositions() const
+        const std::set<std::pair<int,int> > getDeadPositions() const
         { return mDeadPositions; }
         const int getBoardSize() const
         { return mBoardSize; }
@@ -58,6 +59,10 @@ class board {
         { return mWhatGotMeHere; }
         void printBoard();
     private:
+        void findWallDeadlocks();
+        std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
+        bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);
+        bool stillHuggingWall(char wallDirection, std::pair<int,int> position);
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         void findDeadlocks(const std::vector<std::vector<char> > &chars);
@@ -66,7 +71,8 @@ class board {
         int mBoardSize;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
-        std::vector<std::pair<int,int> > mDeadPositions;
+        //std::vector<std::pair<int,int> > mDeadPositions;
+        std::set<std::pair<int,int> > mDeadPositions;
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
