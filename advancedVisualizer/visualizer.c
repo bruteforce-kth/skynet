@@ -123,7 +123,7 @@ void actuallyPrint(WINDOW *win, struct coordinate* box){
             attron(COLOR_PAIR(3));
             wprintw(win, "%c", '*');
             attroff(COLOR_PAIR(3)); 
-            maze[box->row][box->col] = '.';
+            maze[box->row][box->col] = '*';
         }
         else if(maze[box->row][box->col] == ' '){
             attron(COLOR_PAIR(2));
