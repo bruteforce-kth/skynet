@@ -107,16 +107,20 @@ string solver::aStar(const board &b) {
         // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             if(tempBoard.isPush()){
                 visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
                 if ( visited_it != visited.end() ) {
-                    cout << "continuing" << endl;
+                    tempBoard.printBoard();
                     cout << hashState(tempBoard.getBoxPositions());
-                    if(isReachable(tempBoard, visited_it->second)) //If we can reach a state with the same box positions without pushing
+                    if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
+                        cout << "continuing" << endl;
                         continue;
-                    else{ // This is a new unique state
-                        vector<pair<int,int> > currentPlayerPositions;
-                        currentPlayerPositions.push_back(tempBoard.getPlayerPosition());
+                    }
+                    else { // This is a new unique state
+                        vector<pair<int,int> > currentPlayerPositions = visited_it->second;
+                        currentPlayerPositions.push_back(tempPlayerPos);
+                        visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), currentPlayerPositions));
                     }
                 }
                 else{ //If the boxes havent been in this position previously
@@ -129,7 +133,6 @@ string solver::aStar(const board &b) {
                 continue;
             // std::cout << "valid move:" << std::endl;
             // tempBoard.printBoard();
-            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
             int temp_g = g_score_map.at(currentBoard.getBoardString());
@@ -181,8 +184,6 @@ bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
-        if (currentBoard.getBoxPositions() != boxPositions)
-            continue;
         openQueue.pop();
         int x = currentBoard.getPlayerPosition().first;
         int y = currentBoard.getPlayerPosition().second;
