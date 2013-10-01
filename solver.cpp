@@ -1,7 +1,3 @@
-#include <iostream>
-#include <queue>
-#include <list>
-#include <sstream>
 #include "solver.h"
 
 using std::cout;
@@ -12,6 +8,7 @@ using std::priority_queue;
 using std::pair;
 using std::make_pair;
 using std::stringstream;
+using std::stack;
 
 /*
  * c-tor
@@ -30,35 +27,65 @@ using std::stringstream;
     mGoalPositions = b.getGoalPositions();
 
     //Iterative deepening
-    int depth = 0;
+    int depth = 2;
     string solution;
     do {
-        solution = search(b);
-    }while(true);
+        cout << "Depth: " << depth << endl;
+        solution = search(b, depth);
+        cout << "Solution: " << solution << endl;
+        if(solution != "no path") {
+            return solution;
+        }
+        depth++;
+    }while(depth < 100);
 
-    return solution;
+    return "no path";
 }
 
 /*
  * Search the state space using dfs
- *
  */
-string solver::search(const board &b) {
+string solver::search(const board &b, int depth) {
+
+    board bo = b;
+    bo.printBoard();
+
+    if (b.isFinished()) {
+        cout << "finished" << endl;
+        return b.getPath();
+    }else if(depth==0) {
+        cout << "no path" << endl;
+        return "no path";
+    }
+
+    vector<board> moves;
+    b.getAllValidMoves(moves);
+    string path;
+
+    for (int i = 0; i < moves.size(); ++i) {
+        path = search(moves[i], depth-1);
+        if(path != "no path"){
+            return path;
+        }
+    }
+    return "no path";
 }
 
 
-// board solver::getLockedDownBoxesBoard(const board &boardToConvert){
-//     vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
-//     for(int row = 0; row < boardChars.size(); row++){
-//         for(int col = 0; col < boardChars[row].size(); col++){
-//             if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
-//                 boardChars[row][col] = '#';
-//         }
-//     }
-//     return board(boardChars, boardToConvert.isPush(), 
-//      boardToConvert.getWhatGotMeHere(), 
-//      boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
-// }
+/*
+board solver::getLockedDownBoxesBoard(const board &boardToConvert){
+    vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
+    for(int row = 0; row < boardChars.size(); row++){
+        for(int col = 0; col < boardChars[row].size(); col++){
+            if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
+                boardChars[row][col] = '#';
+        }
+    }
+    return board(boardChars, boardToConvert.isPush(), 
+     boardToConvert.getWhatGotMeHere(), 
+     boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
+}
+*/
 
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
@@ -77,95 +104,6 @@ bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions)
             return true;
     }
     return false;
-}
-
-/*
- * Finds pushable boxes using A*
- */
- string solver::aStar(const board &b) {
-    // A priority queue of moves that are sorted based on their f_score
-    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
-    // Set starting position with null char to let backtrack know we're finished.
-    pair<int,int> playerPos = b.getPlayerPosition();
-    int px = playerPos.first;
-    int py = playerPos.second;
-    // previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
-    g_score_map.insert(make_pair(b.getBoardString(), 1));
-    // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
-
-    float starting_heuristic = 1 + heuristicDistance(b);
-    openQueue.push(make_pair(b, starting_heuristic));
-    std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
-    while(!openQueue.empty()) {
-        board currentBoard = openQueue.top().first;
-        openQueue.pop();
-
-        int x = currentBoard.getPlayerPosition().first;
-        int y = currentBoard.getPlayerPosition().second;
-
-        // currentBoard.printBoard();
-
-        // Iterate through all valid moves (neighbours)
-        // A move is a pair consisting of a pair of coordinates and the 
-        // direction taken to reach it from the current node.
-        vector<board> moves;
-        currentBoard.getAllValidMoves(moves);
-        std::unordered_map<std::string,int>::const_iterator map_it;
-        // cout << "Number of possible moves: " << moves.size() << endl;
-        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
-        for (int k = 0; k < moves.size(); ++k) {
-            board tempBoard = moves[k];
-            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
-
-            if (tempBoard.isFinished()) {
-                return tempBoard.getPath();
-            }
-            // std::cout << "valid move:" << std::endl;
-            // tempBoard.printBoard();
-            int tempX = tempPlayerPos.first;
-            int tempY = tempPlayerPos.second;
-            int temp_g = g_score_map.at(currentBoard.getBoardString()) + 1;
-            int current_g;
-            map_it = g_score_map.find(tempBoard.getBoardString());
-            if ( map_it != g_score_map.end() ) {
-                current_g = map_it->second;
-            }
-            else {
-                current_g = 0;
-            }
-
-            // Skip move if the position is in the open or closed set with a lower g_score
-            // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
-            if (current_g > 0 && current_g <= temp_g ) {
-                continue;
-            }
-            if (!tempBoard.isPush() && !currentBoard.isPush()) {
-                if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-                    continue;    
-            }
-            // if(tempBoard.isPush() ) {
-            //     visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
-            //     if ( visited_it != visited.end() ) {
-            //         if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
-            //             continue;
-            //         }
-            //         else { // This is a new unique state
-            //             vector<pair<int,int> > currentPlayerPositions = visited_it->second;
-            //             currentPlayerPositions.push_back(tempPlayerPos);
-            //             visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), currentPlayerPositions));
-            //         }
-            //     }
-            //     else{ //If the boxes havent been in this position previously
-            //         vector<pair<int,int> > tempPlayerPos;
-            //         tempPlayerPos.push_back(tempBoard.getPlayerPosition());
-            //         visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
-            //     }
-            // }
-            g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-            openQueue.push(make_pair(tempBoard, heuristicDistance(tempBoard)));  
-        }
-    }
-    return "no path";
 }
 
 
