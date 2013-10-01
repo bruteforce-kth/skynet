@@ -47,8 +47,7 @@ using std::stack;
  */
 string solver::search(const board &b, int depth) {
 
-    board bo = b;
-    bo.printBoard();
+    b.printBoard();
 
     if (b.isFinished()) {
         cout << "finished" << endl;

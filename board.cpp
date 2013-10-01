@@ -294,7 +294,7 @@ void board::getPossibleStateChanges(vector<board> &moves){
 
 }
 
-void board::printBoard() {
+void board::printBoard() const{
     // std::cout << "printBoard" << std::endl;
     for (int i = 0; i < mBoard.size(); i++) {
         for (int j = 0; j < mBoard[i].size(); j++) {

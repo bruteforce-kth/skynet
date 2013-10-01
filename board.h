@@ -61,7 +61,7 @@ class board {
         { return mWasPush; }
         char getWhatGotMeHere() const
         { return mWhatGotMeHere; }
-        void printBoard();
+        void printBoard() const;
         void getPossibleStateChanges(std::vector<board> &board);
         possibleBoxPush boxAStar(std::pair<int,int> goalBox);
         int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
