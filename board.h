@@ -32,6 +32,7 @@ class board {
             std::pair<int, int> boxPosition;
             std::string path;
             std::vector<std::pair<int, int> > positionsAroundBox;
+
         };
         board (const std::vector<std::vector<char> > &chars);
         board (const std::vector<std::vector<char> > &chars, 
@@ -65,8 +66,11 @@ class board {
         { return mWasPush; }
         char getWhatGotMeHere() const
         { return mWhatGotMeHere; }
-        void printBoard();
+        void printBoard() const;
         void getPossibleStateChanges(std::vector<board> &board);
+        possibleBoxPush boxAStar(std::pair<int,int> goalBox);
+        int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
+        int distance(std::pair<int,int> i, std::pair<int,int> j);
     private:
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
