@@ -53,6 +53,8 @@ class board {
         { return mBoardString; }
         std::string getPath() const 
         { return mPath; }
+        void appendToPath(std::string newPath)
+        { mPath = mPath + newPath; }
         std::vector<std::vector<char> > getBoardCharVector() const
         {return mBoard; }
         bool isAccessible(int row, int col, int prevRow, int prevCol) const;
@@ -83,11 +85,12 @@ class board {
         bool mWasPush;
         char mWhatGotMeHere;
         board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
-        void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush);
+        void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
         void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox);
         void investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                                       std::vector<std::pair<int, int> > &possibles);
+        bool vectorContainsPair(std::vector<std::pair<int,int> > &vector, std::pair<int, int> &pair);
 };
 
 #endif

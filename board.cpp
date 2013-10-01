@@ -294,6 +294,13 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
     }
 }
 
+/*
+ * This method investigates whether the collected adjacent positions
+ * of the box defined by possibleBoxPush.boxPosition that are
+ * contained in possibles are positions from which
+ * the box actually can be pushed. If they are, they
+ * are added into possibleBoxPush.positionsAroundBox (if not already in there)
+ */
 void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
                                      vector<pair<int,int> > &possibles){
 
@@ -302,19 +309,39 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
         if(isAccessible(possibleBoxPush.boxPosition.first,
                                 possibleBoxPush.boxPosition.second,
                                 possibles[i].first,
-                                possibles[i].second))
+                                possibles[i].second)){
+            if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i]))
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
+        }
 
     }
 
 }
 
+/*
+ * Do a local search on the box specified by possibleBoxPush.boxPosition.
+ * The argument directionToBox specifies the location of the box
+ * relative to the player specified by possibleBoxPush.playerPosition.
+ */
 void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox){
 
+    // Is the box on the same col or the same row?
     char axis;
+    // Investigatorpos will hold the coordinates of the currently investigated
+    // adjacent position to box
     pair<int, int> investigatorPos = possibleBoxPush.playerPosition;
+    // This vector will hold positions that are reachable by local
+    // search but are yet to be determined if the box can be pushed from that
+    // position.
     vector<pair<int, int> > possiblePositions;
-    bool isOppositeReachable = false;
+
+    /*
+     * REST OF THIS METHOD IS JUST STEPPING THROUGH
+     * TILES AROUND THE BOX AND ADDING THE RELEVANT POSITIONS
+     * INTO "possiblePositions". Ends with calling "investigateThesePositions".
+     * LEFT TODO IS INVESTIGATING THE OPPOSITE SIDE OF THE BOX, IF POSSIBLE
+     */
+    
     if(directionToBox == 'N' || directionToBox == 'S')
         axis = 'x';
     else
@@ -356,10 +383,12 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
         //Step up
         investigatorPos.first--;
         if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            //Step left
             if(directionToBox == 'W'){
                 investigatorPos.second--;
                 possiblePositions.push_back(investigatorPos);
             }
+            //Step right
             else {
                 investigatorPos.second++;
                 possiblePositions.push_back(investigatorPos);            
@@ -369,10 +398,12 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
         investigatorPos = possibleBoxPush.playerPosition;
         investigatorPos.first++;
         if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            //Step left
             if(directionToBox == 'W'){
                 investigatorPos.second--;
                 possiblePositions.push_back(investigatorPos);
             }
+            //Step right
             else {
                 investigatorPos.second++;
                 possiblePositions.push_back(investigatorPos);            
@@ -387,6 +418,7 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
 
 }
 
+// Determine the position of box relative to player
 char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box){
 
     int rowDelta;
@@ -409,46 +441,80 @@ char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> bo
 
 }
 
-void board::investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush){
-
-    //IF PLAYER IS NORTH OR SOUT OF BOX, AXIS IS Y
-
-    //IF PLAYER IS EAST OR WEST, AXIS IS X
-
-    //circleBox(possibleBoxPush, 
-     //         getDirectionToPos(possibleBoxPush.playerPosition,
-     //                           possibleBoxPush.boxPosition));
+/*
+ * This function investigates if and possibly in how many directions the box
+ * who's coordinates is included in currentBox can be pushed. 
+ * Will insert related state changes that occur when the box is 
+ * pushed in the found possible directions.
+ */
+void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vector<board> &moves){
+    
+    // Temp variable
+    pair<int, int> possiblePosition;
+    // Will hold all the directly adjacent positions to the box (N S E W)
+    vector<pair<int,int> > possiblePositions;
+    possiblePosition = currentBox.boxPosition;
+    possiblePosition.first--;
+    if(isWalkable(possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.first += 2;
+    if(isWalkable(possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.first--;
+    possiblePosition.second--;
+    if(isWalkable(possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.second += 2;
+    if(isWalkable(possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
 
     
-    char directionToBox = getDirectionToPos(possibleBoxPush.playerPosition,
-                                            possibleBoxPush.boxPosition);
-    circleBox(possibleBoxPush, directionToBox);
+    
+    // Will hold the direction of the box relative to the player.
+    // If the box is to the left ot the player directionToBox will be 'W' (west)
+    char directionToBox;
+    // Loop through all of the directly adjacent positions to the box
+    for(int i = 0; i < possiblePositions.size(); i++){
+        // If we've already determined that this position is reachable, 
+        // we don't need to do it again
+        if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
+            // Is the possiblePositions[i] reachable from our position?
+            currentBox = boxAStar(possiblePositions[i]);
+            if(currentBox.boxPosition.first != -1){
+                // Set the player position to be the just searched for position
+                currentBox.playerPosition = possiblePositions[i];
+                // Determine the relative position of the box
+                directionToBox = getDirectionToPos(currentBox.playerPosition,
+                                                currentBox.boxPosition);
+                // Can we find adjacent positions through a local search?
+                circleBox(currentBox, directionToBox);
+            }
+        }
+    }
+    // Perform state changes on accepted positions and place them in moves
+    for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
+        moves.push_back(*doMove(currentBox.positionsAroundBox[i], ' '));    
+    }
+
 
 }
 
-
+/*
+ * This will insert all the possible state changes
+ * that will occur due to box movement into moves.
+ */ 
 void board::getPossibleStateChanges(vector<board> &moves){
-    
-    //FOR EACH BOX
-    //INVESTIGATE IF IT CAN BE PUSHED IN ALL FOUR DIRECTIONS
-    //PUT ALL POSSIBLE MOVES INTO THE ARGUMENT "MOVES"
-
+    // This struct will hold information
+    // used on a per-box-basis.
+    // A new one is set each time a new box
+    // on the board is investigated.
     struct possibleBoxPush currentBox;
-    pair<int,int> positionNextToABox;
+    // Loop through all boxes on the board
     for(int i = 0; i < mBoxPositions.size(); i++){
-        //Can we reach this box?
-        positionNextToABox = mBoxPositions[i];
-        positionNextToABox.first--;
-        currentBox = boxAStar(mBoxPositions[i]);
+        // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
-        if(currentBox.boxPosition.first != -1){
-            investigatePushBoxDirections(currentBox);
-        }
-        for(int j = 0; j < currentBox.positionsAroundBox.size(); j++){
-            moves.push_back(*doMove(currentBox.positionsAroundBox[i], 
-                            getDirectionToPos(currentBox.positionsAroundBox[i], 
-                            currentBox.playerPosition)));
-        }
+        // Let's look at how many directions it can go
+        investigatePushBoxDirections(currentBox, moves);
     }
 }
 
@@ -565,4 +631,13 @@ void board::printBoard() const{
 */
 }
 
+bool board::vectorContainsPair(vector<pair<int, int> > &vector, pair<int, int> &pair){
+
+    for(int i = 0; i < vector.size(); i++){
+        if(pair == vector[i])
+            return true;    
+    }
+
+    return false;
+}
 
