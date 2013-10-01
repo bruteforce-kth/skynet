@@ -58,9 +58,6 @@ class board {
         { return mWhatGotMeHere; }
         void printBoard();
     private:
-        std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
-        bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);
-        bool stillHuggingWall(char wallDirection, std::pair<int,int> position);
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         std::vector<std::vector<char> > mBoard;
