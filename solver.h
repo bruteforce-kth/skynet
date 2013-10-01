@@ -30,7 +30,7 @@ class solver {
         std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
 
         //FUNCTIONS
-        void search(const board &b);
+        std::string search(const board &b);
         std::string aStar(const board &b);
 
         int distance(int i1, int j1, int i2, int j2);

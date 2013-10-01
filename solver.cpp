@@ -31,18 +31,19 @@ using std::stringstream;
 
     //Iterative deepening
     int depth = 0;
+    string solution;
     do {
-        search(b);
+        solution = search(b);
     }while(true);
 
-    return b;
+    return solution;
 }
 
 /*
  * Search the state space using dfs
  *
  */
-void solver::search(const board &b) {
+string solver::search(const board &b) {
 }
 
 
@@ -71,7 +72,7 @@ board solver::getLockedDownBoxesBoard(const board &boardToConvert){
 bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions){
     bool res = false;
     for(int i = 0; i < playerPositions.size(); i++){
-        res = aStarPlayer(b, playerPositions[i]);
+        //res = aStarPlayer(b, playerPositions[i]);
         if(res)
             return true;
     }
