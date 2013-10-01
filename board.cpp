@@ -434,16 +434,20 @@ void board::getPossibleStateChanges(vector<board> &moves){
     //PUT ALL POSSIBLE MOVES INTO THE ARGUMENT "MOVES"
 
     struct possibleBoxPush currentBox;
+    pair<int,int> positionNextToABox;
     for(int i = 0; i < mBoxPositions.size(); i++){
         //Can we reach this box?
+        positionNextToABox = mBoxPositions[i];
+        positionNextToABox.first--;
         currentBox = boxAStar(mBoxPositions[i]);
+        currentBox.boxPosition = mBoxPositions[i];
         if(currentBox.boxPosition.first != -1){
             investigatePushBoxDirections(currentBox);
         }
         for(int j = 0; j < currentBox.positionsAroundBox.size(); j++){
-            moves.push_back(doMove(currentBox.positionsAroundBox[i], 
-                getDirectionToPos(currentBox.positionsAroundBox[i], 
-                    currentBox.playerPosition)));
+            moves.push_back(*doMove(currentBox.positionsAroundBox[i], 
+                            getDirectionToPos(currentBox.positionsAroundBox[i], 
+                            currentBox.playerPosition)));
         }
     }
 }
