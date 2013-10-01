@@ -30,12 +30,14 @@ using std::stack;
     int depth = 2;
     string solution;
     do {
+        cout << "Depth: " << depth << endl;
         solution = search(b, depth);
+        cout << "Solution: " << solution << endl;
         if(solution != "no path") {
             return solution;
         }
         depth++;
-    }while(true);
+    }while(depth < 100);
 
     return "no path";
 }
@@ -44,11 +46,15 @@ using std::stack;
  * Search the state space using dfs
  */
 string solver::search(const board &b, int depth) {
-    //stack<board> dfs_stack;
-    //dfs_stack.push(b);
+
+    board bo = b;
+    bo.printBoard();
+
     if (b.isFinished()) {
+        cout << "finished" << endl;
         return b.getPath();
     }else if(depth==0) {
+        cout << "no path" << endl;
         return "no path";
     }
 
@@ -66,6 +72,7 @@ string solver::search(const board &b, int depth) {
 }
 
 
+/*
 board solver::getLockedDownBoxesBoard(const board &boardToConvert){
     vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
     for(int row = 0; row < boardChars.size(); row++){
@@ -78,6 +85,7 @@ board solver::getLockedDownBoxesBoard(const board &boardToConvert){
      boardToConvert.getWhatGotMeHere(), 
      boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
 }
+*/
 
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
