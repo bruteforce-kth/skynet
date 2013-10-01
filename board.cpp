@@ -276,6 +276,10 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
     }
 }
 
+void board::getPossibleStateChanges(vector<board> &moves){
+    
+
+}
 
 void board::printBoard() {
     // std::cout << "printBoard" << std::endl;

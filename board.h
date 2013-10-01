@@ -21,6 +21,14 @@
 #include <algorithm>
 #include <set>
 
+struct possibleBoxPush {
+
+    std::pair<int, int> playerPosition;
+    std::pair<int, int> boxPosition;
+    std::string path;
+
+};
+
 class board {
 
     public:
@@ -57,6 +65,7 @@ class board {
         char getWhatGotMeHere() const
         { return mWhatGotMeHere; }
         void printBoard();
+        void getPossibleStateChanges(std::vector<board> &board);
     private:
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
