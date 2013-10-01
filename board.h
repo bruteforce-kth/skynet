@@ -21,17 +21,18 @@
 #include <algorithm>
 #include <set>
 
-struct possibleBoxPush {
 
-    std::pair<int, int> playerPosition;
-    std::pair<int, int> boxPosition;
-    std::string path;
-
-};
 
 class board {
 
     public:
+            struct possibleBoxPush {
+
+            std::pair<int, int> playerPosition;
+            std::pair<int, int> boxPosition;
+            std::string path;
+            std::vector<std::pair<int, int> > positionsAroundBox;
+        };
         board (const std::vector<std::vector<char> > &chars);
         board (const std::vector<std::vector<char> > &chars, 
                bool wasPush, char whatGotMeHere,
@@ -78,6 +79,11 @@ class board {
         bool mWasPush;
         char mWhatGotMeHere;
         board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
+        void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush);
+        char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
+        void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox);
+        void investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
+                                      std::vector<std::pair<int, int> > &possibles);
 };
 
 #endif

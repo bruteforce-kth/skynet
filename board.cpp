@@ -126,6 +126,9 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
  * Checks if a position on the board is accessible.
  */
 bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
+    // If we can't stand here    
+    if (isWalkable(prevRow, prevCol))
+        return false;
     // Check regular move
     if (isWalkable(row, col)){
         return true;
@@ -276,9 +279,158 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
     }
 }
 
+void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
+                                     vector<pair<int,int> > &possibles){
+
+    for(int i = 0; i < possibles.size(); i++){
+        //Can we push the box from this position?
+        if(isAccessible(possibleBoxPush.boxPosition.first,
+                                possibleBoxPush.boxPosition.second,
+                                possibles[i].first,
+                                possibles[i].second))
+                    possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
+
+    }
+
+}
+
+void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox){
+
+    char axis;
+    pair<int, int> investigatorPos = possibleBoxPush.playerPosition;
+    vector<pair<int, int> > possiblePositions;
+    bool isOppositeReachable = false;
+    if(directionToBox == 'N' || directionToBox == 'S')
+        axis = 'x';
+    else
+        axis = 'y';
+
+    if(axis == 'x'){
+        //Step to the right
+        investigatorPos.second++;
+        if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            //Step up
+            if(directionToBox == 'N'){
+                investigatorPos.first--;
+                //Maybe we can push from this direction as well!
+                possiblePositions.push_back(investigatorPos);
+            }
+            else {
+                investigatorPos.first++;
+                possiblePositions.push_back(investigatorPos);
+            }        
+        }
+        //Step to the left
+        investigatorPos = possibleBoxPush.playerPosition;
+        investigatorPos.second--;
+        if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            //Step up
+            if(directionToBox == 'N'){
+                investigatorPos.first--;
+                //Maybe we can push from this direction as well!
+                possiblePositions.push_back(investigatorPos);
+            }
+            else {
+                investigatorPos.first++;
+                possiblePositions.push_back(investigatorPos);
+            }        
+        }
+    }
+    //Axis is y
+    else {
+        //Step up
+        investigatorPos.first--;
+        if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            if(directionToBox == 'W'){
+                investigatorPos.second--;
+                possiblePositions.push_back(investigatorPos);
+            }
+            else {
+                investigatorPos.second++;
+                possiblePositions.push_back(investigatorPos);            
+            }
+        }
+        //Step down
+        investigatorPos = possibleBoxPush.playerPosition;
+        investigatorPos.first++;
+        if(isWalkable(investigatorPos.first, investigatorPos.second)){
+            if(directionToBox == 'W'){
+                investigatorPos.second--;
+                possiblePositions.push_back(investigatorPos);
+            }
+            else {
+                investigatorPos.second++;
+                possiblePositions.push_back(investigatorPos);            
+            }
+        }
+    }
+
+    if(possiblePositions.size() > 3)
+        cout << "Problem in circleBox!" << endl;
+
+    investigateThesePositions(possibleBoxPush, possiblePositions);
+
+}
+
+char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box){
+
+    int rowDelta;
+    int colDelta;
+
+    rowDelta = player.first - box.first;
+    colDelta = player.second - box.second;
+
+    if(rowDelta != 0 && colDelta != 0)
+        cout << "Player is not standing next to box!" << endl;
+
+    if(rowDelta > 0)
+        return 'N';
+    else if(rowDelta < 0)
+        return 'S';
+    else if(colDelta > 0)
+        return 'W';
+    else
+        return 'E';
+
+}
+
+void board::investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush){
+
+    //IF PLAYER IS NORTH OR SOUT OF BOX, AXIS IS Y
+
+    //IF PLAYER IS EAST OR WEST, AXIS IS X
+
+    //circleBox(possibleBoxPush, 
+     //         getDirectionToPos(possibleBoxPush.playerPosition,
+     //                           possibleBoxPush.boxPosition));
+
+    
+    char directionToBox = getDirectionToPos(possibleBoxPush.playerPosition,
+                                            possibleBoxPush.boxPosition);
+    circleBox(possibleBoxPush, directionToBox);
+
+}
+
+
 void board::getPossibleStateChanges(vector<board> &moves){
     
+    //FOR EACH BOX
+    //INVESTIGATE IF IT CAN BE PUSHED IN ALL FOUR DIRECTIONS
+    //PUT ALL POSSIBLE MOVES INTO THE ARGUMENT "MOVES"
 
+    struct possibleBoxPush currentBox;
+    for(int i = 0; i < mBoxPositions.size(); i++){
+        //Can we reach this box?
+        currentBox = boxAstar(mBoxPositions[i]);
+        if(currentBox.boxPosition.first != -1){
+            investigatePushBoxDirections(currentBox);
+        }
+        for(int j = 0; j < currentBox.positionsAroundBox.size(); j++){
+            moves.push_back(doMove(currentBox.positionsAroundBox[i], 
+                            getDirectionToPos(currentBox.positionsAroundBox[i], 
+                            currentBox.playerPosition)));
+        }
+    }
 }
 
 void board::printBoard() {
