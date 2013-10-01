@@ -139,7 +139,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 /*
  * Checks if a position on the board is accessible.
  */
-bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
+ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // If we can't stand here    
     if (isWalkable(prevRow, prevCol))
         return false;
@@ -295,15 +295,15 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
 }
 
 void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
-                                     vector<pair<int,int> > &possibles){
+ vector<pair<int,int> > &possibles){
 
     for(int i = 0; i < possibles.size(); i++){
         //Can we push the box from this position?
         if(isAccessible(possibleBoxPush.boxPosition.first,
-                                possibleBoxPush.boxPosition.second,
-                                possibles[i].first,
-                                possibles[i].second))
-                    possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
+            possibleBoxPush.boxPosition.second,
+            possibles[i].first,
+            possibles[i].second))
+            possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
 
     }
 
@@ -419,16 +419,16 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush
      //         getDirectionToPos(possibleBoxPush.playerPosition,
      //                           possibleBoxPush.boxPosition));
 
-    
+
     char directionToBox = getDirectionToPos(possibleBoxPush.playerPosition,
-                                            possibleBoxPush.boxPosition);
+        possibleBoxPush.boxPosition);
     circleBox(possibleBoxPush, directionToBox);
 
 }
 
 
 void board::getPossibleStateChanges(vector<board> &moves){
-    
+
     //FOR EACH BOX
     //INVESTIGATE IF IT CAN BE PUSHED IN ALL FOUR DIRECTIONS
     //PUT ALL POSSIBLE MOVES INTO THE ARGUMENT "MOVES"
@@ -436,14 +436,14 @@ void board::getPossibleStateChanges(vector<board> &moves){
     struct possibleBoxPush currentBox;
     for(int i = 0; i < mBoxPositions.size(); i++){
         //Can we reach this box?
-        currentBox = boxAstar(mBoxPositions[i]);
+        currentBox = boxAStar(mBoxPositions[i]);
         if(currentBox.boxPosition.first != -1){
             investigatePushBoxDirections(currentBox);
         }
         for(int j = 0; j < currentBox.positionsAroundBox.size(); j++){
             moves.push_back(doMove(currentBox.positionsAroundBox[i], 
-                            getDirectionToPos(currentBox.positionsAroundBox[i], 
-                            currentBox.playerPosition)));
+                getDirectionToPos(currentBox.positionsAroundBox[i], 
+                    currentBox.playerPosition)));
         }
     }
 }
@@ -461,7 +461,7 @@ void board::printBoard() const{
 /*
  * Finds pushable boxes using A*
  */
- board::possibleBoxPush board::boxAStar(pair<int,int> goalBox) {
+ board::possibleBoxPush board::boxAStar(pair<int,int> goalPos) {
     unordered_map<string,int> g_score_map(200000);
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     std::unordered_map<std::string, int> g_score;
@@ -469,7 +469,7 @@ void board::printBoard() const{
     int px = playerPos.first;
     int py = playerPos.second;
     std::vector<std::pair<int,int> > boxPositions = getBoxPositions();
-    float starting_heuristic = 1 + distance(goalBox, playerPos);
+    float starting_heuristic = 1 + distance(goalPos, playerPos);
     g_score.insert(make_pair(getBoardString(), 1));
     openQueue.push(make_pair(*this, starting_heuristic));
 
@@ -486,11 +486,15 @@ void board::printBoard() const{
         vector<board> moves;
         currentBoard.getAllValidWalkMoves(moves);
         std::unordered_map<std::string,int>::const_iterator map_it;
-        // cout << "Number of possible moves: " << moves.size() << endl;
-        // std::cout << "Standing on (" << currentBoard.getPlayerPosition().first << ", " << currentBoard.getPlayerPosition().second << ")" << std::endl;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            if (tempPlayerPos == goalPos) {
+                possibleBoxPush p;
+                p.playerPosition = currentPlayerPos;
+                p.path = currentBoard.getPath();
+                return p;
+            }
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
 
@@ -508,21 +512,14 @@ void board::printBoard() const{
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
             else {
-                if (tempBoard.isPush()) {
-                    possibleBoxPush p;
-                    p.playerPosition = currentPlayerPos;
-                    p.boxPosition = goalBox;
-                    p.path = currentBoard.getPath();
-                    return p;
-                }
+                float new_f = temp_g + distance(goalPos, tempPlayerPos);
                 g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, temp_g + distance(goalBox, tempPlayerPos)));
+                openQueue.push(make_pair(tempBoard, new_f));
             }
         }
     }
     possibleBoxPush p;
     p.playerPosition = make_pair(-1,-1);
-    p.boxPosition = make_pair(-1,-1);
     p.path = "\0";
     return p;
 }
