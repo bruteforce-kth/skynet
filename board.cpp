@@ -11,15 +11,13 @@ using std::string;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
-    // printBoard();
 }
 
-board::board (const vector<vector<char> > &chars, bool wasPush, char whatGotMeHere, std::set<pair<int,int> > deadPositions, string path){
+board::board (const vector<vector<char> > &chars, 
+              bool wasPush, char whatGotMeHere, string path){
     this->mBoard = chars;
-    this->mDeadPositions = deadPositions;
     initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
@@ -58,112 +56,7 @@ void board::initializeIndexAndPositions(const vector<vector<char> > &chars) {
     return;
 }
 
-void board::findDeadlocks(const vector<vector<char> > &chars) {
-    for (int i = 0; i < chars.size(); i++) {
-        for (int j = 0; j < chars[i].size(); j++) {
-            char c = chars[i][j];
-            // DEADLOCK CHECK
-            if(c == PLAYER || c == FLOOR){
-                char up;
-                char down;
-                char left;
-                char right;
-                if(i > 0){
-                    up = chars[i-1][j];
-                }else{ up = WALL;}
-                if(i < chars.size() - 1){
-                    down = chars[i+1][j];
-                }else{ down = WALL;}
-                if(j > 0){
-                    left = chars[i][j-1];
-                }else{ left = WALL;}
-                if(j < chars[i].size() - 1){
-                    right = chars[i][j+1];
-                }else{ right = WALL;}
-                if(up == WALL && (left == WALL || right == WALL)) {
-                    mDeadPositions.insert(make_pair(i,j));
-                }
-                if(down == WALL && (left == WALL || right == WALL)) {
-                    mDeadPositions.insert(make_pair(i,j));
-                }
-            }
-        }
-    }
-    findWallDeadlocks();
-    //cout << "Size of mDeadPositions: " << mDeadPositions.size() << endl;
-}
-
-pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
-    pair<int,int> newPos = position;
-    switch(direction){
-        case 'N':
-            newPos.first--;
-            break;
-        case 'S':
-            newPos.first++;
-            break;
-        case 'W':
-            newPos.second--;
-            break;
-        case 'E':
-            newPos.second++;
-            break;    
-    }
-
-    return newPos;
-}
-
-bool board::stillHuggingWall(char wallDirection, pair<int,int> position){
-    pair<int,int> wallPosition = getRelativePosition(wallDirection, position);
-    if(wallPosition.first >= mBoard.size() || position.second >= mBoard[position.first].size())
-        return false;
-    if(wallPosition.first < 0 || wallPosition.second < 0)
-        return false;
-    if(mBoard[wallPosition.first][wallPosition.second] == WALL)
-        return true;
-    return false;
-}
-
-bool board::investigateWall(char direction, char wallDirection, pair<int,int> position){
-    
-    position = getRelativePosition(direction, position);
-    if(position.first >= mBoard.size() || position.second >= mBoard[position.first].size())
-        return false; //Outside of map
-    if(position.first < 0 || position.second < 0)
-        return false; 
-    
-    if(mBoard[position.first][position.second] == GOAL || mBoard[position.first][position.second] == BOX_ON_GOAL)
-        return false;
-    if(!stillHuggingWall(wallDirection, position))
-        return false;
-    if(mBoard[position.first][position.second] == WALL)
-        return true;
-    
-    if(investigateWall(direction, wallDirection, position)){
-        mDeadPositions.insert(position);
-        //cout << "Inserted: " << position.first << ", " << position.second << endl;
-    }
-}
-
-void board::findWallDeadlocks(){
-    pair<int,int> currentDeadPosition;
-    std::set<pair<int,int> >::iterator it;
-    for(it = mDeadPositions.begin(); it != mDeadPositions.end(); it++){
-        currentDeadPosition = *it;
-        investigateWall('N', 'W', currentDeadPosition);
-        investigateWall('N', 'E', currentDeadPosition);
-        investigateWall('S', 'W', currentDeadPosition);
-        investigateWall('S', 'E', currentDeadPosition);
-        investigateWall('W', 'N', currentDeadPosition);
-        investigateWall('W', 'S', currentDeadPosition);
-        investigateWall('E', 'N', currentDeadPosition);
-        investigateWall('E', 'S', currentDeadPosition);
-    }
-}
-
-
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
-    // std::cout << "doMove(<" << newPlayerPos.first << "," << newPlayerPos.second << ">, " << direction << ")" << std::endl;
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -225,10 +118,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
             else
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
-
-        
     }
-    return new board(newMap, boxPush, direction, mDeadPositions, getPath() + direction);
+    return new board(newMap, boxPush, direction, getPath() + direction);
 }
 
 /*
@@ -237,17 +128,13 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // Check regular move
     if (isWalkable(row, col)){
-        // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
         return true;
     }
     // Check box push
     else if (isBox(row, col)) {
-        pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2);
-         //std::cout << "looking for (" << prevRow+(row-prevRow)*2 << ", " << prevCol+(col-prevCol)*2 << ")" << std::endl;
-        if (std::find(mDeadPositions.begin(), mDeadPositions.end(), boxPos) != mDeadPositions.end()) {
-           // std::cout << "Deadlock found, not pushing!" << std::endl;
-            return false;
-        }
+        pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
+                                         prevCol+(col-prevCol)*2);
+
         //DYNAMIC DEADLOCK
         char up = WALL;
         char upr = WALL;
@@ -282,21 +169,14 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
             right = mBoard[row][col+1];
         }
 
-        //cout << "checking:" << endl;
-        //cout << upl << up << upr << endl;
-        //cout << left << BOX << right << endl;
-        //cout << downl << down << downr << endl;
-
         if(up == WALL || up == BOX) {
             if(upl == WALL || upl == BOX) {
                 if(left == WALL || left == BOX) {
-                    //cout << "found deadlock!" << endl;
                     return false;
                 }
             }
             if(upr == WALL || upr == BOX) {
                 if(right == WALL || right == BOX) {
-                    //cout << "found deadlock!" << endl;
                     return false;
                 }
             }
@@ -304,29 +184,21 @@ bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
         if(down == WALL || down == BOX){
             if(downl == WALL || downl == BOX) {
                 if(left == WALL || left == BOX) {
-                    //cout << "found deadlock!" << endl;
                     return false;
                 }
             }
             if(downr == WALL || downr == BOX) {
                 if(right == WALL || right == BOX) {
-                    //cout << "found deadlock!" << endl;
                     return false;
                 }
             }
         }
         // END DYNAMIC DEADLOCK
 
-        /*
-        std::set<pair<int,int> >::iterator it = mDeadPositions.find(make_pair(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2));
-        if(it == mDeadPositions.end())
-            return false;*/
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
-            // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): yes" << std::endl;
             return true;
         }
     }
-    // std::cout << "isAccessible(" << row << ", " << col << ", " << prevRow << ", " << prevCol << "): no" << std::endl;
     return false;
 }
 
@@ -342,14 +214,12 @@ bool board::isFinished() const{
 }
 
 bool board::isWalkable(int row, int col) const {
-    // std::cout << "isWalkable(" << row << ", " << col << "): ";
+
     char t = mBoard[row][col];
     // Check regular move
     if(t == FLOOR || t == GOAL){
-        // std::cout << "yes" << std::endl;
         return true;    
-    }    
-    // std::cout << "no" << std::endl;
+    }
     return false;
 }
 
@@ -415,9 +285,4 @@ void board::printBoard() {
         }
         cout << '\n';
     }
-    // cout << "Dead positions: ";
-    // for(int i = 0; i < mDeadPositions.size(); i++) {
-    //     cout << "(" << mDeadPositions[i].first << ", " << mDeadPositions[i].second << ") ";
-    // }
-    // cout << std::endl;
 }
