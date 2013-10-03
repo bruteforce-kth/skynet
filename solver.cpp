@@ -23,7 +23,7 @@ solver::solver() {}
  * The solver method. It takes a board as a parameter and returns a solution
  */
 string solver::solve(const board &b) {
-    g_score_map.reserve(900000);
+    // g_score_map.reserve(900000);
     visited.reserve(600000);
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
@@ -68,7 +68,7 @@ std::string solver::hashState(const std::vector<std::pair<int,int> > boxPosition
  */
 string solver::IDA(const board &b) {
     mSolution = "no path";
-    float bound = 6; 
+    float bound = 3; 
     while(mSolution == "no path") {
         float tempBound = aStar(b, bound);
         if (bound == tempBound)
@@ -79,20 +79,21 @@ string solver::IDA(const board &b) {
     return mSolution;
 }
  
-// bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions){
-//     bool res = false;
-//     for(int i = 0; i < playerPositions.size(); i++){
-//         res = aStarPlayer(b, playerPositions[i]);
-//         if(res)
-//             return true;
-//     }
-//     return false;
-// }
+bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions){
+    bool res = false;
+    for(int i = 0; i < playerPositions.size(); i++){
+        res = aStarPlayer(b, playerPositions[i]);
+        if(res)
+            return true;
+    }
+    return false;
+}
 
 /*
  * Finds pushable boxes using A*
  */
 float solver::aStar(const board &b, float bound) {
+    std::unordered_map<std::string, int> g_score_map;
     // A priority queue of moves that are sorted based on their f_score
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     // Set starting position with null char to let backtrack know we're finished.
@@ -103,8 +104,8 @@ float solver::aStar(const board &b, float bound) {
     g_score_map.insert(make_pair(b.getBoardString(), 1));
     // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
-    int minCost = bound;
     int starting_box_distances = heuristicDistance(b);
+    int minCost = starting_box_distances + bound + 1;
     float starting_heuristic = 1 + starting_box_distances;
     openQueue.push(make_pair(b, starting_heuristic));
     std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
@@ -147,10 +148,10 @@ float solver::aStar(const board &b, float bound) {
             if (current_g > 0 && current_g <= temp_g ) {
                 continue;
             }
-            // if (!tempBoard.isPush() && !currentBoard.isPush()) {
-            //     if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-            //         continue;    
-            // }
+            if (!tempBoard.isPush() && !currentBoard.isPush()) {
+                if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
+                    continue;    
+            }
             // if(tempBoard.isPush() ) {
             //     visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
             //     if ( visited_it != visited.end() ) {
@@ -177,7 +178,7 @@ float solver::aStar(const board &b, float bound) {
             }
             else {
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, tempHeuristic));    
+                openQueue.push(make_pair(tempBoard,temp_g + 8*tempHeuristic));    
             }
         }
     }
@@ -189,63 +190,63 @@ float solver::aStar(const board &b, float bound) {
 /*
  * Finds pushable boxes using A*
  */
-// bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
-//     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
-//     std::unordered_map<std::string, int> g_score;
-//     pair<int,int> playerPos = b.getPlayerPosition();
-//     int px = playerPos.first;
-//     int py = playerPos.second;
-//     std::vector<std::pair<int,int> > boxPositions = b.getBoxPositions();
+bool solver::aStarPlayer(const board &b, pair<int,int> goal) {
+    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
+    std::unordered_map<std::string, int> g_score;
+    pair<int,int> playerPos = b.getPlayerPosition();
+    int px = playerPos.first;
+    int py = playerPos.second;
+    std::vector<std::pair<int,int> > boxPositions = b.getBoxPositions();
 
-//     float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
-//     g_score.insert(make_pair(b.getBoardString(), 1));
-//     openQueue.push(make_pair(b, starting_heuristic));
-//     while(!openQueue.empty()) {
-//         board currentBoard = openQueue.top().first;
+    float starting_heuristic = 1 + heuristicPlayerDistance(playerPos, goal);
+    g_score.insert(make_pair(b.getBoardString(), 1));
+    openQueue.push(make_pair(b, starting_heuristic));
+    while(!openQueue.empty()) {
+        board currentBoard = openQueue.top().first;
 
-//         openQueue.pop();
-//         int x = currentBoard.getPlayerPosition().first;
-//         int y = currentBoard.getPlayerPosition().second;
+        openQueue.pop();
+        int x = currentBoard.getPlayerPosition().first;
+        int y = currentBoard.getPlayerPosition().second;
 
-//         // currentBoard.printBoard();
+        // currentBoard.printBoard();
 
-//         // Iterate through all valid moves (neighbours)
-//         // A move is a pair consisting of a pair of coordinates and the 
-//         // direction taken to reach it from the current node.
-//         vector<board> moves;
-//         currentBoard.getAllValidWalkMoves(moves);
-//         std::unordered_map<std::string,int>::const_iterator map_it;
-//         for (int k = 0; k < moves.size(); ++k) {
-//             board tempBoard = moves[k];
-//             // std::cout << "valid move:" << std::endl;
-//             // tempBoard.printBoard();
-//             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
-//             if (tempPlayerPos == goal) {
-//                 return true;
-//             }
-//             int tempX = tempPlayerPos.first;
-//             int tempY = tempPlayerPos.second;
+        // Iterate through all valid moves (neighbours)
+        // A move is a pair consisting of a pair of coordinates and the 
+        // direction taken to reach it from the current node.
+        vector<board> moves;
+        currentBoard.getAllValidWalkMoves(moves);
+        std::unordered_map<std::string,int>::const_iterator map_it;
+        for (int k = 0; k < moves.size(); ++k) {
+            board tempBoard = moves[k];
+            // std::cout << "valid move:" << std::endl;
+            // tempBoard.printBoard();
+            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            if (tempPlayerPos == goal) {
+                return true;
+            }
+            int tempX = tempPlayerPos.first;
+            int tempY = tempPlayerPos.second;
 
-//             int temp_g = g_score.at(currentBoard.getBoardString()) + 1; 
-//             int current_g;
-//             map_it = g_score.find(tempBoard.getBoardString());
-//             if ( map_it != g_score.end() ) {
-//                 current_g = map_it->second;
-//             }
-//             else {
-//                 current_g = 0;
-//             }
-//             // Skip move if the position is in the open or closed set with a lower g_score
-//             // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
-//             if (current_g > 0 && current_g <= temp_g ) {
-//                 continue;
-//             }
-//             g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
-//             openQueue.push(make_pair(tempBoard, heuristicPlayerDistance(tempPlayerPos, goal)));
-//         }
-//     }
-//     return false;
-// }
+            int temp_g = g_score.at(currentBoard.getBoardString()) + 1; 
+            int current_g;
+            map_it = g_score.find(tempBoard.getBoardString());
+            if ( map_it != g_score.end() ) {
+                current_g = map_it->second;
+            }
+            else {
+                current_g = 0;
+            }
+            // Skip move if the position is in the open or closed set with a lower g_score
+            // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
+            if (current_g > 0 && current_g <= temp_g ) {
+                continue;
+            }
+            g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
+            openQueue.push(make_pair(tempBoard, heuristicPlayerDistance(tempPlayerPos, goal)));
+        }
+    }
+    return false;
+}
 
 /*
  * Heuristic for A* search. 
