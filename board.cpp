@@ -93,8 +93,7 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
     else
         newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
     
-    return new board(newMap, true, longPath.back(), mPath + longPath);
-        
+    return new board(newMap, true, longPath.back(), mPath + longPath);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -607,7 +606,7 @@ void board::printBoard() const{
 /*
  * Finds pushable boxes using A*
  */
- board::possibleBoxPush board::boxAStar(pair<int,int> goalPos){
+ string board::boxAStar(pair<int,int> goalPos){
     unordered_map<string,int> g_score_map(200000);
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     std::unordered_map<std::string, int> g_score;
@@ -636,10 +635,7 @@ void board::printBoard() const{
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             if (tempPlayerPos == goalPos) {
-                possibleBoxPush p;
-                p.playerPosition = tempPlayerPos;
-                p.path = tempBoard.getPath();
-                return p;
+                return tempBoard.getPath();
             }
             int tempX = tempPlayerPos.first;
             int tempY = tempPlayerPos.second;
@@ -664,10 +660,7 @@ void board::printBoard() const{
             }
         }
     }
-    possibleBoxPush p;
-    p.playerPosition = make_pair(-1,-1);
-    p.path = "\0";
-    return p;
+    return "\0";
 }
 
 /*
