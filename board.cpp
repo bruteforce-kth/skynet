@@ -517,6 +517,16 @@ std::pair<int,int> board::getPushCoordinates(std::pair<int,int> playerCoordinate
 
 }
 
+void board::updatePlayerPosition(std::pair<int, int> newPlayerPosition){
+
+    if(mBoard[mPlayerPos.first][mPlayerPos.second] == '+')
+        mBoard[mPlayerPos.first][mPlayerPos.second] = '.';
+    else
+        mBoard[mPlayerPos.first][mPlayerPos.second] = ' ';
+    mPlayerPos = newPlayerPosition;
+
+}
+
 /*
  * This function investigates if and possibly in how many directions the box
  * who's coordinates is included in currentBox can be pushed. 
@@ -560,13 +570,17 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             // Is the possiblePositions[i] reachable from our position?
             
             currPath = boxAStar(possiblePositions[i]);
-            possiblePaths.push_back(currPath);
+            
             currentBox.boxPosition = possiblePosition;
             
             if(currPath != "\0"){
+                updatePlayerPosition(possiblePositions[i]);
+                possiblePaths.push_back(currPath);
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
+                cout << "PlayerPosition first: " << currentBox.playerPosition.first << " PlayerPosition.second: " << currentBox.playerPosition.second << endl;
+                cout << "BoxPosition first: " << currentBox.boxPosition.first << " BoxPosition.second: " << currentBox.boxPosition.second << endl;
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
@@ -588,11 +602,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
 
         moves.push_back(*doLongMove(currentBox.boxPosition, 
                                     pushedBoxCoordinates, possiblePaths[i], lastMove));
-        //cout << currentBox.path << endl;
-        //moves[i].printBoard();
-        //cout << "First: " << currentBox.positionsAroundBox[i].first << "Second: " << currentBox.positionsAroundBox[i].second << endl;
     }
-    //cout << "HURR\n";
 }
 
 /*

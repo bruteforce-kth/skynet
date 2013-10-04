@@ -96,6 +96,7 @@ class board {
         std::pair<int,int> getPushCoordinates(std::pair<int,int> playerCoordinates,
                                     std::pair<int,int> boxCoordinates);
         char translateDirection(char nsew);
+        void updatePlayerPosition(std::pair<int, int> newPlayerPosition);
 };
 
 #endif
