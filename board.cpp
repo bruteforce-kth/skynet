@@ -17,6 +17,7 @@ board::board (const vector<vector<char> > &chars) {
     initializeIndexAndPositions(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
+    mPath = "";
 }
 
 board::board (const vector<vector<char> > &chars, 
