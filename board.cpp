@@ -631,8 +631,8 @@ void board::printBoard() const{
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             if (tempPlayerPos == goalPos) {
                 possibleBoxPush p;
-                p.playerPosition = currentPlayerPos;
-                p.path = currentBoard.getPath();
+                p.playerPosition = tempPlayerPos;
+                p.path = tempBoard.getPath();
                 return p;
             }
             int tempX = tempPlayerPos.first;
