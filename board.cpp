@@ -70,6 +70,32 @@ board::board (const vector<vector<char> > &chars,
     return;
 }
 
+// SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
+board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
+                         std::string longPath){
+
+    
+    std::vector<std::vector<char> > newMap = mBoard;
+    
+    if(newMap[newBoxPos.first][newBoxPos.second] == GOAL)
+        newMap[newBoxPos.first][newBoxPos.second] = '*';
+    else
+        newMap[newBoxPos.first][newBoxPos.second] = '$';
+
+    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL)
+        newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+    else
+        newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+
+    if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+        newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+    else
+        newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
+    
+    return new board(newMap, true, longPath.back(), mPath + longPath);
+        
+}
+
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
@@ -141,8 +167,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
  */
  bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // If we can't stand here    
-    if (isWalkable(prevRow, prevCol))
-        return false;
+    //if (!isWalkable(prevRow, prevCol))
+    //    return false;
 
     // Check regular move
     if (isWalkable(row, col)){
@@ -190,11 +216,13 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         if(up == WALL || up == BOX) {
             if(upl == WALL || upl == BOX) {
                 if(left == WALL || left == BOX) {
+                    cout << "Deadlock 1";
                     return false;
                 }
             }
             if(upr == WALL || upr == BOX) {
                 if(right == WALL || right == BOX) {
+                    cout << "Deadlock 2";
                     return false;
                 }
             }
@@ -202,17 +230,19 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         if(down == WALL || down == BOX){
             if(downl == WALL || downl == BOX) {
                 if(left == WALL || left == BOX) {
+                    cout << "Deadlock 3";
                     return false;
                 }
             }
             if(downr == WALL || downr == BOX) {
                 if(right == WALL || right == BOX) {
+                    cout << "Deadlock 4";
                     return false;
                 }
             }
         }
         // END DYNAMIC DEADLOCK
-
+        
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
@@ -235,7 +265,7 @@ bool board::isWalkable(int row, int col) const {
 
     char t = mBoard[row][col];
     // Check regular move
-    if(t == FLOOR || t == GOAL){
+    if(t == FLOOR || t == GOAL || t == PLAYER || t == PLAYER_ON_GOAL){
         return true;    
     }
     return false;
@@ -306,14 +336,15 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
 
     for(int i = 0; i < possibles.size(); i++){
         //Can we push the box from this position?
+        
         if(isAccessible(possibleBoxPush.boxPosition.first,
                                 possibleBoxPush.boxPosition.second,
                                 possibles[i].first,
                                 possibles[i].second)){
+            
             if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i]))
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
         }
-
 
     }
 
@@ -415,8 +446,10 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
     if(possiblePositions.size() > 3)
         cout << "Problem in circleBox!" << endl;
 
+    
+    
     investigateThesePositions(possibleBoxPush, possiblePositions);
-
+    
 }
 
 // Determine the position of box relative to player
@@ -439,6 +472,25 @@ char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> bo
         return 'W';
     else
         return 'E';
+
+}
+
+std::pair<int,int> board::getPushCoordinates(std::pair<int,int> playerCoordinates,
+                                    std::pair<int,int> boxCoordinates){
+
+    std::pair<int,int> pushedBoxCoordinates = boxCoordinates;
+    
+    char directionToBox = getDirectionToPos(playerCoordinates, boxCoordinates);
+
+    if(directionToBox == 'N')
+        pushedBoxCoordinates.first--;
+    else if(directionToBox == 'S')
+        pushedBoxCoordinates.first++;
+    else if(directionToBox == 'W')
+        pushedBoxCoordinates.second--;
+    else 
+        pushedBoxCoordinates.second++;
+    return pushedBoxCoordinates;
 
 }
 
@@ -469,6 +521,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     if(isWalkable(possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
     
+    possiblePosition.second--;
     
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
@@ -479,23 +532,39 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
         // we don't need to do it again
         if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
             // Is the possiblePositions[i] reachable from our position?
+            
             currentBox = boxAStar(possiblePositions[i]);
+            cout << currentBox.path << endl;
+            currentBox.boxPosition = possiblePosition;
+            
             if(currentBox.boxPosition.first != -1){
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
+                //cout << "First: " << currentBox.playerPosition.first << "Second: " << currentBox.playerPosition.second << endl;
+                
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
                 // Can we find adjacent positions through a local search?
                 circleBox(currentBox, directionToBox);
+                //cout << currentBox.positionsAroundBox.size() << endl;
             }
         }
     }
     // Perform state changes on accepted positions and place them in moves
     for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
-        moves.push_back(*doMove(currentBox.positionsAroundBox[i], ' '));    
-    }
 
+        std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
+                                                  currentBox.positionsAroundBox[i],
+                                                  currentBox.boxPosition);
+
+        moves.push_back(*doLongMove(currentBox.boxPosition, 
+                                    pushedBoxCoordinates, currentBox.path));
+        //cout << currentBox.path << endl;
+        //moves[i].printBoard();
+        //cout << "First: " << currentBox.positionsAroundBox[i].first << "Second: " << currentBox.positionsAroundBox[i].second << endl;
+    }
+    //cout << "HURR\n";
 }
 
 /*
@@ -532,7 +601,7 @@ void board::printBoard() const{
 /*
  * Finds pushable boxes using A*
  */
- board::possibleBoxPush board::boxAStar(pair<int,int> goalPos) {
+ board::possibleBoxPush board::boxAStar(pair<int,int> goalPos){
     unordered_map<string,int> g_score_map(200000);
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     std::unordered_map<std::string, int> g_score;

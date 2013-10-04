@@ -20,7 +20,7 @@ using std::stack;
 /*
  * The solver method. It takes a board as a parameter and returns a solution
  */
- string solver::solve(const board &b) {
+ string solver::solve(board &b) {
     g_score_map.reserve(600000);
     visited.reserve(600000);
     mBoardSize = b.getBoardSize();
@@ -45,20 +45,20 @@ using std::stack;
 /*
  * Search the state space using dfs
  */
-string solver::search(const board &b, int depth) {
+string solver::search(board &b, int depth) {
 
-    b.printBoard();
+    //b.printBoard();
 
     if (b.isFinished()) {
         cout << "finished" << endl;
         return b.getPath();
     }else if(depth==0) {
-        cout << "no path" << endl;
+        //cout << "no path" << endl;
         return "no path";
     }
 
     vector<board> moves;
-    b.getAllValidMoves(moves);
+    b.getPossibleStateChanges(moves);
     string path;
 
     for (int i = 0; i < moves.size(); ++i) {

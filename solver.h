@@ -12,7 +12,7 @@
 class solver {
     public:
         solver();
-        std::string solve(const board &b);
+        std::string solve(board &b);
 
     private:
 
@@ -35,7 +35,7 @@ class solver {
         std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
 
         //FUNCTIONS
-        std::string search(const board &b, int depth);
+        std::string search(board &b, int depth);
 
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const board &b);
