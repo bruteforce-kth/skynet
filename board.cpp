@@ -73,7 +73,7 @@ board::board (const vector<vector<char> > &chars,
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
 board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         char lastMove){
+                         char lastMove, string path){
 
     
     // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
@@ -96,7 +96,7 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
     
-    return new board(newMap, true, lastMove, mPath);        
+    return new board(newMap, true, lastMove, path + lastMove);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -335,7 +335,7 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
  * are added into possibleBoxPush.positionsAroundBox (if not already in there)
  */
 void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
- vector<pair<int,int> > &possibles, vector<board> &moves){
+ vector<pair<int,int> > &possibles, vector<board> &moves, string path){
 
     for(int i = 0; i < possibles.size(); i++){
         //Can we push the box from this position?
@@ -357,7 +357,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                     char lastMove = translateDirection(getDirectionToPos(possibles[i],
                                           possibleBoxPush.boxPosition));
                     moves.push_back(*doLongMove(possibleBoxPush.boxPosition, 
-                                    pushedBoxCoordinates, lastMove));
+                                    pushedBoxCoordinates, lastMove, path));
                     
             }
         }
@@ -371,7 +371,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
  * The argument directionToBox specifies the location of the box
  * relative to the player specified by possibleBoxPush.playerPosition.
  */
-void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, vector<board> &moves){
+void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, vector<board> &moves, string path){
 
     // Is the box on the same col or the same row?
     char axis;
@@ -464,7 +464,7 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
 
     
     possiblePositions.push_back(possibleBoxPush.playerPosition);
-    investigateThesePositions(possibleBoxPush, possiblePositions, moves);
+    investigateThesePositions(possibleBoxPush, possiblePositions, moves, path);
     
 }
 
@@ -577,7 +577,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
     std::string currPath;
-    std::string cumulativePath = "";
+    std::string cumulativePath = mPath;
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
         // If we've already determined that this position is reachable, 
@@ -594,7 +594,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                 updatePlayerPosition(possiblePositions[i]);
                 cumulativePath = cumulativePath + currPath;
                 possiblePaths.push_back(cumulativePath);
-                cout << "Valid path found: " << cumulativePath << endl;
+                // cout << "Valid path found: " << cumulativePath << endl;
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
@@ -605,7 +605,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
                 // Can we find adjacent positions through a local search?
-                circleBox(currentBox, directionToBox, moves);
+                circleBox(currentBox, directionToBox, moves, cumulativePath);
             }
         }
     }

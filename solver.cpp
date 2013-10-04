@@ -39,9 +39,9 @@ using std::stack;
     int depth = 2;
     string solution;
     do {
-        cout << "Depth: " << depth << endl;
+        // cout << "Depth: " << depth << endl;
         solution = search(b, depth);
-        cout << "Solution: " << solution << endl;
+        // cout << "Solution: " << solution << endl;
         if(solution != "no path") {
             return solution;
         }
@@ -65,7 +65,7 @@ string solver::search(board &b, int depth) {
     //b.printBoard();
 
     if (b.isFinished()) {
-        cout << "finished" << endl;
+        // cout << "finished" << endl;
         return b.getPath();
     }else if(depth==0) {
         //cout << "no path" << endl;
