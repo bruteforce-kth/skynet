@@ -523,6 +523,7 @@ void board::updatePlayerPosition(std::pair<int, int> newPlayerPosition){
         mBoard[mPlayerPos.first][mPlayerPos.second] = '.';
     else
         mBoard[mPlayerPos.first][mPlayerPos.second] = ' ';
+
     mPlayerPos = newPlayerPosition;
 
 }
@@ -579,8 +580,8 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
-                cout << "PlayerPosition first: " << currentBox.playerPosition.first << " PlayerPosition.second: " << currentBox.playerPosition.second << endl;
-                cout << "BoxPosition first: " << currentBox.boxPosition.first << " BoxPosition.second: " << currentBox.boxPosition.second << endl;
+                //cout << "PlayerPosition first: " << currentBox.playerPosition.first << " PlayerPosition.second: " << currentBox.playerPosition.second << endl;
+                //cout << "BoxPosition first: " << currentBox.boxPosition.first << " BoxPosition.second: " << currentBox.boxPosition.second << endl;
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
