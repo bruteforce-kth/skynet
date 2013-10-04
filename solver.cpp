@@ -27,6 +27,14 @@ using std::stack;
     mGoalPositions = b.getGoalPositions();
 
     //Iterative deepening
+    // TODO if IDA*:
+    // Set bound to 0 or higher.
+    // Break when heuristic is bigger than starting heuristic + bound.
+    // Save the lowest value of the ones that are too big OR bound++
+    // (for our box heuristic bound++ is the same as saving the lowest)
+    // Also: check if bound never caused any branch-cutoffs. If so,
+    // there are no possible solutions. End the iteration and return "no path".
+    // (might be needed for DFS as well).
     int depth = 2;
     string solution;
     do {
