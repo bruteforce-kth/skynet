@@ -76,6 +76,8 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
                          std::string longPath, char lastMove){
 
     
+    // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
+    // cout << "new playerpos: " << newPlayerPos.first << ", " << newPlayerPos.second << endl;
     std::vector<std::vector<char> > newMap = mBoard;
 
     if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
@@ -524,6 +526,10 @@ void board::updatePlayerPosition(std::pair<int, int> newPlayerPosition){
     else
         mBoard[mPlayerPos.first][mPlayerPos.second] = ' ';
 
+    if(mBoard[newPlayerPosition.first][newPlayerPosition.second] == GOAL)
+        mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER_ON_GOAL;
+    else
+        mBoard[newPlayerPosition.first][newPlayerPosition.second] = FLOOR;
     mPlayerPos = newPlayerPosition;
 
 }
@@ -562,6 +568,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
     std::string currPath;
+    std::string cumulativePath = "";
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
         // If we've already determined that this position is reachable, 
@@ -576,12 +583,15 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             
             if(currPath != "\0"){
                 updatePlayerPosition(possiblePositions[i]);
-                possiblePaths.push_back(currPath);
+                cumulativePath = cumulativePath + currPath;
+                possiblePaths.push_back(cumulativePath);
+                cout << "Valid path found: " << cumulativePath << endl;
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
                 //cout << "PlayerPosition first: " << currentBox.playerPosition.first << " PlayerPosition.second: " << currentBox.playerPosition.second << endl;
                 //cout << "BoxPosition first: " << currentBox.boxPosition.first << " BoxPosition.second: " << currentBox.boxPosition.second << endl;
+
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
