@@ -585,15 +585,16 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             // Is the possiblePositions[i] reachable from our position?
             
             currPath = boxAStar(possiblePositions[i]);
-            cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
+            // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
             currentBox.boxPosition = possiblePosition;
             
             if(currPath != "\0"){
                 updatePlayerPosition(possiblePositions[i]);
-                cout << "currPath: " << currPath << endl; 
-                cout << "for this board: " << endl;
-                printBoard();
+                mPath = currPath;
+                // cout << "currPath: " << currPath << endl; 
+                // cout << "for this board: " << endl;
+                // printBoard();
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
