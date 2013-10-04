@@ -179,7 +179,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     else if (isBox(row, col)) {
         pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
            prevCol+(col-prevCol)*2);
-
+        /*
         //DYNAMIC DEADLOCK
         char up = WALL;
         char upr = WALL;
@@ -243,7 +243,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
             }
         }
         // END DYNAMIC DEADLOCK
-        
+        */
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
@@ -342,9 +342,13 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                                 possibleBoxPush.boxPosition.second,
                                 possibles[i].first,
                                 possibles[i].second)){
+            cout << "ISACCESIBLE\n";
             
-            if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i]))
+            if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
+                    cout << "INSERTED INTO POSITIONSAROUNDBOX\n";
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
+                    cout << possibleBoxPush.positionsAroundBox.size() << endl;
+            }
         }
 
     }
@@ -374,7 +378,7 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
      * INTO "possiblePositions". Ends with calling "investigateThesePositions".
      * LEFT TODO IS INVESTIGATING THE OPPOSITE SIDE OF THE BOX, IF POSSIBLE
      */
-    
+    /*
     if(directionToBox == 'N' || directionToBox == 'S')
         axis = 'x';
     else
@@ -442,13 +446,13 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
                 possiblePositions.push_back(investigatorPos);            
             }
         }
-    }
+    }*/
 
     if(possiblePositions.size() > 3)
         cout << "Problem in circleBox!" << endl;
 
     
-    
+    possiblePositions.push_back(possibleBoxPush.playerPosition);
     investigateThesePositions(possibleBoxPush, possiblePositions);
     
 }
@@ -521,7 +525,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     possiblePosition.second += 2;
     if(isWalkable(possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
-    
+
     possiblePosition.second--;
     
     // Will hold the direction of the box relative to the player.
@@ -532,26 +536,25 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
         // If we've already determined that this position is reachable, 
         // we don't need to do it again
         if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
+            
             // Is the possiblePositions[i] reachable from our position?
             
             currentBox = boxAStar(possiblePositions[i]);
-            cout << currentBox.path << endl;
             currentBox.boxPosition = possiblePosition;
             
             if(currentBox.boxPosition.first != -1){
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
-                //cout << "First: " << currentBox.playerPosition.first << "Second: " << currentBox.playerPosition.second << endl;
                 
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
                 // Can we find adjacent positions through a local search?
                 circleBox(currentBox, directionToBox);
-                //cout << currentBox.positionsAroundBox.size() << endl;
             }
         }
     }
+    cout << currentBox.positionsAroundBox.size() << endl;
     // Perform state changes on accepted positions and place them in moves
     for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
 
@@ -578,6 +581,8 @@ void board::getPossibleStateChanges(vector<board> &moves){
     // used on a per-box-basis.
     // A new one is set each time a new box
     // on the board is investigated.
+
+    cout << "Player First: " << getPlayerPosition().first << "Player second: " << getPlayerPosition().second << endl;
 
     struct possibleBoxPush currentBox;
     // Loop through all boxes on the board
