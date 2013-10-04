@@ -73,11 +73,16 @@ board::board (const vector<vector<char> > &chars,
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
 board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         std::string longPath){
+                         std::string longPath, char lastMove){
 
     
     std::vector<std::vector<char> > newMap = mBoard;
-    
+
+    if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+        newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+    else
+        newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
+
     if(newMap[newBoxPos.first][newBoxPos.second] == GOAL)
         newMap[newBoxPos.first][newBoxPos.second] = '*';
     else
@@ -87,13 +92,9 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
         newMap[newPlayerPos.first][newPlayerPos.second] = '+';
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
-
-    if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
-        newMap[mPlayerPos.first][mPlayerPos.second] = '.';
-    else
-        newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
     
-    return new board(newMap, true, longPath.back(), mPath + longPath);        
+    
+    return new board(newMap, true, longPath.back(), mPath + longPath + lastMove);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -341,12 +342,12 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                                 possibleBoxPush.boxPosition.second,
                                 possibles[i].first,
                                 possibles[i].second)){
-            cout << "ISACCESIBLE\n";
+            //cout << "ISACCESIBLE\n";
             
             if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
-                    cout << "INSERTED INTO POSITIONSAROUNDBOX\n";
+                    //cout << "INSERTED INTO POSITIONSAROUNDBOX\n";
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
-                    cout << possibleBoxPush.positionsAroundBox.size() << endl;
+                    //cout << possibleBoxPush.positionsAroundBox.size() << endl;
             }
         }
 
@@ -479,6 +480,24 @@ char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> bo
 
 }
 
+char board::translateDirection(char nsew){
+
+    switch(nsew){
+        case 'N':
+            return 'U';
+            break;
+        case 'S':
+            return 'D';
+            break;
+        case 'E':
+            return 'R';
+            break;
+        case 'W':
+            return 'L';
+            break;    
+    }
+}
+
 std::pair<int,int> board::getPushCoordinates(std::pair<int,int> playerCoordinates,
                                     std::pair<int,int> boxCoordinates){
 
@@ -510,6 +529,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     pair<int, int> possiblePosition;
     // Will hold all the directly adjacent positions to the box (N S E W)
     vector<pair<int,int> > possiblePositions;
+    vector<std::string> possiblePaths;
     possiblePosition = currentBox.boxPosition;
     possiblePosition.first--;
     if(isWalkable(possiblePosition.first, possiblePosition.second))
@@ -530,6 +550,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
+    std::string currPath;
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
         // If we've already determined that this position is reachable, 
@@ -538,10 +559,11 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             
             // Is the possiblePositions[i] reachable from our position?
             
-            currentBox = boxAStar(possiblePositions[i]);
+            currPath = boxAStar(possiblePositions[i]);
+            possiblePaths.push_back(currPath);
             currentBox.boxPosition = possiblePosition;
             
-            if(currentBox.boxPosition.first != -1){
+            if(currPath != "\0"){
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
@@ -553,7 +575,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             }
         }
     }
-    cout << currentBox.positionsAroundBox.size() << endl;
+    //cout << currentBox.positionsAroundBox.size() << endl;
     // Perform state changes on accepted positions and place them in moves
     for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
 
@@ -561,8 +583,11 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                                                   currentBox.positionsAroundBox[i],
                                                   currentBox.boxPosition);
 
+        char lastMove = translateDirection(getDirectionToPos(currentBox.positionsAroundBox[i],
+                                          currentBox.boxPosition));
+
         moves.push_back(*doLongMove(currentBox.boxPosition, 
-                                    pushedBoxCoordinates, currentBox.path));
+                                    pushedBoxCoordinates, possiblePaths[i], lastMove));
         //cout << currentBox.path << endl;
         //moves[i].printBoard();
         //cout << "First: " << currentBox.positionsAroundBox[i].first << "Second: " << currentBox.positionsAroundBox[i].second << endl;
@@ -580,8 +605,6 @@ void board::getPossibleStateChanges(vector<board> &moves){
     // used on a per-box-basis.
     // A new one is set each time a new box
     // on the board is investigated.
-
-    cout << "Player First: " << getPlayerPosition().first << "Player second: " << getPlayerPosition().second << endl;
 
     struct possibleBoxPush currentBox;
     // Loop through all boxes on the board

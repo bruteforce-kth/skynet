@@ -50,10 +50,10 @@ using std::stack;
     */
     vector<board> boards;
     b.getPossibleStateChanges(boards);
-    /*for(int i = 0; i < boards.size(); i++){
+    for(int i = 0; i < boards.size(); i++){
         boards[i].printBoard();
         cout << boards[i].getPath() << endl;
-    }*/
+    }
     return "no path";
 }
 
