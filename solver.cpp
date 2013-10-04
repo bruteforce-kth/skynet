@@ -35,7 +35,7 @@ using std::stack;
     // Also: check if bound never caused any branch-cutoffs. If so,
     // there are no possible solutions. End the iteration and return "no path".
     // (might be needed for DFS as well).
-    /*
+    
     int depth = 2;
     string solution;
     do {
@@ -47,13 +47,13 @@ using std::stack;
         }
         depth++;
     }while(depth < 100);
-    */
+    /*
     vector<board> boards;
     b.getPossibleStateChanges(boards);
     for(int i = 0; i < boards.size(); i++){
         boards[i].printBoard();
         cout << boards[i].getPath() << endl;
-    }
+    }*/
     return "no path";
 }
 

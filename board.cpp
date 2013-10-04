@@ -73,7 +73,7 @@ board::board (const vector<vector<char> > &chars,
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
 board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         std::string longPath, char lastMove){
+                         char lastMove){
 
     
     // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
@@ -96,7 +96,7 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
     
-    return new board(newMap, true, longPath.back(), mPath + longPath + lastMove);        
+    return new board(newMap, true, lastMove, mPath);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -335,7 +335,7 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
  * are added into possibleBoxPush.positionsAroundBox (if not already in there)
  */
 void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
- vector<pair<int,int> > &possibles){
+ vector<pair<int,int> > &possibles, vector<board> &moves){
 
     for(int i = 0; i < possibles.size(); i++){
         //Can we push the box from this position?
@@ -350,6 +350,15 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                     //cout << "INSERTED INTO POSITIONSAROUNDBOX\n";
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
                     //cout << possibleBoxPush.positionsAroundBox.size() << endl;
+                    std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
+                                                  possibles[i],
+                                                  possibleBoxPush.boxPosition);
+
+                    char lastMove = translateDirection(getDirectionToPos(possibles[i],
+                                          possibleBoxPush.boxPosition));
+                    moves.push_back(*doLongMove(possibleBoxPush.boxPosition, 
+                                    pushedBoxCoordinates, lastMove));
+                    
             }
         }
 
@@ -362,7 +371,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
  * The argument directionToBox specifies the location of the box
  * relative to the player specified by possibleBoxPush.playerPosition.
  */
-void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox){
+void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, vector<board> &moves){
 
     // Is the box on the same col or the same row?
     char axis;
@@ -455,7 +464,7 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
 
     
     possiblePositions.push_back(possibleBoxPush.playerPosition);
-    investigateThesePositions(possibleBoxPush, possiblePositions);
+    investigateThesePositions(possibleBoxPush, possiblePositions, moves);
     
 }
 
@@ -596,12 +605,13 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
                 // Can we find adjacent positions through a local search?
-                circleBox(currentBox, directionToBox);
+                circleBox(currentBox, directionToBox, moves);
             }
         }
     }
     //cout << currentBox.positionsAroundBox.size() << endl;
     // Perform state changes on accepted positions and place them in moves
+    /*
     for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
 
         std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
@@ -613,7 +623,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
 
         moves.push_back(*doLongMove(currentBox.boxPosition, 
                                     pushedBoxCoordinates, possiblePaths[i], lastMove));
-    }
+    }*/
 }
 
 /*

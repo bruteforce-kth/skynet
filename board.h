@@ -74,7 +74,7 @@ class board {
         int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
         int distance(std::pair<int,int> i, std::pair<int,int> j);
         board* doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         std::string longPath, char lastMove);
+                         char lastMove);
     private:
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
@@ -89,9 +89,9 @@ class board {
         board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
         void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
-        void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox);
+        void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, std::vector<board> &moves);
         void investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
-                                      std::vector<std::pair<int, int> > &possibles);
+                                      std::vector<std::pair<int, int> > &possibles, std::vector<board> &moves);
         bool vectorContainsPair(std::vector<std::pair<int,int> > &vector, std::pair<int, int> &pair);
         std::pair<int,int> getPushCoordinates(std::pair<int,int> playerCoordinates,
                                     std::pair<int,int> boxCoordinates);
