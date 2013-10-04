@@ -62,7 +62,8 @@ using std::stack;
  */
 string solver::search(board &b, int depth) {
 
-    //b.printBoard();
+    // cout << "current player position: (" << b.getPlayerPosition().first << ", " << b.getPlayerPosition().second << ")" << endl;
+    // b.printBoard();
 
     if (b.isFinished()) {
         // cout << "finished" << endl;

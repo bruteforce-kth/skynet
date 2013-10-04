@@ -95,7 +95,6 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
-    
     return new board(newMap, true, lastMove, path + lastMove);        
 }
 
@@ -577,7 +576,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
     std::string currPath;
-    std::string cumulativePath = mPath;
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
         // If we've already determined that this position is reachable, 
@@ -592,9 +590,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             
             if(currPath != "\0"){
                 updatePlayerPosition(possiblePositions[i]);
-                cumulativePath = cumulativePath + currPath;
-                possiblePaths.push_back(cumulativePath);
-                // cout << "Valid path found: " << cumulativePath << endl;
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
@@ -605,7 +600,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
                                                 currentBox.boxPosition);
                 // Can we find adjacent positions through a local search?
-                circleBox(currentBox, directionToBox, moves, cumulativePath);
+                circleBox(currentBox, directionToBox, moves, currPath);
             }
         }
     }
@@ -661,6 +656,7 @@ void board::printBoard() const{
  * Finds pushable boxes using A*
  */
  string board::boxAStar(pair<int,int> goalPos){
+    // cout << "current player position: (" << getPlayerPosition().first << ", " << getPlayerPosition().second << ")" << endl;            
     unordered_map<string,int> g_score_map(200000);
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     std::unordered_map<std::string, int> g_score;
