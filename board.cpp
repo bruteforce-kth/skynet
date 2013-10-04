@@ -537,7 +537,7 @@ void board::updatePlayerPosition(std::pair<int, int> newPlayerPosition){
     if(mBoard[newPlayerPosition.first][newPlayerPosition.second] == GOAL)
         mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER_ON_GOAL;
     else
-        mBoard[newPlayerPosition.first][newPlayerPosition.second] = FLOOR;
+        mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER;
     mPlayerPos = newPlayerPosition;
 
 }
@@ -585,11 +585,15 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             // Is the possiblePositions[i] reachable from our position?
             
             currPath = boxAStar(possiblePositions[i]);
+            cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
             currentBox.boxPosition = possiblePosition;
             
             if(currPath != "\0"){
                 updatePlayerPosition(possiblePositions[i]);
+                cout << "currPath: " << currPath << endl; 
+                cout << "for this board: " << endl;
+                printBoard();
                 // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
                 
