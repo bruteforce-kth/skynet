@@ -2,4 +2,4 @@
 
 gcc visualizer.c -lncurses -o visualizer.out
 
-./visualizer.out -m mazeTest.txt -s pathTest.txt -f
+./visualizer.out -m ../maps/sokoban3 -s Path.txt -f

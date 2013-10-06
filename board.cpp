@@ -762,3 +762,13 @@ bool board::vectorContainsPair(vector<pair<int, int> > &vector, pair<int, int> &
     return false;
 }
 
+void board::setBoxPositionsString() {
+    string boxString = "";
+    for (int i = 0; i < mBoxPositions.size(); ++i) {
+        boxString += (mBoxPositions[i].first + "-" + mBoxPositions[i].second);
+    }
+    mBoxString = boxString;
+}
+
+
+

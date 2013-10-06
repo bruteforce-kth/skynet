@@ -75,7 +75,11 @@ class board {
         int distance(std::pair<int,int> i, std::pair<int,int> j);
         board* doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
                          char lastMove, std::string path);
+        void setBoxPositionsString();
+        std::string getBoxString() const
+        { return mBoxString; }
     private:
+        std::string mBoxString;
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         std::vector<std::vector<char> > mBoard;

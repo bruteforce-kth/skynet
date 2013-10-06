@@ -9,8 +9,8 @@ do
     #./main < maps/02_sample.in
     #./main < maps/sokoban1
     #./main < maps/sokoban2
-    #./main < maps/sokoban3
+    ./main < maps/sokoban3
     #./main < maps/20_maps/F3
-    ./main < maps/simple2
+    #./main < maps/simple2
 done
 
