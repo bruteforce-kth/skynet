@@ -288,7 +288,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     else if (isBox(row, col)) {
         pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
            prevCol+(col-prevCol)*2);
-        /*
+        
         //DYNAMIC DEADLOCK
         char up = WALL;
         char upr = WALL;
@@ -326,13 +326,13 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         if(up == WALL || up == BOX) {
             if(upl == WALL || upl == BOX) {
                 if(left == WALL || left == BOX) {
-                    cout << "Deadlock 1";
+                    //std::cerr << "Deadlock 1";
                     return false;
                 }
             }
             if(upr == WALL || upr == BOX) {
                 if(right == WALL || right == BOX) {
-                    cout << "Deadlock 2";
+                    //std::cerr << "Deadlock 2";
                     return false;
                 }
             }
@@ -340,19 +340,19 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         if(down == WALL || down == BOX){
             if(downl == WALL || downl == BOX) {
                 if(left == WALL || left == BOX) {
-                    cout << "Deadlock 3";
+                    //std::cerr << "Deadlock 3";
                     return false;
                 }
             }
             if(downr == WALL || downr == BOX) {
                 if(right == WALL || right == BOX) {
-                    cout << "Deadlock 4";
+                    //std::cerr << "Deadlock 4";
                     return false;
                 }
             }
         }
         // END DYNAMIC DEADLOCK
-        */
+        
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
