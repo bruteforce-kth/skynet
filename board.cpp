@@ -552,22 +552,30 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     
     // Temp variable
     pair<int, int> possiblePosition;
+    pair<int, int> boxPosition;
     // Will hold all the directly adjacent positions to the box (N S E W)
     vector<pair<int,int> > possiblePositions;
     vector<std::string> possiblePaths;
     possiblePosition = currentBox.boxPosition;
+    boxPosition = currentBox.boxPosition;    
+
+    // Checks if box is pushable from all directions
     possiblePosition.first--;
-    if(isWalkable(possiblePosition.first, possiblePosition.second))
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
     possiblePosition.first += 2;
-    if(isWalkable(possiblePosition.first, possiblePosition.second))
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
     possiblePosition.first--;
     possiblePosition.second--;
-    if(isWalkable(possiblePosition.first, possiblePosition.second))
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
     possiblePosition.second += 2;
-    if(isWalkable(possiblePosition.first, possiblePosition.second))
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
         possiblePositions.push_back(possiblePosition);
 
     possiblePosition.second--;
