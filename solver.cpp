@@ -51,15 +51,14 @@ using std::stack;
     //     }
     //     depth++;
     // }while(depth < 100);
-    // /*
-    // vector<board> boards;
-    // b.getPossibleStateChanges(boards);
-    // for(int i = 0; i < boards.size(); i++){
-    //     boards[i].printBoard();
-    //     cout << boards[i].getPath() << endl;
-    // }*/
-    // return "no path";
-
+    
+     //vector<board> boards;
+     //b.getPossibleStateChanges(boards);
+     /*for(int i = 0; i < boards.size(); i++){
+         boards[i].printBoard();
+         cout << boards[i].getPath() << endl;
+     }*/
+    //return "no path";
     return IDA(b);
 }
 

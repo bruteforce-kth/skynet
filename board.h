@@ -9,7 +9,8 @@
 #define PLAYER_ON_GOAL  '+'
 #define BOX             '$'
 #define BOX_ON_GOAL     '*'
-#define DEAD            'X'
+#define DEAD            'x'
+#define PLAYER_ON_DEAD  '&'
 
 // Move directions
 #define MOVE_UP         'U'
@@ -36,15 +37,13 @@ class board {
         };
         board (const std::vector<std::vector<char> > &chars);
         board(const std::vector<std::vector<char> > &chars,
-            bool wasPush, char whatGotMeHere,
-             std::set<std::pair<int,int> > deadPositions, std::string path);
+            bool wasPush, char whatGotMeHere, std::string path, 
+             std::vector<std::pair<int,int> > corners);
         board (const board &source, bool wasPush, 
                char whatGotMeHere, std::pair<int,int> playerPos,
                std::vector<std::pair<int,int> > boxPositions);
         const std::vector<std::pair<int,int> > getGoalPositions() const
         { return mGoalPositions; }
-        const std::set<std::pair<int,int> > getDeadPositions() const
-        { return mDeadPositions; }
         const std::vector<std::pair<int,int> > getBoxPositions() const
         { return mBoxPositions; }
         const std::pair<int,int> getPlayerPosition() const
@@ -86,7 +85,7 @@ class board {
         bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);
         void findWallDeadlocks();
         void findDeadlocks(const std::vector<std::vector<char> > &chars);
-        std::set<std::pair<int,int> > mDeadPositions;
+        std::vector<std::pair<int,int> > mCornerPositions;
         std::string mBoxString;
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);

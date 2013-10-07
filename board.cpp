@@ -22,10 +22,10 @@ board::board (const vector<vector<char> > &chars) {
 }
 
 board::board (const vector<vector<char> > &chars, 
-  bool wasPush, char whatGotMeHere, std::set<pair<int,int> > deadPositions, 
-  string path){
+  bool wasPush, char whatGotMeHere,
+  string path, std::vector<std::pair<int,int> > corners){
     this->mBoard = chars;
-    this->mDeadPositions = deadPositions;
+    this->mCornerPositions = corners;
     initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
@@ -79,7 +79,7 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
         return true;
     
     if(investigateWall(direction, wallDirection, position)){
-        mDeadPositions.insert(position);
+        mBoard[position.first][position.second] = DEAD;
         //cout << "Inserted: " << position.first << ", " << position.second << endl;
     }
 }
@@ -88,9 +88,8 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
 
 void board::findWallDeadlocks(){
     pair<int,int> currentDeadPosition;
-    std::set<pair<int,int> >::iterator it;
-    for(it = mDeadPositions.begin(); it != mDeadPositions.end(); it++){
-        currentDeadPosition = *it;
+    for(int i = 0; i < mCornerPositions.size(); i++){
+        currentDeadPosition = mCornerPositions[i];
         investigateWall('N', 'W', currentDeadPosition);
         investigateWall('N', 'E', currentDeadPosition);
         investigateWall('S', 'W', currentDeadPosition);
@@ -125,10 +124,12 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
                     right = chars[i][j+1];
                 }else{ right = WALL;}
                 if(up == WALL && (left == WALL || right == WALL)) {
-                    mDeadPositions.insert(make_pair(i,j));
+                    mBoard[i][j] = DEAD;
+                    mCornerPositions.push_back(make_pair(i,j));
                 }
                 if(down == WALL && (left == WALL || right == WALL)) {
-                    mDeadPositions.insert(make_pair(i,j));
+                    mBoard[i][j] = DEAD;
+                    mCornerPositions.push_back(make_pair(i,j));
                 }
             }
         }
@@ -159,12 +160,13 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
         for (int j = 0; j < chars[i].size(); j++) {
             boardString += chars[i][j];
             char c = chars[i][j];
+            
             // Store goal positions
             if (c == GOAL || c == BOX_ON_GOAL || c == PLAYER_ON_GOAL) {
                 mGoalPositions.push_back(make_pair(i,j));
             }
             // Store player position
-            if (c == PLAYER || c == PLAYER_ON_GOAL) {
+            if (c == PLAYER || c == PLAYER_ON_GOAL || c == PLAYER_ON_DEAD) {
                 mPlayerPos = make_pair(i,j);
             }
             if(c == BOX || c == BOX_ON_GOAL){
@@ -189,6 +191,8 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
 
     if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
         newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+    else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
+        newMap[mPlayerPos.first][mPlayerPos.second] = DEAD;
     else
         newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
 
@@ -199,10 +203,12 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
 
     if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL)
         newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+    else if(newMap[newPlayerPos.first][newPlayerPos.second] == DEAD)
+        newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
-    return new board(newMap, true, lastMove, mDeadPositions, path + lastMove);        
+    return new board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -256,6 +262,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
             /* DID WE LAND ON A GOAL */
             if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
                 newMap[newPlayerPos.first][newPlayerPos.second] = '+';
+            else if(newMap[newPlayerPos.first][newPlayerPos.second] == DEAD)
+                newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
             /* NORMAL MOVE */
             else
                 newMap[newPlayerPos.first][newPlayerPos.second] = '@';
@@ -263,13 +271,15 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
             /* DID WE LEAVE A GOAL POSITION */
             if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
                 newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+            else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
+                newMap[mPlayerPos.first][mPlayerPos.second] = DEAD;
             /* PREVIOUS POSITION WAS NORMAL */
             else
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
     }
-    return new board(newMap, boxPush, direction, mDeadPositions, 
-                     getPath() + direction);
+    return new board(newMap, boxPush, direction, 
+                     getPath() + direction, mCornerPositions);
 }
 
 /*
@@ -288,6 +298,11 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     else if (isBox(row, col)) {
         pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
            prevCol+(col-prevCol)*2);
+        
+        //STATIC DEADLOCKS
+        if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == DEAD){
+            return false;
+        }
         
         //DYNAMIC DEADLOCK
         char up = WALL;
@@ -353,9 +368,11 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         }
         // END DYNAMIC DEADLOCK
         
+    
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
+
     }
     return false;
 }
@@ -374,7 +391,8 @@ bool board::isWalkable(int row, int col) const {
 
     char t = mBoard[row][col];
     // Check regular move
-    if(t == FLOOR || t == GOAL || t == PLAYER || t == PLAYER_ON_GOAL){
+    if(t == FLOOR || t == GOAL || t == PLAYER || t == PLAYER_ON_GOAL || 
+       t == DEAD || t == PLAYER_ON_DEAD){
         return true;    
     }
     return false;
@@ -638,11 +656,15 @@ void board::updatePlayerPosition(std::pair<int, int> newPlayerPosition){
 
     if(mBoard[mPlayerPos.first][mPlayerPos.second] == '+')
         mBoard[mPlayerPos.first][mPlayerPos.second] = '.';
+    else if(mBoard[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
+        mBoard[mPlayerPos.first][mPlayerPos.second] = DEAD;
     else
         mBoard[mPlayerPos.first][mPlayerPos.second] = ' ';
 
     if(mBoard[newPlayerPosition.first][newPlayerPosition.second] == GOAL)
         mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER_ON_GOAL;
+    else if(mBoard[newPlayerPosition.first][newPlayerPosition.second] == DEAD)
+        mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER_ON_DEAD;
     else
         mBoard[newPlayerPosition.first][newPlayerPosition.second] = PLAYER;
     mPlayerPos = newPlayerPosition;
@@ -687,18 +709,19 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
 
     possiblePosition.second--;
     
+    
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
     std::string currPath;
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
+       
         // If we've already determined that this position is reachable, 
         // we don't need to do it again
         if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
             
             // Is the possiblePositions[i] reachable from our position?
-            
             currPath = boxAStar(possiblePositions[i]);
             // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
@@ -757,7 +780,9 @@ void board::getPossibleStateChanges(vector<board> &moves){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
         // Let's look at how many directions it can go
+        
         investigatePushBoxDirections(currentBox, moves);
+        
     }
 }
 
@@ -777,7 +802,7 @@ void board::printBoard() const{
  string board::boxAStar(pair<int,int> goalPos){
     pair<int,int> playerPos = getPlayerPosition();
     if (playerPos == goalPos) {
-        return this->getPath();
+        return getPath();
     }
 
 
@@ -790,7 +815,7 @@ void board::printBoard() const{
     float starting_heuristic = 1 + distance(goalPos, playerPos);
     g_score.insert(make_pair(getBoardString(), 1));
     openQueue.push(make_pair(*this, starting_heuristic));
-
+    
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
