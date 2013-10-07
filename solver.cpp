@@ -21,8 +21,8 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    g_score_map.reserve(600000);
-    visited.reserve(600000);
+    g_score_map.reserve(200000);
+    // visited.reserve(600000);
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
 
@@ -91,7 +91,6 @@ string solver::search(board &b, int depth) {
     return "no path";
 }
 
-
 /*
 board solver::getLockedDownBoxesBoard(const board &boardToConvert){
     vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
@@ -112,20 +111,9 @@ board solver::getLockedDownBoxesBoard(const board &boardToConvert){
  */
  struct fcomparison {
     bool operator() (pair<board,float> a, pair<board,float> b) {
-        return  a.second >= b.second ? true : false;
+        return a.second >= b.second ? true : false;
     }
 };
-
-bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions){
-    bool res = false;
-    for(int i = 0; i < playerPositions.size(); i++){
-        //res = aStarPlayer(b, playerPositions[i]);
-        if(res)
-            return true;
-    }
-    return false;
-}
-
 
 /*
  * Heuristic for A* search. 
@@ -161,33 +149,22 @@ void solver::calculateDistances(const board &b) {
 }
 
 
-
-/*
- * Heuristic for A* player search. 
- */
- int solver::heuristicPlayerDistance(pair<int,int> from, pair<int,int> to) {
-    return distance(from.first,from.second, to.first, to.second);
-}
-
-
-
 /*
  * Returns the estimated distance between two positions
  */
  int solver::distance(int i1, int j1, int i2, int j2) {
-    //std::cout << "distance(" << i1 << ", " << j1 << ", " << i2 << ", " << j2 << ")" << std::endl;
-    // Manhattan method (10 instead of 1)
+    // Manhattan distance
     return 1*abs(i2-i1) + abs(j2-j1);
+
     // Diagonal shortcut
-/*    int xDelta = abs(i2-i1);
-    int yDelta =  abs(j2-j1);
-    if (xDelta > yDelta) {
-        return 14*yDelta + 10*(xDelta-yDelta);
-    }
-    else {
-        return 14*xDelta + 10*(yDelta-xDelta);
-    }
-*/
+    // int xDelta = abs(i2-i1);
+    // int yDelta =  abs(j2-j1);
+    // if (xDelta > yDelta) {
+    //     return 4*yDelta + 3*(xDelta-yDelta);
+    // }
+    // else {
+    //     return 4*xDelta + 3*(yDelta-xDelta);
+    // }
 }
 
 
@@ -201,8 +178,8 @@ string solver::IDA(const board &b) {
         float tempBound = aStar(b, bound);
         if (bound == tempBound)
             break;
-        else
-            bound++;
+        else 
+            bound = tempBound;
         // if (bound >= 600)
         //     return "no path";
     }
@@ -275,24 +252,7 @@ float solver::aStar(const board &b, float bound) {
             if (current_g > 0 && current_g <= temp_g ) {
                 continue;
             }
-            // if(tempBoard.isPush() ) {
-            //     visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
-            //     if ( visited_it != visited.end() ) {
-            //         if(isReachable(tempBoard, visited_it->second)) { //If we can reach a state with the same box positions without pushing
-            //             continue;
-            //         }
-            //         else { // This is a new unique state
-            //             vector<pair<int,int> > currentPlayerPositions = visited_it->second;
-            //             currentPlayerPositions.push_back(tempPlayerPos);
-            //             visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), currentPlayerPositions));
-            //         }
-            //     }
-            //     else{ //If the boxes havent been in this position previously
-            //         vector<pair<int,int> > tempPlayerPos;
-            //         tempPlayerPos.push_back(tempBoard.getPlayerPosition());
-            //         visited.insert(make_pair(hashState(tempBoard.getBoxPositions()), tempPlayerPos));
-            //     }
-            // }
+
             float tempHeuristic = heuristicDistance(tempBoard);
             if (starting_box_distances + bound < tempHeuristic) {
                 if (tempHeuristic < minCost)
@@ -301,7 +261,7 @@ float solver::aStar(const board &b, float bound) {
             }
             else {
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, tempHeuristic));    
+                openQueue.push(make_pair(tempBoard, tempHeuristic));
             }
         }
     }
