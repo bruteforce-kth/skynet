@@ -253,7 +253,6 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
 }
 
 
-
 /*
  * Checks if all boxes are on goals (finish state).
  */
@@ -588,7 +587,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
             currentBox.boxPosition = possiblePosition;
-            
             if(currPath != "\0"){
                 updatePlayerPosition(possiblePositions[i]);
                 mPath = currPath;
@@ -661,11 +659,15 @@ void board::printBoard() const{
  * Finds pushable boxes using A*
  */
  string board::boxAStar(pair<int,int> goalPos){
-    // cout << "current player position: (" << getPlayerPosition().first << ", " << getPlayerPosition().second << ")" << endl;            
+    pair<int,int> playerPos = getPlayerPosition();
+    if (playerPos == goalPos) {
+        return this->getPath();
+    }
+
+
     unordered_map<string,int> g_score_map(200000);
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     std::unordered_map<std::string, int> g_score;
-    pair<int,int> playerPos = getPlayerPosition();
     int px = playerPos.first;
     int py = playerPos.second;
     std::vector<std::pair<int,int> > boxPositions = getBoxPositions();
