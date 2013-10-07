@@ -26,6 +26,10 @@ using std::stack;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
 
+    vector<vector<int> > distanceMatrix;
+    calculateDistances(b, distanceMatrix);
+    //printMatrix(distanceMatrix);
+
     //Iterative deepening
     // TODO if IDA*:
     // Set bound to 0 or higher.
@@ -152,6 +156,25 @@ bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions)
         totalDistances += shortestDistance;
     }
     return totalDistances;
+}
+
+void solver::calculateDistances(const board &b, vector<vector<int> > &distance_matrix) {
+    vector<vector<char> > board = b.getBoardCharVector();
+    distance_matrix.resize(board.size());
+
+    for(int i = 0; i < board.size(); i++) {
+        distance_matrix[i] = vector<int>(board[i].size());
+        for(int j = 0; j < board[i].size(); j++) {
+            int shortestDistance = mBoardSize; // Set to a high value
+            for(int k = 0; k < mGoalPositions.size(); k++) {
+                int d = distance(i, j, mGoalPositions[k].first, mGoalPositions[k].second);
+                if( d < shortestDistance) {
+                    shortestDistance = d;
+                }
+            }
+            distance_matrix[i][j] = shortestDistance;
+        }
+    }
 }
 
 
@@ -313,4 +336,13 @@ return false;
  */
  void solver::printCoordinates(int x, int y) {
     cout << "(" << x << ", " << y << ")";
+}
+
+void solver::printMatrix(vector<vector<int> > &m) {
+    for(int i = 0; i < m.size(); i++) {
+        for(int j = 0; j < m[i].size(); j++) {
+                cout << m[i][j] << ", ";
+        }
+        cout << endl;
+    }
 }
