@@ -23,6 +23,7 @@ class solver {
         std::pair<int,int> mBoxPos;
         std::pair<int,int> mPlayerPos;
         std::pair<int,int> mStartingPos;
+        std::unordered_map<std::string, std::vector<board> > mTransTable;
 
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;

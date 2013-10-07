@@ -196,11 +196,13 @@ void solver::calculateDistances(const board &b) {
  */
 string solver::IDA(const board &b) {
     mPath = "no path";
-    float bound = 3; 
+    float bound = 2; 
     while(mPath == "no path") {
         float tempBound = aStar(b, bound);
         if (bound == tempBound)
             break;
+        else
+            bound++;
         // if (bound >= 600)
         //     return "no path";
     }
@@ -235,7 +237,17 @@ float solver::aStar(const board &b, float bound) {
         // A move is a pair consisting of a pair of coordinates and the 
         // direction taken to reach it from the current node.
         vector<board> moves;
-        currentBoard.getPossibleStateChanges(moves);
+        std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
+        board_map_it = mTransTable.find(currentBoard.getBoardString());
+        if(board_map_it != mTransTable.end()) {
+            //cout << "moves found!" << endl;
+            moves = board_map_it->second;
+        }else{
+            //cout << "no moves found!" << endl;
+            currentBoard.getPossibleStateChanges(moves);
+            mTransTable.insert(make_pair(currentBoard.getBoardString(), moves));
+        }
+
         std::unordered_map<std::string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
