@@ -26,8 +26,7 @@ using std::stack;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
 
-    vector<vector<int> > distanceMatrix;
-    calculateDistances(b, distanceMatrix);
+    calculateDistances(b);
     //printMatrix(distanceMatrix);
 
     //Iterative deepening
@@ -136,34 +135,18 @@ bool solver::isReachable(const board &b, vector<pair<int,int> > playerPositions)
  int solver::heuristicDistance(const board &b) {
     int totalDistances = 0;
     vector< pair<int,int> > boxPositions = b.getBoxPositions();
-    vector<vector<char> > chars = b.getBoardCharVector();
     for (int i = 0; i < boxPositions.size(); ++i) {
-        int shortestDistance = mBoardSize;
-        int x = boxPositions[i].first;
-        int y = boxPositions[i].second;
-        if (chars[x][y] == BOX_ON_GOAL)
-            continue;
-        else {
-            for (int j = 0; j < mGoalPositions.size(); ++j) {
-                int d = distance(x, y, mGoalPositions[j].first, mGoalPositions[j].second);
-                if (d < shortestDistance) {
-                    shortestDistance = d;
-                    if (d == 1)
-                        break;
-                }   
-            }
-        }
-        totalDistances += shortestDistance;
+        totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
     }
     return totalDistances;
 }
 
-void solver::calculateDistances(const board &b, vector<vector<int> > &distance_matrix) {
+void solver::calculateDistances(const board &b) {
     vector<vector<char> > board = b.getBoardCharVector();
-    distance_matrix.resize(board.size());
+    mDistanceMatrix.resize(board.size());
 
     for(int i = 0; i < board.size(); i++) {
-        distance_matrix[i] = vector<int>(board[i].size());
+        mDistanceMatrix[i] = vector<int>(board[i].size());
         for(int j = 0; j < board[i].size(); j++) {
             int shortestDistance = mBoardSize; // Set to a high value
             for(int k = 0; k < mGoalPositions.size(); k++) {
@@ -172,7 +155,7 @@ void solver::calculateDistances(const board &b, vector<vector<int> > &distance_m
                     shortestDistance = d;
                 }
             }
-            distance_matrix[i][j] = shortestDistance;
+            mDistanceMatrix[i][j] = shortestDistance;
         }
     }
 }
@@ -213,7 +196,7 @@ void solver::calculateDistances(const board &b, vector<vector<int> > &distance_m
  */
 string solver::IDA(const board &b) {
     mPath = "no path";
-    float bound = 100; 
+    float bound = 3; 
     while(mPath == "no path") {
         float tempBound = aStar(b, bound);
         if (bound == tempBound)
@@ -229,24 +212,24 @@ float solver::aStar(const board &b, float bound) {
     // A priority queue of moves that are sorted based on their f_score
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
     // Set starting position with null char to let backtrack know we're finished.
-    pair<int,int> playerPos = b.getPlayerPosition();
-    int px = playerPos.first;
-    int py = playerPos.second;
+    // pair<int,int> playerPos = b.getPlayerPosition();
+    // int px = playerPos.first;
+    // int py = playerPos.second;
     // previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
     g_score_map.insert(make_pair(b.getBoardString(), 1));
     // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
 
     int starting_box_distances = heuristicDistance(b);
-    int minCost = starting_box_distances + bound + 1;
-    float starting_heuristic = 1 + starting_box_distances;
+    float minCost = starting_box_distances + bound + 2;
+    float starting_heuristic = starting_box_distances;
     openQueue.push(make_pair(b, starting_heuristic));
     std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        int x = currentBoard.getPlayerPosition().first;
-        int y = currentBoard.getPlayerPosition().second;
+        // int x = currentBoard.getPlayerPosition().first;
+        // int y = currentBoard.getPlayerPosition().second;
 
         // Iterate through all valid moves (neighbours)
         // A move is a pair consisting of a pair of coordinates and the 
@@ -280,10 +263,6 @@ float solver::aStar(const board &b, float bound) {
             if (current_g > 0 && current_g <= temp_g ) {
                 continue;
             }
-            // if (!tempBoard.isPush() && !currentBoard.isPush()) {
-            //     if(isRepeatedMove(currentBoard.getWhatGotMeHere(), tempBoard.getWhatGotMeHere()))
-            //         continue;    
-            // }
             // if(tempBoard.isPush() ) {
             //     visited_it = visited.find(hashState(tempBoard.getBoxPositions()));
             //     if ( visited_it != visited.end() ) {
@@ -316,18 +295,6 @@ float solver::aStar(const board &b, float bound) {
     }
     mPath = "no path";
     return minCost;
-}
-
-
-bool solver::isRepeatedMove(char a, char b) {
-    if(
-        a == 'U' && b == 'D' ||
-        a == 'D' && b == 'U' ||
-        a == 'L' && b == 'R' ||
-        a == 'R' && b == 'L') {
-        return true;
-}
-return false;
 }
 
 
