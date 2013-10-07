@@ -35,14 +35,16 @@ class board {
 
         };
         board (const std::vector<std::vector<char> > &chars);
-        board (const std::vector<std::vector<char> > &chars, 
-               bool wasPush, char whatGotMeHere,
-               std::string path);
+        board(const std::vector<std::vector<char> > &chars,
+            bool wasPush, char whatGotMeHere,
+             std::set<std::pair<int,int> > deadPositions, std::string path);
         board (const board &source, bool wasPush, 
                char whatGotMeHere, std::pair<int,int> playerPos,
                std::vector<std::pair<int,int> > boxPositions);
         const std::vector<std::pair<int,int> > getGoalPositions() const
         { return mGoalPositions; }
+        const std::set<std::pair<int,int> > getDeadPositions() const
+        { return mDeadPositions; }
         const std::vector<std::pair<int,int> > getBoxPositions() const
         { return mBoxPositions; }
         const std::pair<int,int> getPlayerPosition() const
@@ -79,6 +81,12 @@ class board {
         std::string getBoxString() const
         { return mBoxString; }
     private:
+        std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
+        bool stillHuggingWall(char wallDirection, std::pair<int,int> position);
+        bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);
+        void findWallDeadlocks();
+        void findDeadlocks(const std::vector<std::vector<char> > &chars);
+        std::set<std::pair<int,int> > mDeadPositions;
         std::string mBoxString;
         std::string mPath;
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);

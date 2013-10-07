@@ -15,20 +15,127 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
+    findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
 }
 
 board::board (const vector<vector<char> > &chars, 
-  bool wasPush, char whatGotMeHere, string path){
+  bool wasPush, char whatGotMeHere, std::set<pair<int,int> > deadPositions, 
+  string path){
     this->mBoard = chars;
+    this->mDeadPositions = deadPositions;
     initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
     mPath = path;
 }
 
+pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
+    pair<int,int> newPos = position;
+    switch(direction){
+        case 'N':
+            newPos.first--;
+            break;
+        case 'S':
+            newPos.first++;
+            break;
+        case 'W':
+            newPos.second--;
+            break;
+        case 'E':
+            newPos.second++;
+            break;
+    }
+
+    return newPos;
+}
+
+bool board::stillHuggingWall(char wallDirection, pair<int,int> position){
+    pair<int,int> wallPosition = getRelativePosition(wallDirection, position);
+    if(wallPosition.first >= mBoard.size() || position.second >= mBoard[position.first].size())
+        return false;
+    if(wallPosition.first < 0 || wallPosition.second < 0)
+        return false;
+    if(mBoard[wallPosition.first][wallPosition.second] == WALL)
+        return true;
+    return false;
+}
+
+bool board::investigateWall(char direction, char wallDirection, pair<int,int> position){
+    
+    position = getRelativePosition(direction, position);
+    if(position.first >= mBoard.size() || position.second >= mBoard[position.first].size())
+        return false; //Outside of map
+    if(position.first < 0 || position.second < 0)
+        return false;
+    
+    if(mBoard[position.first][position.second] == GOAL || mBoard[position.first][position.second] == BOX_ON_GOAL)
+        return false;
+    if(!stillHuggingWall(wallDirection, position))
+        return false;
+    if(mBoard[position.first][position.second] == WALL)
+        return true;
+    
+    if(investigateWall(direction, wallDirection, position)){
+        mDeadPositions.insert(position);
+        //cout << "Inserted: " << position.first << ", " << position.second << endl;
+    }
+}
+
+
+
+void board::findWallDeadlocks(){
+    pair<int,int> currentDeadPosition;
+    std::set<pair<int,int> >::iterator it;
+    for(it = mDeadPositions.begin(); it != mDeadPositions.end(); it++){
+        currentDeadPosition = *it;
+        investigateWall('N', 'W', currentDeadPosition);
+        investigateWall('N', 'E', currentDeadPosition);
+        investigateWall('S', 'W', currentDeadPosition);
+        investigateWall('S', 'E', currentDeadPosition);
+        investigateWall('W', 'N', currentDeadPosition);
+        investigateWall('W', 'S', currentDeadPosition);
+        investigateWall('E', 'N', currentDeadPosition);
+        investigateWall('E', 'S', currentDeadPosition);
+    }
+}
+
+void board::findDeadlocks(const vector<vector<char> > &chars) {
+    for (int i = 0; i < chars.size(); i++) {
+        for (int j = 0; j < chars[i].size(); j++) {
+            char c = chars[i][j];
+            // DEADLOCK CHECK
+            if(c == PLAYER || c == FLOOR){
+                char up;
+                char down;
+                char left;
+                char right;
+                if(i > 0){
+                    up = chars[i-1][j];
+                }else{ up = WALL;}
+                if(i < chars.size() - 1){
+                    down = chars[i+1][j];
+                }else{ down = WALL;}
+                if(j > 0){
+                    left = chars[i][j-1];
+                }else{ left = WALL;}
+                if(j < chars[i].size() - 1){
+                    right = chars[i][j+1];
+                }else{ right = WALL;}
+                if(up == WALL && (left == WALL || right == WALL)) {
+                    mDeadPositions.insert(make_pair(i,j));
+                }
+                if(down == WALL && (left == WALL || right == WALL)) {
+                    mDeadPositions.insert(make_pair(i,j));
+                }
+            }
+        }
+    }
+    findWallDeadlocks();
+    //cout << "Size of mDeadPositions: " << mDeadPositions.size() << endl;
+}
 
 /*
  * Custom comparator for A* that compares the f_score of two coordinates.
@@ -95,7 +202,7 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
-    return new board(newMap, true, lastMove, path + lastMove);        
+    return new board(newMap, true, lastMove, mDeadPositions, path + lastMove);        
 }
 
 board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
@@ -161,7 +268,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
     }
-    return new board(newMap, boxPush, direction, getPath() + direction);
+    return new board(newMap, boxPush, direction, mDeadPositions, 
+                     getPath() + direction);
 }
 
 /*
