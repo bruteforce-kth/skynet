@@ -39,6 +39,7 @@ class solver {
 
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const board &b);
+        void calculateDistances(const board &b, std::vector<std::vector<int> > &distance_matrix);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
 
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
@@ -50,4 +51,5 @@ class solver {
         float aStar(const board &b, float bound);
 
         void printCoordinates(int x, int y);
+        void printMatrix(std::vector<std::vector<int> > &m);
 };
