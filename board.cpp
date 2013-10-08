@@ -188,7 +188,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 }
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
-board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
+board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
                          char lastMove, string path){
 
     
@@ -215,10 +215,10 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
-    return new board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
+    return board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
 }
 
-board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
+board board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -285,7 +285,7 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
     }
-    return new board(newMap, boxPush, direction, 
+    return board(newMap, boxPush, direction, 
                      getPath() + direction, mCornerPositions);
 }
 
@@ -427,16 +427,16 @@ bool board::isBox(int row, int col) const{
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
 
@@ -445,16 +445,16 @@ void board::getAllValidWalkMoves(vector<board> &moves) const{
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isWalkable(row-1, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isWalkable(row+1, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isWalkable(row, col-1)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isWalkable(row, col+1)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
 
@@ -487,7 +487,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
 
                     char lastMove = translateDirection(getDirectionToPos(possibles[i],
                                           possibleBoxPush.boxPosition));
-                    moves.push_back(*doLongMove(possibleBoxPush.boxPosition, 
+                    moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
                                     pushedBoxCoordinates, lastMove, path));
                     
             }
