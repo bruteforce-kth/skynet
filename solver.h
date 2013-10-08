@@ -31,7 +31,6 @@ class solver {
         bool mBoundUsed;
 
         std::unordered_map<std::string, int> g_score_map;
-        std::unordered_map<std::string, std::vector<std::pair<int,int> > > visited;
 
         std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
 
