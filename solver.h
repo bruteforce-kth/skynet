@@ -23,9 +23,11 @@ class solver {
         std::pair<int,int> mBoxPos;
         std::pair<int,int> mPlayerPos;
         std::pair<int,int> mStartingPos;
+        std::unordered_map<std::string, std::vector<board> > mTransTable;
 
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
+        std::vector< std::vector<int> > mDistanceMatrix;
         std::vector< std::vector<float> > f_score;    // Heuristic cost used in A*
         std::vector< std::vector<int> > g_score;    // Number of steps taken, used in A*
 
@@ -39,7 +41,7 @@ class solver {
 
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const board &b);
-        void calculateDistances(const board &b, std::vector<std::vector<int> > &distance_matrix);
+        void calculateDistances(const board &b);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
 
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
