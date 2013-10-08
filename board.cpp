@@ -15,7 +15,7 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    //findDeadlocks(chars);
+    findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -79,7 +79,11 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
         return true;
     
     if(investigateWall(direction, wallDirection, position)){
-        mBoard[position.first][position.second] = DEAD;
+        if(mBoard[position.first][position.second] == PLAYER ||
+            mBoard[position.first][position.second] == PLAYER_ON_DEAD)
+            mBoard[position.first][position.second] = PLAYER_ON_DEAD;
+        else
+            mBoard[position.first][position.second] = DEAD;
         //cout << "Inserted: " << position.first << ", " << position.second << endl;
     }
 }
@@ -128,7 +132,10 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
                     mCornerPositions.push_back(make_pair(i,j));
                 }
                 if(down == WALL && (left == WALL || right == WALL)) {
-                    mBoard[i][j] = DEAD;
+                    if(mBoard[i][j] == PLAYER)
+                        mBoard[i][j] = PLAYER_ON_DEAD;
+                    else
+                        mBoard[i][j] = DEAD;
                     mCornerPositions.push_back(make_pair(i,j));
                 }
             }

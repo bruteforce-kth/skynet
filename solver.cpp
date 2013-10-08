@@ -57,6 +57,8 @@ using std::stack;
          boards[i].printBoard();
          cout << boards[i].getPath() << endl;
      }*/
+    
+    //b.printBoard();
     //return "no path";
 
     // return aStar(b, 99999999);
