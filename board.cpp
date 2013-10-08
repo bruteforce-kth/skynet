@@ -726,9 +726,9 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
             currentBox.boxPosition = possiblePosition;
-            if(currPath != "\0"){
-                updatePlayerPosition(possiblePositions[i]);
-                mPath = currPath;
+            if(currPath != "x"){
+                //updatePlayerPosition(possiblePositions[i]);
+                //mPath = currPath;
                 // cout << "currPath: " << currPath << endl; 
                 // cout << "for this board: " << endl;
                 // printBoard();
@@ -858,7 +858,7 @@ void board::printBoard() const{
             }
         }
     }
-    return "\0";
+    return "x";
 }
 
 /*
