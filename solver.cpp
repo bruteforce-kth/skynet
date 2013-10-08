@@ -170,6 +170,7 @@ string solver::IDA(const board &b) {
     float bound = 6;
     mBoundUsed = true;
     while(solution == "no path" && mBoundUsed) {
+        //b.printBoard();
         solution =  aStar(b, bound);
         ++bound;
     }
@@ -190,7 +191,7 @@ string solver::aStar(const board &b, float bound) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        currentBoard.printBoard();
+        //currentBoard.printBoard();
 
         // Iterate through all valid pushes
         vector<board> moves;
@@ -233,7 +234,7 @@ string solver::aStar(const board &b, float bound) {
             float tempHeuristic = heuristicDistance(tempBoard);
             if (starting_box_distances + bound < tempHeuristic) {
                 mBoundUsed = true;
-                continue;
+                continue; // <<<<< Is this correct?
             }
             else {
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));

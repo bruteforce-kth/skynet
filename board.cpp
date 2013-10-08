@@ -339,32 +339,32 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
         right = mBoard[boxPos.first][boxPos.second+1];
     }
 
-    if(up == WALL || up == BOX) {
-        if(upl == WALL || upl == BOX) {
-            if(left == WALL || left == BOX) {
+    if(up == WALL || up == BOX || up == BOX_ON_GOAL) {
+        if(upl == WALL || upl == BOX || upl == BOX_ON_GOAL) {
+            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
                 //std::cerr << "Deadlock 1";
                 isAccessibleRestore(row, col);
                 return true;
             }
         }
-        if(upr == WALL || upr == BOX) {
-            if(right == WALL || right == BOX) {
+        if(upr == WALL || upr == BOX || upr == BOX_ON_GOAL) {
+            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
                 isAccessibleRestore(row, col);
                 //std::cerr << "Deadlock 2";
                 return true;
             }
         }
     }
-    if(down == WALL || down == BOX){
-        if(downl == WALL || downl == BOX) {
-            if(left == WALL || left == BOX) {
+    if(down == WALL || down == BOX || down == BOX_ON_GOAL){
+        if(downl == WALL || downl == BOX || downl == BOX_ON_GOAL) {
+            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
                 isAccessibleRestore(row, col);
                 //std::cerr << "Deadlock 3";
                 return true;
             }
         }
-        if(downr == WALL || downr == BOX) {
-            if(right == WALL || right == BOX) {
+        if(downr == WALL || downr == BOX || downr == BOX_ON_GOAL) {
+            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
                 //std::cerr << "Deadlock 4";
                 isAccessibleRestore(row, col);
                 return true;
@@ -404,9 +404,9 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
         if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == GOAL){
             return true;        
         }
-
+        //DYNAMIC DEADLOCKS
         if(isDynamicDeadlock(row, col, boxPos))
-            return false;        
+           return false;        
 
         
         
