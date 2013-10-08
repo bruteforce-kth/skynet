@@ -58,6 +58,9 @@ using std::stack;
          cout << boards[i].getPath() << endl;
      }*/
     //return "no path";
+
+    // return aStar(b, 99999999);
+
     return IDA(b);
 }
 
@@ -171,55 +174,36 @@ void solver::calculateDistances(const board &b) {
  * IDA*
  */
 string solver::IDA(const board &b) {
-    mPath = "no path";
-    float bound = 2; 
-    while(mPath == "no path") {
-        float tempBound = aStar(b, bound);
-        if (bound == tempBound)
-            break;
-        else 
-            bound = tempBound;
-        // if (bound >= 600)
-        //     return "no path";
+    string solution = "no path";
+    float bound = 0;
+    while(solution == "no path") {
+        solution =  aStar(b, bound);
+        ++bound;
     }
-    return mPath;
+    return solution;
 }
 
-float solver::aStar(const board &b, float bound) {
+string solver::aStar(const board &b, float bound) {
     std::unordered_map<std::string, int> g_score_map;
     // A priority queue of moves that are sorted based on their f_score
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
-    // Set starting position with null char to let backtrack know we're finished.
-    // pair<int,int> playerPos = b.getPlayerPosition();
-    // int px = playerPos.first;
-    // int py = playerPos.second;
-    // previous[px][py].push_back(make_pair(make_pair(-1,-1), '\0'));
     g_score_map.insert(make_pair(b.getBoardString(), 1));
-    // f_score[px][py] = 1 + heuristicDistance(b.getBoxPositions());
-
     int starting_box_distances = heuristicDistance(b);
-    float minCost = starting_box_distances + bound + 2;
-    float starting_heuristic = starting_box_distances;
-    openQueue.push(make_pair(b, starting_heuristic));
+    openQueue.push(make_pair(b, (float)starting_box_distances));
     std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        // int x = currentBoard.getPlayerPosition().first;
-        // int y = currentBoard.getPlayerPosition().second;
-
-        // Iterate through all valid moves (neighbours)
-        // A move is a pair consisting of a pair of coordinates and the 
-        // direction taken to reach it from the current node.
+        // Iterate through all valid pushes
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
         board_map_it = mTransTable.find(currentBoard.getBoardString());
         if(board_map_it != mTransTable.end()) {
-            //cout << "moves found!" << endl;
+            // cout << "moves found!" << endl;
             moves = board_map_it->second;
         }else{
-            //cout << "no moves found!" << endl;
+            // cout << "no moves found!" << endl;
             currentBoard.getPossibleStateChanges(moves);
             mTransTable.insert(make_pair(currentBoard.getBoardString(), moves));
         }
@@ -230,12 +214,9 @@ float solver::aStar(const board &b, float bound) {
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
 
             if (tempBoard.isFinished()) {
-                mPath = tempBoard.getPath();
-                return -1;
+                return tempBoard.getPath();
             }
 
-            int tempX = tempPlayerPos.first;
-            int tempY = tempPlayerPos.second;
             int temp_g = g_score_map.at(currentBoard.getBoardString()) + 1;
             int current_g;
             map_it = g_score_map.find(tempBoard.getBoardString());
@@ -253,19 +234,15 @@ float solver::aStar(const board &b, float bound) {
             }
 
             float tempHeuristic = heuristicDistance(tempBoard);
-            if (starting_box_distances + bound < tempHeuristic) {
-                if (tempHeuristic < minCost)
-                    minCost = tempHeuristic;
+            if (starting_box_distances + bound < tempHeuristic)
                 continue;
-            }
             else {
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
                 openQueue.push(make_pair(tempBoard, tempHeuristic));
             }
         }
     }
-    mPath = "no path";
-    return minCost;
+    return "no path";
 }
 
 
