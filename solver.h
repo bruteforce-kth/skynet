@@ -50,7 +50,7 @@ class solver {
         board getLockedDownBoxesBoard(const board &boardToConvert);
 
         std::string IDA(const board &b);
-        float aStar(const board &b, float bound);
+        std::string aStar(const board &b, float bound);
 
         void printCoordinates(int x, int y);
         void printMatrix(std::vector<std::vector<int> > &m);
