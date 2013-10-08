@@ -15,7 +15,7 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    findDeadlocks(chars);
+    //findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
