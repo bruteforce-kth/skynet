@@ -15,7 +15,7 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    findDeadlocks(chars);
+    //findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -294,8 +294,8 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
  */
  bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
     // If we can't stand here    
-    //if (!isWalkable(prevRow, prevCol))
-    //    return false;
+    if (!isWalkable(prevRow, prevCol))
+        return false;
 
     // Check regular move
     if (isWalkable(row, col)){
