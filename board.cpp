@@ -15,7 +15,7 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    //findDeadlocks(chars);
+    findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -218,7 +218,7 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     return board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
 }
 
-board board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
+board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -289,10 +289,99 @@ board board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
                      getPath() + direction, mCornerPositions);
 }
 
+void board::isAccessibleRestore(int row, int col){
+
+    if(mBoard[row][col] == GOAL)
+        mBoard[row][col] = BOX_ON_GOAL;
+    else
+        mBoard[row][col] = BOX;
+    return;
+
+}
+
+bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
+
+    if(mBoard[row][col] == BOX_ON_GOAL)
+            mBoard[row][col] = GOAL;
+    else
+        mBoard[row][col] = FLOOR;
+    char up = WALL;
+    char upr = WALL;
+    char upl = WALL;
+    char down = WALL;
+    char downr = WALL;
+    char downl = WALL;
+    char left = WALL;
+    char right = WALL;
+
+    if(boxPos.first > 0){                            // SET UP
+        up = mBoard[boxPos.first-1][boxPos.second];
+        if(boxPos.second > 0){                        // SET UP LEFT CORNER
+            upl = mBoard[boxPos.first-1][boxPos.second-1];
+        }
+        if(boxPos.second < mBoard[boxPos.first-1].size() - 1){ // SET UP RIGHT CORNER
+            upr = mBoard[boxPos.first-1][boxPos.second+1];
+        }
+    }
+    if(boxPos.first < mBoard.size() - 1){            // SET DOWN
+        down = mBoard[boxPos.first+1][boxPos.second];
+        if(boxPos.second > 0){                        // SET DOWN LEFT CORNER
+            downl = mBoard[boxPos.first+1][boxPos.second-1];
+        }
+        if(boxPos.second < mBoard[boxPos.first+1].size() - 1) {
+            downr = mBoard[boxPos.first+1][boxPos.second+1];
+        }
+    }
+    if(boxPos.second > 0){                            // SET LEFT
+        left = mBoard[boxPos.first][boxPos.second-1];
+    }
+    if(boxPos.second < mBoard[boxPos.first].size() - 1){       // SET RIGHT
+        right = mBoard[boxPos.first][boxPos.second+1];
+    }
+
+    if(up == WALL || up == BOX) {
+        if(upl == WALL || upl == BOX) {
+            if(left == WALL || left == BOX) {
+                //std::cerr << "Deadlock 1";
+                isAccessibleRestore(row, col);
+                return true;
+            }
+        }
+        if(upr == WALL || upr == BOX) {
+            if(right == WALL || right == BOX) {
+                isAccessibleRestore(row, col);
+                //std::cerr << "Deadlock 2";
+                return true;
+            }
+        }
+    }
+    if(down == WALL || down == BOX){
+        if(downl == WALL || downl == BOX) {
+            if(left == WALL || left == BOX) {
+                isAccessibleRestore(row, col);
+                //std::cerr << "Deadlock 3";
+                return true;
+            }
+        }
+        if(downr == WALL || downr == BOX) {
+            if(right == WALL || right == BOX) {
+                //std::cerr << "Deadlock 4";
+                isAccessibleRestore(row, col);
+                return true;
+            }
+        }
+    }
+    // END DYNAMIC DEADLOCK
+    
+    isAccessibleRestore(row, col);
+    
+    return false;
+}
+
 /*
  * Checks if a position on the board is accessible.
  */
- bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
+ bool board::isAccessible(int row, int col, int prevRow, int prevCol) {
     // If we can't stand here    
     if (!isWalkable(prevRow, prevCol))
         return false;
@@ -306,76 +395,21 @@ board board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
            prevCol+(col-prevCol)*2);
         
+        
+                
         //STATIC DEADLOCKS
         if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == DEAD){
             return false;
         }
-        
-        //DYNAMIC DEADLOCK
-        char up = WALL;
-        char upr = WALL;
-        char upl = WALL;
-        char down = WALL;
-        char downr = WALL;
-        char downl = WALL;
-        char left = WALL;
-        char right = WALL;
-        if(row > 0){                            // SET UP
-            up = mBoard[row-1][col];
-            if(col > 0){                        // SET UP LEFT CORNER
-                upl = mBoard[row-1][col-1];
-            }
-            if(col < mBoard[row-1].size() - 1){ // SET UP RIGHT CORNER
-                upr = mBoard[row-1][col+1];
-            }
-        }
-        if(row < mBoard.size() - 1){            // SET DOWN
-            down = mBoard[row+1][col];
-            if(col > 0){                        // SET DOWN LEFT CORNER
-                downl = mBoard[row+1][col-1];
-            }
-            if(col < mBoard[row+1].size() - 1) {
-                downr = mBoard[row+1][col+1];
-            }
-        }
-        if(col > 0){                            // SET LEFT
-            left = mBoard[row][col-1];
-        }
-        if(col < mBoard[row].size() - 1){       // SET RIGHT
-            right = mBoard[row][col+1];
+        if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == GOAL){
+            return true;        
         }
 
-        if(up == WALL || up == BOX) {
-            if(upl == WALL || upl == BOX) {
-                if(left == WALL || left == BOX) {
-                    //std::cerr << "Deadlock 1";
-                    return false;
-                }
-            }
-            if(upr == WALL || upr == BOX) {
-                if(right == WALL || right == BOX) {
-                    //std::cerr << "Deadlock 2";
-                    return false;
-                }
-            }
-        }
-        if(down == WALL || down == BOX){
-            if(downl == WALL || downl == BOX) {
-                if(left == WALL || left == BOX) {
-                    //std::cerr << "Deadlock 3";
-                    return false;
-                }
-            }
-            if(downr == WALL || downr == BOX) {
-                if(right == WALL || right == BOX) {
-                    //std::cerr << "Deadlock 4";
-                    return false;
-                }
-            }
-        }
-        // END DYNAMIC DEADLOCK
+        if(isDynamicDeadlock(row, col, boxPos))
+            return false;        
+
         
-    
+        
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
@@ -422,7 +456,7 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
- void board::getAllValidMoves(vector<board> &moves) const{
+ void board::getAllValidMoves(vector<board> &moves) {
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
@@ -440,7 +474,7 @@ bool board::isBox(int row, int col) const{
     }
 }
 
-void board::getAllValidWalkMoves(vector<board> &moves) const{
+void board::getAllValidWalkMoves(vector<board> &moves) {
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;

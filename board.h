@@ -58,12 +58,12 @@ class board {
         { mPath = mPath + newPath; }
         std::vector<std::vector<char> > getBoardCharVector() const
         {return mBoard; }
-        bool isAccessible(int row, int col, int prevRow, int prevCol) const;
+        bool isAccessible(int row, int col, int prevRow, int prevCol);
         bool isWalkable(int row, int col) const;
         bool isGoal(int row, int col) const;
         bool isBox(int row, int col) const;
-        void getAllValidMoves(std::vector<board> &moves) const;
-        void getAllValidWalkMoves(std::vector<board> &moves) const;
+        void getAllValidMoves(std::vector<board> &moves);
+        void getAllValidWalkMoves(std::vector<board> &moves);
         bool isFinished() const;
         bool isPush() const
         { return mWasPush; }
@@ -80,6 +80,8 @@ class board {
         std::string getBoxString() const
         { return mBoxString; }
     private:
+        bool isDynamicDeadlock(int row, int col, std::pair<int,int> boxPos);
+        void isAccessibleRestore(int row, int col);
         std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
         bool stillHuggingWall(char wallDirection, std::pair<int,int> position);
         bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);
@@ -97,7 +99,7 @@ class board {
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
-        board doMove(std::pair<int,int> newPlayerPos, char direction) const;
+        board doMove(std::pair<int,int> newPlayerPos, char direction);
         void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
         void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, std::vector<board> &moves, std::string path);
