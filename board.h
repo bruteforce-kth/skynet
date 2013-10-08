@@ -74,7 +74,7 @@ class board {
         std::string boxAStar(std::pair<int,int> goalBox);
         int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
         int distance(std::pair<int,int> i, std::pair<int,int> j);
-        board* doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
+        board doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
                          char lastMove, std::string path);
         void setBoxPositionsString();
         std::string getBoxString() const
@@ -97,7 +97,7 @@ class board {
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
-        board* doMove(std::pair<int,int> newPlayerPos, char direction) const;
+        board doMove(std::pair<int,int> newPlayerPos, char direction) const;
         void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
         void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, std::vector<board> &moves, std::string path);
