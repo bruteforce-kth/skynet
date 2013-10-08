@@ -178,7 +178,8 @@ void solver::calculateDistances(const board &b) {
 string solver::IDA(const board &b) {
     string solution = "no path";
     float bound = 0;
-    while(solution == "no path") {
+    mBoundUsed = true;
+    while(solution == "no path" && mBoundUsed) {
         solution =  aStar(b, bound);
         ++bound;
     }
@@ -186,6 +187,7 @@ string solver::IDA(const board &b) {
 }
 
 string solver::aStar(const board &b, float bound) {
+    mBoundUsed = false;
     std::unordered_map<std::string, int> g_score_map;
     // A priority queue of moves that are sorted based on their f_score
     priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
@@ -236,8 +238,10 @@ string solver::aStar(const board &b, float bound) {
             }
 
             float tempHeuristic = heuristicDistance(tempBoard);
-            if (starting_box_distances + bound < tempHeuristic)
+            if (starting_box_distances + bound < tempHeuristic) {
+                mBoundUsed = true;
                 continue;
+            }
             else {
                 g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
                 openQueue.push(make_pair(tempBoard, tempHeuristic));

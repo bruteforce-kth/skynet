@@ -28,8 +28,7 @@ class solver {
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
         std::vector< std::vector<int> > mDistanceMatrix;
-        std::vector< std::vector<float> > f_score;    // Heuristic cost used in A*
-        std::vector< std::vector<int> > g_score;    // Number of steps taken, used in A*
+        bool mBoundUsed;
 
         std::unordered_map<std::string, int> g_score_map;
         std::unordered_map<std::string, std::vector<std::pair<int,int> > > visited;
