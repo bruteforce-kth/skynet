@@ -15,40 +15,28 @@ class solver {
         std::string solve(board &b);
 
     private:
-
         //VAIRABLES
         int mBoardSize;
         std::string mPath;
-
+        bool mBoundUsed;
         std::pair<int,int> mBoxPos;
         std::pair<int,int> mPlayerPos;
         std::pair<int,int> mStartingPos;
         std::unordered_map<std::string, std::vector<board> > mTransTable;
-
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
         std::vector< std::vector<int> > mDistanceMatrix;
-        bool mBoundUsed;
-
-        std::unordered_map<std::string, int> g_score_map;
-
-        std::vector< std::vector<std::vector<std::pair<std::pair<int,int>, char> > > > previous;
 
         //FUNCTIONS
         std::string search(board &b, int depth);
-
         int distance(int i1, int j1, int i2, int j2);
         int heuristicDistance(const board &b);
         void calculateDistances(const board &b);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
-
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
         bool isRepeatedMove(char a, char b);
-
-        board getLockedDownBoxesBoard(const board &boardToConvert);
-
         std::string IDA(const board &b);
-        std::string aStar(const board &b, float bound);
+        int aStar(const board &b, int bound);
 
         void printCoordinates(int x, int y);
         void printMatrix(std::vector<std::vector<int> > &m);

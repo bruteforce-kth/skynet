@@ -16,13 +16,10 @@ using std::stack;
  solver::solver() {}
 
 
-
 /*
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    g_score_map.reserve(200000);
-    // visited.reserve(600000);
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -50,7 +47,8 @@ using std::stack;
     //return "no path";
 
     // A* only
-    // return aStar(b, 99999999);
+    // aStar(b, 99999999);
+    // return mPath;
 
     // IDA
     return IDA(b);
@@ -60,10 +58,6 @@ using std::stack;
  * Search the state space using dfs
  */
 string solver::search(board &b, int depth) {
-
-    // cout << "current player position: (" << b.getPlayerPosition().first << ", " << b.getPlayerPosition().second << ")" << endl;
-    // b.printBoard();
-
     if (b.isFinished()) {
         // cout << "finished" << endl;
         return b.getPath();
@@ -86,26 +80,11 @@ string solver::search(board &b, int depth) {
 }
 
 /*
-board solver::getLockedDownBoxesBoard(const board &boardToConvert){
-    vector<vector<char> > boardChars = boardToConvert.getBoardCharVector();
-    for(int row = 0; row < boardChars.size(); row++){
-        for(int col = 0; col < boardChars[row].size(); col++){
-            if(boardChars[row][col] == '*' || boardChars[row][col] == '$')
-                boardChars[row][col] = '#';
-        }
-    }
-    return board(boardChars, boardToConvert.isPush(), 
-     boardToConvert.getWhatGotMeHere(), 
-     boardToConvert.getDeadPositions(), boardToConvert.getPath()); 
-}
-*/
-
-/*
  * Custom comparator for A* that compares the f_score of two coordinates.
  */
  struct fcomparison {
-    bool operator() (pair<board,float> a, pair<board,float> b) {
-        return a.second >= b.second ? true : false;
+    bool operator() (pair<board,int> a, pair<board,int> b) {
+        return a.second > b.second ? true : false;
     }
 };
 
@@ -164,38 +143,54 @@ void solver::calculateDistances(const board &b) {
 
 /*
  * IDA*
+ *
+ * The A* will skip branches with f_score > bound,
+ * and the next iteration will run with the bound set to the lowest 
+ * skipped f_score.
  */
 string solver::IDA(const board &b) {
-    string solution = "no path";
-    float bound = 6;
+    mPath = "no path";
+    int start_h = heuristicDistance(b);
+    // Arbitrary start bound. Preferably board-dependent.
+    int bound = start_h*2 + 4;
     mBoundUsed = true;
-    while(solution == "no path" && mBoundUsed) {
-        //b.printBoard();
-        solution =  aStar(b, bound);
-        ++bound;
+    while(mPath == "no path" && mBoundUsed) {
+        // A* returns the lowest f_score that was skipped
+        bound = aStar(b, bound);
     }
-    return solution;
+    return mPath;
 }
 
-string solver::aStar(const board &b, float bound) {
+int solver::aStar(const board &b, int bound) {
     mBoundUsed = false;
-    std::unordered_map<std::string, int> visited;
-    std::unordered_map<std::string,vector<pair<int,int> > >::const_iterator visited_it;
-    std::unordered_map<std::string, int> g_score_map;
-    // A priority queue of moves that are sorted based on their f_score
-    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
-    g_score_map.insert(make_pair(b.getBoardString(), 1));
-    int starting_box_distances = heuristicDistance(b);
-    openQueue.push(make_pair(b, (float)starting_box_distances));
+    // minCost is the lowest f score skipped. Used by IDA in the next iteration.
+    // Set to +inf here.
+    int minCost = b.getBoardSize()*2;
+    // g = number of pushes made
+    std::unordered_map<std::string, int> g_score;
+    // f = heuristic
+    std::unordered_map<std::string, int> f_score;
+    // Keep track of visited states. Locally.
+    std::unordered_map<std::string, int> closed;
+
+    // A priority queue of moves that are sorted based on their heuristic
+    priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
+    int start_h = heuristicDistance(b);
+    g_score.insert(make_pair(b.getBoardString(), 1));
+    f_score.insert(make_pair(b.getBoardString(), 1 + start_h));
+
+    openQueue.push(make_pair(b, start_h));
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
+        // Mark as processed
+        closed.insert(make_pair(currentBoard.getBoardString(), 0));
 
-        //currentBoard.printBoard();
+        // currentBoard.printBoard();
 
-        // Iterate through all valid pushes
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
+        // Check if the pushes for this state has already been calculated. 
         board_map_it = mTransTable.find(currentBoard.getBoardString());
         if(board_map_it != mTransTable.end()) {
             // cout << "moves found!" << endl;
@@ -206,43 +201,48 @@ string solver::aStar(const board &b, float bound) {
             mTransTable.insert(make_pair(currentBoard.getBoardString(), moves));
         }
 
+        // Loop over all possible pushes
         std::unordered_map<std::string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
 
+            // Finished? Set path and return
             if (tempBoard.isFinished()) {
-                return tempBoard.getPath();
+                mPath = tempBoard.getPath();
+                return -1; 
             }
 
-            int temp_g = g_score_map.at(currentBoard.getBoardString()) + 1;
-            int current_g;
-            map_it = g_score_map.find(tempBoard.getBoardString());
-            if ( map_it != g_score_map.end() ) {
-                current_g = map_it->second;
-            }
-            else {
-                current_g = 0;
-            }
-
-            // Skip move if the position is in the open or closed set with a lower g_score
-            // g_scores are initalized to 0 and start at 1, so an initialized g_score is always positive
-            if (current_g > 0 && current_g <= temp_g ) {
-                continue;
+            // Calculate new g and f
+            int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
+            int t_f_score = t_g_score + 10*heuristicDistance(tempBoard);
+            map_it = closed.find(tempBoard.getBoardString());
+            // If already visited, skip.
+            if ( map_it != closed.end() ){
+                // Optional. Only skip visited states if we had a lower f
+                // if (f_score.at(tempBoard.getBoardString()) < t_f_score ) {
+                    continue;
+                // }
             }
 
-            float tempHeuristic = heuristicDistance(tempBoard);
-            if (starting_box_distances + bound < tempHeuristic) {
+            // IDA bounds checking. If we're above bound, skip this push.
+            if (bound < t_f_score) {
+                // Keep track of the lowest f_score skipped to use in the next iteration.
+                if (t_f_score < minCost)
+                    minCost = t_f_score;
                 mBoundUsed = true;
-                continue; // <<<<< Is this correct?
+                continue; 
             }
             else {
-                g_score_map.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, tempHeuristic));
+                // Add the push to the queue and store g and f.
+                g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
+                f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
+                openQueue.push(make_pair(tempBoard, t_f_score));
             }
         }
     }
-    return "no path";
+    mPath = "no path";
+    return minCost;
 }
 
 
