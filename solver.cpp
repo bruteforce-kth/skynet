@@ -24,7 +24,7 @@ using std::stack;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
-    //printMatrix(mDistanceMatrix);
+    printMatrix(mDistanceMatrix);
     
     // int depth = 2;
     // string solution;
@@ -202,7 +202,7 @@ int solver::aStar(const board &b, int bound) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        //currentBoard.printBoard();
+        currentBoard.printBoard();
 
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;

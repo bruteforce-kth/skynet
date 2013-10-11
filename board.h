@@ -18,9 +18,13 @@
 #define MOVE_LEFT       'L'
 #define MOVE_RIGHT      'R'
 
+#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <queue>
+#include <string.h>
+#include <unordered_map>
 
 
 
@@ -110,6 +114,8 @@ class board {
                                     std::pair<int,int> boxCoordinates);
         char translateDirection(char nsew);
         void updatePlayerPosition(std::pair<int, int> newPlayerPosition);
+
+        bool isDeadspace(int row, int col);
 };
 
 #endif
