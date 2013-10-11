@@ -128,14 +128,19 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
                     right = chars[i][j+1];
                 }else{ right = WALL;}
                 if(up == WALL && (left == WALL || right == WALL)) {
-                    mBoard[i][j] = DEAD;
+                    if(mBoard[i][j] == PLAYER){
+                        mBoard[i][j] = PLAYER_ON_DEAD;
+                    }else{
+                        mBoard[i][j] = DEAD;
+                    }
                     mCornerPositions.push_back(make_pair(i,j));
                 }
                 if(down == WALL && (left == WALL || right == WALL)) {
-                    if(mBoard[i][j] == PLAYER)
+                    if(mBoard[i][j] == PLAYER){
                         mBoard[i][j] = PLAYER_ON_DEAD;
-                    else
+                    }else{
                         mBoard[i][j] = DEAD;
+                    }
                     mCornerPositions.push_back(make_pair(i,j));
                 }
             }
