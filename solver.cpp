@@ -20,6 +20,7 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
+    h_coeff = 7;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -127,17 +128,7 @@ void solver::calculateDistances(const board &b) {
  */
  int solver::distance(int i1, int j1, int i2, int j2) {
     // Manhattan distance
-    return 1*abs(i2-i1) + abs(j2-j1);
-
-    // Diagonal shortcut
-    // int xDelta = abs(i2-i1);
-    // int yDelta =  abs(j2-j1);
-    // if (xDelta > yDelta) {
-    //     return 4*yDelta + 3*(xDelta-yDelta);
-    // }
-    // else {
-    //     return 4*xDelta + 3*(yDelta-xDelta);
-    // }
+    return abs(i2-i1) + abs(j2-j1);
 }
 
 
@@ -152,7 +143,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = start_h*2 + 2;
+    int bound = h_coeff*start_h + b.getBoardSize()/8;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -162,6 +153,7 @@ string solver::IDA(const board &b) {
 }
 
 int solver::aStar(const board &b, int bound) {
+    // cout << "RUNNING A*" << endl;
     mBoundUsed = false;
     // minCost is the lowest f score skipped. Used by IDA in the next iteration.
     // Set to +inf here.
@@ -186,8 +178,6 @@ int solver::aStar(const board &b, int bound) {
         // Mark as processed
         closed.insert(make_pair(currentBoard.getBoardString(), 0));
 
-        // currentBoard.printBoard();
-
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
         // Check if the pushes for this state has already been calculated. 
@@ -205,6 +195,7 @@ int solver::aStar(const board &b, int bound) {
         std::unordered_map<std::string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
+
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
 
             // Finished? Set path and return
@@ -215,14 +206,14 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = t_g_score + 8*heuristicDistance(tempBoard);
+            int t_f_score = t_g_score + h_coeff*heuristicDistance(tempBoard);
             map_it = closed.find(tempBoard.getBoardString());
             // If already visited, skip.
             if ( map_it != closed.end() ){
                 // Optional. Only skip visited states if we had a lower f
-                // if (f_score.at(tempBoard.getBoardString()) < t_f_score ) {
+                if (f_score.at(tempBoard.getBoardString()) < t_f_score ) {
                     continue;
-                // }
+                }
             }
 
             // IDA bounds checking. If we're above bound, skip this push.
@@ -231,6 +222,7 @@ int solver::aStar(const board &b, int bound) {
                 if (t_f_score < minCost)
                     minCost = t_f_score;
                 mBoundUsed = true;
+                // cout << "bound is: " << bound << " and f_score is: " << t_f_score << endl;
                 continue; 
             }
             else {

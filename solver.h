@@ -16,6 +16,7 @@ class solver {
 
     private:
         //VAIRABLES
+        int h_coeff;
         int mBoardSize;
         std::string mPath;
         bool mBoundUsed;
