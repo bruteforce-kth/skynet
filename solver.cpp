@@ -20,7 +20,7 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    h_coeff = 7;
+    h_coeff = 1;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -37,7 +37,6 @@ using std::stack;
     //     }
     //     depth++;
     // }while(depth < 100);
-    
      //vector<board> boards;
      //b.getPossibleStateChanges(boards);
      /*for(int i = 0; i < boards.size(); i++){
@@ -96,9 +95,12 @@ string solver::search(board &b, int depth) {
  * all boxes shortest distance to a goal.
  */
  int solver::heuristicDistance(const board &b) {
+    vector <vector<char> > board = b.getBoardCharVector();
     int totalDistances = 0;
     vector< pair<int,int> > boxPositions = b.getBoxPositions();
     for (int i = 0; i < boxPositions.size(); ++i) {
+        if (board[boxPositions[i].first][boxPositions[i].second] == BOX_ON_GOAL)
+            continue;
         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
     }
     return totalDistances;
@@ -143,7 +145,7 @@ void solver::calculateDistances(const board &b) {
                     shortestDistance = d;
                 }
             }
-            mDistanceMatrix[i][j] = shortestDistance;
+            mDistanceMatrix[i][j] = shortestDistance + b.getBoardSize();
         }
     }
 }
@@ -169,7 +171,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h + b.getBoardSize()/8;
+    int bound = h_coeff*start_h + 10;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -183,7 +185,7 @@ int solver::aStar(const board &b, int bound) {
     mBoundUsed = false;
     // minCost is the lowest f score skipped. Used by IDA in the next iteration.
     // Set to +inf here.
-    int minCost = b.getBoardSize()*2;
+    int minCost = b.getBoardSize()*100;
     // g = number of pushes made
     std::unordered_map<std::string, int> g_score;
     // f = heuristic
@@ -202,7 +204,7 @@ int solver::aStar(const board &b, int bound) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        //currentBoard.printBoard();
+        // currentBoard.printBoard();
 
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
@@ -243,7 +245,11 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = t_g_score + h_coeff*heuristicDistance(tempBoard);
+            int t_f_score = t_g_score*(mBoardSize/20) + h_coeff*heuristicDistance(tempBoard);
+
+            // cout << "g_score:" << t_g_score << endl;
+            // cout << "heuristic: " << heuristicDistance(tempBoard) << endl;
+            // cout << "t_f_score: " << t_f_score << endl;
 
             // IDA bounds checking. If we're above bound, skip this push.
             if (bound < t_f_score) {
