@@ -21,3 +21,7 @@ main
 
 # Solution file
 Path.txt
+
+# Kattis files
+.kattisrc
+submit.py
