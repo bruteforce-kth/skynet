@@ -24,6 +24,7 @@ using std::stack;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
+    //printMatrix(mDistanceMatrix);
     
     // int depth = 2;
     // string solution;
@@ -110,9 +111,34 @@ void solver::calculateDistances(const board &b) {
     for(int i = 0; i < board.size(); i++) {
         mDistanceMatrix[i] = vector<int>(board[i].size());
         for(int j = 0; j < board[i].size(); j++) {
-            int shortestDistance = mBoardSize; // Set to a high value
+            int shortestDistance = b.getBoardSize(); // Set to a high value
             for(int k = 0; k < mGoalPositions.size(); k++) {
-                int d = distance(i, j, mGoalPositions[k].first, mGoalPositions[k].second);
+                pair<int,int> goal = mGoalPositions[k];
+                int d = distance(i, j, goal.first, goal.second);
+                if(goal.first > 0
+                        && ( board[goal.first-1][goal.second] == WALL
+                            || board[goal.first-1][goal.second] == DEAD
+                            || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.first < board.size()-1
+                        && ( board[goal.first+1][goal.second] == WALL
+                            || board[goal.first+1][goal.second] == DEAD
+                            || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.second > 0
+                        && ( board[goal.first][goal.second-1] == WALL
+                            || board[goal.first][goal.second-1] == DEAD
+                            || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.second < board[goal.first].size()-1
+                        && ( board[goal.first][goal.second+1] == WALL
+                            || board[goal.first][goal.second+1] == DEAD
+                            || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
                 if( d < shortestDistance) {
                     shortestDistance = d;
                 }
@@ -176,7 +202,7 @@ int solver::aStar(const board &b, int bound) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
 
-        // currentBoard.printBoard();
+        //currentBoard.printBoard();
 
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
