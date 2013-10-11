@@ -163,7 +163,7 @@ int solver::aStar(const board &b, int bound) {
     // f = heuristic
     std::unordered_map<std::string, int> f_score;
     // Keep track of visited states. Locally.
-    std::unordered_map<std::string, int> closed;
+    std::unordered_map<std::string, int> closed(600000);
 
     // A priority queue of moves that are sorted based on their heuristic
     priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
@@ -175,8 +175,8 @@ int solver::aStar(const board &b, int bound) {
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
         openQueue.pop();
-        // Mark as processed
-        closed.insert(make_pair(currentBoard.getBoardString(), 0));
+
+        // currentBoard.printBoard();
 
         vector<board> moves;
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
@@ -196,6 +196,17 @@ int solver::aStar(const board &b, int bound) {
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
 
+            // If f_score check is done, this code block has to be moved to after
+            // the f_score calculation below.
+            map_it = closed.find(tempBoard.getBoardString());
+            // If already visited, skip.
+            if ( map_it != closed.end() ){
+                // Optional. Only skip visited states if we had a lower f
+                // if (f_score.at(tempBoard.getBoardString()) <= t_f_score ) {
+                    continue;
+                // }
+            }
+
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
 
             // Finished? Set path and return
@@ -207,14 +218,6 @@ int solver::aStar(const board &b, int bound) {
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
             int t_f_score = t_g_score + h_coeff*heuristicDistance(tempBoard);
-            map_it = closed.find(tempBoard.getBoardString());
-            // If already visited, skip.
-            if ( map_it != closed.end() ){
-                // Optional. Only skip visited states if we had a lower f
-                if (f_score.at(tempBoard.getBoardString()) < t_f_score ) {
-                    continue;
-                }
-            }
 
             // IDA bounds checking. If we're above bound, skip this push.
             if (bound < t_f_score) {
@@ -222,7 +225,6 @@ int solver::aStar(const board &b, int bound) {
                 if (t_f_score < minCost)
                     minCost = t_f_score;
                 mBoundUsed = true;
-                // cout << "bound is: " << bound << " and f_score is: " << t_f_score << endl;
                 continue; 
             }
             else {
@@ -230,6 +232,8 @@ int solver::aStar(const board &b, int bound) {
                 g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
                 f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
                 openQueue.push(make_pair(tempBoard, t_f_score));
+                // Mark as processed
+                closed.insert(make_pair(tempBoard.getBoardString(), 0));
             }
         }
     }
