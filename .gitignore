@@ -25,3 +25,6 @@ Path.txt
 # Kattis files
 .kattisrc
 submit.py
+
+# scripts
+compileAndRun.sh
