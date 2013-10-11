@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unordered_map>
 #include <queue>
+#include <unistd.h>
+
 using std::cout;
 using std::endl;
 using std::pair;
@@ -15,7 +17,7 @@ using std::priority_queue;
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     initializeIndexAndPositions(chars);
-    findDeadlocks(chars);
+    //findDeadlocks(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -79,7 +81,11 @@ bool board::investigateWall(char direction, char wallDirection, pair<int,int> po
         return true;
     
     if(investigateWall(direction, wallDirection, position)){
-        mBoard[position.first][position.second] = DEAD;
+        if(mBoard[position.first][position.second] == PLAYER ||
+            mBoard[position.first][position.second] == PLAYER_ON_DEAD)
+            mBoard[position.first][position.second] = PLAYER_ON_DEAD;
+        else
+            mBoard[position.first][position.second] = DEAD;
         //cout << "Inserted: " << position.first << ", " << position.second << endl;
     }
 }
@@ -124,11 +130,19 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
                     right = chars[i][j+1];
                 }else{ right = WALL;}
                 if(up == WALL && (left == WALL || right == WALL)) {
-                    mBoard[i][j] = DEAD;
+                    if(mBoard[i][j] == PLAYER){
+                        mBoard[i][j] = PLAYER_ON_DEAD;
+                    }else{
+                        mBoard[i][j] = DEAD;
+                    }
                     mCornerPositions.push_back(make_pair(i,j));
                 }
                 if(down == WALL && (left == WALL || right == WALL)) {
-                    mBoard[i][j] = DEAD;
+                    if(mBoard[i][j] == PLAYER){
+                        mBoard[i][j] = PLAYER_ON_DEAD;
+                    }else{
+                        mBoard[i][j] = DEAD;
+                    }
                     mCornerPositions.push_back(make_pair(i,j));
                 }
             }
@@ -181,7 +195,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 }
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
-board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
+board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
                          char lastMove, string path){
 
     
@@ -208,10 +222,10 @@ board* board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> new
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
     
-    return new board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
+    return board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
 }
 
-board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
+board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
     bool boxPush = false;
     std::vector<std::vector<char> > newMap = mBoard;
     if( isAccessible(newPlayerPos.first, newPlayerPos.second,
@@ -278,17 +292,106 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
     }
-    return new board(newMap, boxPush, direction, 
+    return board(newMap, boxPush, direction, 
                      getPath() + direction, mCornerPositions);
+}
+
+void board::isAccessibleRestore(int row, int col){
+
+    if(mBoard[row][col] == GOAL)
+        mBoard[row][col] = BOX_ON_GOAL;
+    else
+        mBoard[row][col] = BOX;
+    return;
+
+}
+
+bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
+
+    if(mBoard[row][col] == BOX_ON_GOAL)
+            mBoard[row][col] = GOAL;
+    else
+        mBoard[row][col] = FLOOR;
+    char up = WALL;
+    char upr = WALL;
+    char upl = WALL;
+    char down = WALL;
+    char downr = WALL;
+    char downl = WALL;
+    char left = WALL;
+    char right = WALL;
+
+    if(boxPos.first > 0){                            // SET UP
+        up = mBoard[boxPos.first-1][boxPos.second];
+        if(boxPos.second > 0){                        // SET UP LEFT CORNER
+            upl = mBoard[boxPos.first-1][boxPos.second-1];
+        }
+        if(boxPos.second < mBoard[boxPos.first-1].size() - 1){ // SET UP RIGHT CORNER
+            upr = mBoard[boxPos.first-1][boxPos.second+1];
+        }
+    }
+    if(boxPos.first < mBoard.size() - 1){            // SET DOWN
+        down = mBoard[boxPos.first+1][boxPos.second];
+        if(boxPos.second > 0){                        // SET DOWN LEFT CORNER
+            downl = mBoard[boxPos.first+1][boxPos.second-1];
+        }
+        if(boxPos.second < mBoard[boxPos.first+1].size() - 1) {
+            downr = mBoard[boxPos.first+1][boxPos.second+1];
+        }
+    }
+    if(boxPos.second > 0){                            // SET LEFT
+        left = mBoard[boxPos.first][boxPos.second-1];
+    }
+    if(boxPos.second < mBoard[boxPos.first].size() - 1){       // SET RIGHT
+        right = mBoard[boxPos.first][boxPos.second+1];
+    }
+
+    if(up == WALL || up == BOX || up == BOX_ON_GOAL) {
+        if(upl == WALL || upl == BOX || upl == BOX_ON_GOAL) {
+            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+                //std::cerr << "Deadlock 1";
+                isAccessibleRestore(row, col);
+                return true;
+            }
+        }
+        if(upr == WALL || upr == BOX || upr == BOX_ON_GOAL) {
+            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+                isAccessibleRestore(row, col);
+                //std::cerr << "Deadlock 2";
+                return true;
+            }
+        }
+    }
+    if(down == WALL || down == BOX || down == BOX_ON_GOAL){
+        if(downl == WALL || downl == BOX || downl == BOX_ON_GOAL) {
+            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+                isAccessibleRestore(row, col);
+                //std::cerr << "Deadlock 3";
+                return true;
+            }
+        }
+        if(downr == WALL || downr == BOX || downr == BOX_ON_GOAL) {
+            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+                //std::cerr << "Deadlock 4";
+                isAccessibleRestore(row, col);
+                return true;
+            }
+        }
+    }
+    // END DYNAMIC DEADLOCK
+    
+    isAccessibleRestore(row, col);
+    
+    return false;
 }
 
 /*
  * Checks if a position on the board is accessible.
  */
- bool board::isAccessible(int row, int col, int prevRow, int prevCol) const{
+ bool board::isAccessible(int row, int col, int prevRow, int prevCol) {
     // If we can't stand here    
-    //if (!isWalkable(prevRow, prevCol))
-    //    return false;
+    if (!isWalkable(prevRow, prevCol))
+        return false;
 
     // Check regular move
     if (isWalkable(row, col)){
@@ -299,76 +402,21 @@ board* board::doMove(std::pair<int,int> newPlayerPos, char direction) const{
         pair<int,int> boxPos = make_pair(prevRow+(row-prevRow)*2,
            prevCol+(col-prevCol)*2);
         
+        
+                
         //STATIC DEADLOCKS
         if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == DEAD){
             return false;
         }
-        
-        //DYNAMIC DEADLOCK
-        char up = WALL;
-        char upr = WALL;
-        char upl = WALL;
-        char down = WALL;
-        char downr = WALL;
-        char downl = WALL;
-        char left = WALL;
-        char right = WALL;
-        if(row > 0){                            // SET UP
-            up = mBoard[row-1][col];
-            if(col > 0){                        // SET UP LEFT CORNER
-                upl = mBoard[row-1][col-1];
-            }
-            if(col < mBoard[row-1].size() - 1){ // SET UP RIGHT CORNER
-                upr = mBoard[row-1][col+1];
-            }
+        if (mBoard[prevRow+(row-prevRow)*2][prevCol+(col-prevCol)*2] == GOAL){
+            return true;        
         }
-        if(row < mBoard.size() - 1){            // SET DOWN
-            down = mBoard[row+1][col];
-            if(col > 0){                        // SET DOWN LEFT CORNER
-                downl = mBoard[row+1][col-1];
-            }
-            if(col < mBoard[row+1].size() - 1) {
-                downr = mBoard[row+1][col+1];
-            }
-        }
-        if(col > 0){                            // SET LEFT
-            left = mBoard[row][col-1];
-        }
-        if(col < mBoard[row].size() - 1){       // SET RIGHT
-            right = mBoard[row][col+1];
-        }
+        //DYNAMIC DEADLOCKS
+        if(isDynamicDeadlock(row, col, boxPos))
+           return false;        
 
-        if(up == WALL || up == BOX) {
-            if(upl == WALL || upl == BOX) {
-                if(left == WALL || left == BOX) {
-                    //std::cerr << "Deadlock 1";
-                    return false;
-                }
-            }
-            if(upr == WALL || upr == BOX) {
-                if(right == WALL || right == BOX) {
-                    //std::cerr << "Deadlock 2";
-                    return false;
-                }
-            }
-        }
-        if(down == WALL || down == BOX){
-            if(downl == WALL || downl == BOX) {
-                if(left == WALL || left == BOX) {
-                    //std::cerr << "Deadlock 3";
-                    return false;
-                }
-            }
-            if(downr == WALL || downr == BOX) {
-                if(right == WALL || right == BOX) {
-                    //std::cerr << "Deadlock 4";
-                    return false;
-                }
-            }
-        }
-        // END DYNAMIC DEADLOCK
         
-    
+        
         if (isWalkable(prevRow+(row-prevRow)*2,prevCol+(col-prevCol)*2)){
             return true;
         }
@@ -415,39 +463,39 @@ bool board::isBox(int row, int col) const{
 /*
  * Returns all valid moves from the specified position
  */
- void board::getAllValidMoves(vector<board> &moves) const{
+ void board::getAllValidMoves(vector<board> &moves) {
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isAccessible(row-1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isAccessible(row+1, col, row, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isAccessible(row, col-1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isAccessible(row, col+1, row, col)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
 
-void board::getAllValidWalkMoves(vector<board> &moves) const{
+void board::getAllValidWalkMoves(vector<board> &moves) {
     int row = getPlayerPosition().first;
     int col = getPlayerPosition().second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isWalkable(row-1, col)) {
-        moves.push_back(*doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
     }
     if (isWalkable(row+1, col)) {
-        moves.push_back(*doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isWalkable(row, col-1)) {
-        moves.push_back(*doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isWalkable(row, col+1)) {
-        moves.push_back(*doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
 
@@ -462,12 +510,10 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
  vector<pair<int,int> > &possibles, vector<board> &moves, string path){
 
     for(int i = 0; i < possibles.size(); i++){
+        
         //Can we push the box from this position?
         
-        if(isAccessible(possibleBoxPush.boxPosition.first,
-                                possibleBoxPush.boxPosition.second,
-                                possibles[i].first,
-                                possibles[i].second)){
+     
             //cout << "ISACCESIBLE\n";
             
             if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
@@ -480,14 +526,24 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
 
                     char lastMove = translateDirection(getDirectionToPos(possibles[i],
                                           possibleBoxPush.boxPosition));
-                    moves.push_back(*doLongMove(possibleBoxPush.boxPosition, 
+                    moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
                                     pushedBoxCoordinates, lastMove, path));
                     
             }
-        }
-
+        
+        
     }
 
+}
+
+bool board::tileIsNotBlocked(char tile){
+
+    if(tile == FLOOR || tile == GOAL ||
+       tile == DEAD || tile == PLAYER ||
+       tile == PLAYER_ON_GOAL || tile == PLAYER_ON_DEAD)
+        return true;
+    return false;
+    
 }
 
 /*
@@ -501,94 +557,147 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
     char axis;
     // Investigatorpos will hold the coordinates of the currently investigated
     // adjacent position to box
-    pair<int, int> investigatorPos = possibleBoxPush.playerPosition;
+    pair<int, int> investigatorPos = possibleBoxPush.boxPosition;
+    investigatorPos.second--; // Place investigator west of box
     // This vector will hold positions that are reachable by local
     // search but are yet to be determined if the box can be pushed from that
     // position.
     vector<pair<int, int> > possiblePositions;
-
+    possiblePositions.push_back(possibleBoxPush.playerPosition);
     /*
-     * REST OF THIS METHOD IS JUST STEPPING THROUGH
-     * TILES AROUND THE BOX AND ADDING THE RELEVANT POSITIONS
-     * INTO "possiblePositions". Ends with calling "investigateThesePositions".
-     * LEFT TODO IS INVESTIGATING THE OPPOSITE SIDE OF THE BOX, IF POSSIBLE
-     */
-    /*
-    if(directionToBox == 'N' || directionToBox == 'S')
-        axis = 'x';
-    else
-        axis = 'y';
+    vector<pair<char, pair<int, int> > > tilesClockwise(16);
+        
+    
+    tilesClockwise[0].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[0].second = investigatorPos;
+    tilesClockwise[8].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[8].second = investigatorPos;
+    investigatorPos.first--;
+    tilesClockwise[1].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[1].second = investigatorPos;
+    tilesClockwise[9].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[9].second = investigatorPos;
+    investigatorPos.second++;
+    tilesClockwise[2].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[2].second = investigatorPos;
+    tilesClockwise[10].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[10].second = investigatorPos;
+    investigatorPos.second++;
+    tilesClockwise[3].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[3].second = investigatorPos;
+    tilesClockwise[11].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[11].second = investigatorPos;
+    investigatorPos.first++;
+    tilesClockwise[4].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[4].second = investigatorPos;
+    tilesClockwise[12].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[12].second = investigatorPos;
+    investigatorPos.first++;
+    tilesClockwise[5].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[5].second = investigatorPos;
+    tilesClockwise[13].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[13].second = investigatorPos;
+    investigatorPos.second--;
+    tilesClockwise[6].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[6].second = investigatorPos;
+    tilesClockwise[14].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[14].second = investigatorPos;
+    investigatorPos.second--;
+    tilesClockwise[7].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[7].second = investigatorPos;
+    tilesClockwise[15].first = mBoard[investigatorPos.first][investigatorPos.second];
+    tilesClockwise[15].second = investigatorPos;
 
-    if(axis == 'x'){
-        //Step to the right
-        investigatorPos.second++;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step up
-            if(directionToBox == 'N'){
-                investigatorPos.first--;
-                //Maybe we can push from this direction as well!
-                possiblePositions.push_back(investigatorPos);
+    int startPos = 0;
+    switch(directionToBox){
+        case 'E':
+            startPos = 0;
+            break;
+        case 'S':
+            startPos = 2;
+            break;
+        case 'W':
+            startPos = 4;
+            break;
+        case 'N':
+            startPos = 6;
+            break;   
+    }
+
+    if(tileIsNotBlocked(tilesClockwise[startPos+1].first)){
+        if(tileIsNotBlocked(tilesClockwise[startPos+2].first)){
+            
+            if(tileIsNotBlocked(tilesClockwise[startPos+6].first) && 
+               tilesClockwise[startPos+6].first != DEAD && 
+               tilesClockwise[startPos+6].first != PLAYER_ON_DEAD){
+                //cout << "First\n";
+                possiblePositions.push_back(tilesClockwise[startPos+2].second);
             }
-            else {
-                investigatorPos.first++;
-                possiblePositions.push_back(investigatorPos);
-            }        
-        }
-        //Step to the left
-        investigatorPos = possibleBoxPush.playerPosition;
-        investigatorPos.second--;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step up
-            if(directionToBox == 'N'){
-                investigatorPos.first--;
-                //Maybe we can push from this direction as well!
-                possiblePositions.push_back(investigatorPos);
+            
+            if(tileIsNotBlocked(tilesClockwise[startPos+3].first)){
+                if(tileIsNotBlocked(tilesClockwise[startPos+4].first)){
+                    
+                    if(tileIsNotBlocked(tilesClockwise[startPos+8].first) && 
+                       tilesClockwise[startPos+8].first != DEAD && 
+                       tilesClockwise[startPos+8].first != PLAYER_ON_DEAD){
+                       //cout << "Second\n";
+                       possiblePositions.push_back(tilesClockwise[startPos+4].second);
+                    }
+                    
+                    if(tileIsNotBlocked(tilesClockwise[startPos+5].first)){
+                        if(tileIsNotBlocked(tilesClockwise[startPos+6].first)){
+                            
+                            if(tileIsNotBlocked(tilesClockwise[startPos+2].first) && 
+                                tilesClockwise[startPos+2].first != DEAD && 
+                                tilesClockwise[startPos+2].first != PLAYER_ON_DEAD){
+                                //cout << "Third\n";
+                                //cout << tilesClockwise[startPos+6].second.first << endl;
+                                possiblePositions.push_back(tilesClockwise[startPos+6].second);
+                            }
+                        }
+                    }
+                }
             }
-            else {
-                investigatorPos.first++;
-                possiblePositions.push_back(investigatorPos);
-            }        
         }
     }
-    //Axis is y
-    else {
-        //Step up
-        investigatorPos.first--;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step left
-            if(directionToBox == 'W'){
-                investigatorPos.second--;
-                possiblePositions.push_back(investigatorPos);
-            }
-            //Step right
-            else {
-                investigatorPos.second++;
-                possiblePositions.push_back(investigatorPos);            
+    if(tileIsNotBlocked(tilesClockwise[startPos+7].first)){
+        if(tileIsNotBlocked(tilesClockwise[startPos+6].first)){
+            
+            if(tileIsNotBlocked(tilesClockwise[startPos+2].first) && 
+               tilesClockwise[startPos+2].first != DEAD && 
+               tilesClockwise[startPos+2].first != PLAYER_ON_DEAD){
+                //cout << "Fourth\n";
+                possiblePositions.push_back(tilesClockwise[startPos+6].second);
+             }
+            
+            if(tileIsNotBlocked(tilesClockwise[startPos+5].first)){
+                if(tileIsNotBlocked(tilesClockwise[startPos+4].first)){
+                    
+                    if(tileIsNotBlocked(tilesClockwise[startPos+0].first) && 
+                       tilesClockwise[startPos+0].first != DEAD && 
+                       tilesClockwise[startPos+0].first != PLAYER_ON_DEAD){
+                        //cout << "Fifth\n";
+                       possiblePositions.push_back(tilesClockwise[startPos+4].second);
+                    }
+                    
+                    if(tileIsNotBlocked(tilesClockwise[startPos+3].first)){
+                        if(tileIsNotBlocked(tilesClockwise[startPos+2].first)){
+                            
+                            if(tileIsNotBlocked(tilesClockwise[startPos+6].first) && 
+                                tilesClockwise[startPos+6].first != DEAD && 
+                                tilesClockwise[startPos+6].first != PLAYER_ON_DEAD)
+                                //cout << "Sixth\n";
+                                possiblePositions.push_back(tilesClockwise[startPos+2].second);
+                        }
+                    }
+                }
             }
         }
-        //Step down
-        investigatorPos = possibleBoxPush.playerPosition;
-        investigatorPos.first++;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step left
-            if(directionToBox == 'W'){
-                investigatorPos.second--;
-                possiblePositions.push_back(investigatorPos);
-            }
-            //Step right
-            else {
-                investigatorPos.second++;
-                possiblePositions.push_back(investigatorPos);            
-            }
-        }
-    }*/
-
-    if(possiblePositions.size() > 3)
-        cout << "Problem in circleBox!" << endl;
-
+    }
     
-    possiblePositions.push_back(possibleBoxPush.playerPosition);
+    */
     investigateThesePositions(possibleBoxPush, possiblePositions, moves, path);
+    
     
 }
 
@@ -708,27 +817,28 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
         possiblePositions.push_back(possiblePosition);
 
     possiblePosition.second--;
-    
+
     
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
     char directionToBox;
     std::string currPath;
     // Loop through all of the directly adjacent positions to the box
-    for(int i = 0; i < possiblePositions.size(); i++){
-       
+    for(int i = 0; i < possiblePositions.size(); i++){   
+
         // If we've already determined that this position is reachable, 
         // we don't need to do it again
+
         if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
-            
             // Is the possiblePositions[i] reachable from our position?
             currPath = boxAStar(possiblePositions[i]);
+            //cout << "Called boxAStar" << endl;
             // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
             
             currentBox.boxPosition = possiblePosition;
-            if(currPath != "\0"){
-                updatePlayerPosition(possiblePositions[i]);
-                mPath = currPath;
+            if(currPath != "x"){
+                //updatePlayerPosition(possiblePositions[i]);
+                //mPath = currPath;
                 // cout << "currPath: " << currPath << endl; 
                 // cout << "for this board: " << endl;
                 // printBoard();
@@ -779,6 +889,7 @@ void board::getPossibleStateChanges(vector<board> &moves){
     for(int i = 0; i < mBoxPositions.size(); i++){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
+        currentBox.positionsAroundBox.clear();
         // Let's look at how many directions it can go
         
         investigatePushBoxDirections(currentBox, moves);
@@ -858,7 +969,7 @@ void board::printBoard() const{
             }
         }
     }
-    return "\0";
+    return "x";
 }
 
 /*
