@@ -186,6 +186,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
             }
             ++index;
         }
+        boardString += '\n';
     }
     mBoardString = boardString;
     mBoardSize = size;
@@ -825,6 +826,7 @@ void board::getPossibleStateChanges(vector<board> &moves){
     for(int i = 0; i < mBoxPositions.size(); i++){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
+        currentBox.positionsAroundBox.clear();
         // Let's look at how many directions it can go
         
         investigatePushBoxDirections(currentBox, moves);
@@ -833,13 +835,14 @@ void board::getPossibleStateChanges(vector<board> &moves){
 }
 
 void board::printBoard() const{
+    cout << mBoardString << endl;
     // std::cout << "printBoard" << std::endl;
-    for (int i = 0; i < mBoard.size(); i++) {
-        for (int j = 0; j < mBoard[i].size(); j++) {
-            cout << mBoard[i][j];
-        }
-        cout << '\n';
-    }
+    //for (int i = 0; i < mBoard.size(); i++) {
+    //    for (int j = 0; j < mBoard[i].size(); j++) {
+    //        cout << mBoard[i][j];
+    //    }
+    //    cout << '\n';
+    //}
 }
 
 /*
