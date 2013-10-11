@@ -84,7 +84,7 @@ string solver::search(board &b, int depth) {
  */
  struct fcomparison {
     bool operator() (pair<board,int> a, pair<board,int> b) {
-        return a.second > b.second ? true : false;
+        return a.second >= b.second ? true : false;
     }
 };
 
@@ -152,7 +152,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = start_h*2 + 4;
+    int bound = start_h*2 + 2;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -215,7 +215,7 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = t_g_score + 10*heuristicDistance(tempBoard);
+            int t_f_score = t_g_score + 8*heuristicDistance(tempBoard);
             map_it = closed.find(tempBoard.getBoardString());
             // If already visited, skip.
             if ( map_it != closed.end() ){
