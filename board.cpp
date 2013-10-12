@@ -579,10 +579,11 @@ bool board::isDeadspace(int row, int col) {
 
 
         //DYNAMIC DEADLOCKS
+        /*
         if(isDynamicDeadlock(row, col, boxPos)){
            //cout << "dynamic deadlock found" << endl;
            return false;
-        }
+        }*/
 
         if (mBoard[boxPos.first][boxPos.second] == GOAL){
             return true;        
@@ -684,11 +685,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
 
     for(int i = 0; i < possibles.size(); i++){
         //Can we push the box from this position?
-        
-        if(isAccessible(possibleBoxPush.boxPosition.first,
-                                possibleBoxPush.boxPosition.second,
-                                possibles[i].first,
-                                possibles[i].second)){
+
             //cout << "ISACCESIBLE\n";
             
             if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
@@ -707,7 +704,7 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
             }
         }
 
-    }
+    
 
 }
 
@@ -727,82 +724,6 @@ void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToB
     // search but are yet to be determined if the box can be pushed from that
     // position.
     vector<pair<int, int> > possiblePositions;
-
-    /*
-     * REST OF THIS METHOD IS JUST STEPPING THROUGH
-     * TILES AROUND THE BOX AND ADDING THE RELEVANT POSITIONS
-     * INTO "possiblePositions". Ends with calling "investigateThesePositions".
-     * LEFT TODO IS INVESTIGATING THE OPPOSITE SIDE OF THE BOX, IF POSSIBLE
-     */
-    /*
-    if(directionToBox == 'N' || directionToBox == 'S')
-        axis = 'x';
-    else
-        axis = 'y';
-
-    if(axis == 'x'){
-        //Step to the right
-        investigatorPos.second++;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step up
-            if(directionToBox == 'N'){
-                investigatorPos.first--;
-                //Maybe we can push from this direction as well!
-                possiblePositions.push_back(investigatorPos);
-            }
-            else {
-                investigatorPos.first++;
-                possiblePositions.push_back(investigatorPos);
-            }        
-        }
-        //Step to the left
-        investigatorPos = possibleBoxPush.playerPosition;
-        investigatorPos.second--;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step up
-            if(directionToBox == 'N'){
-                investigatorPos.first--;
-                //Maybe we can push from this direction as well!
-                possiblePositions.push_back(investigatorPos);
-            }
-            else {
-                investigatorPos.first++;
-                possiblePositions.push_back(investigatorPos);
-            }        
-        }
-    }
-    //Axis is y
-    else {
-        //Step up
-        investigatorPos.first--;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step left
-            if(directionToBox == 'W'){
-                investigatorPos.second--;
-                possiblePositions.push_back(investigatorPos);
-            }
-            //Step right
-            else {
-                investigatorPos.second++;
-                possiblePositions.push_back(investigatorPos);            
-            }
-        }
-        //Step down
-        investigatorPos = possibleBoxPush.playerPosition;
-        investigatorPos.first++;
-        if(isWalkable(investigatorPos.first, investigatorPos.second)){
-            //Step left
-            if(directionToBox == 'W'){
-                investigatorPos.second--;
-                possiblePositions.push_back(investigatorPos);
-            }
-            //Step right
-            else {
-                investigatorPos.second++;
-                possiblePositions.push_back(investigatorPos);            
-            }
-        }
-    }*/
 
     if(possiblePositions.size() > 3)
         cout << "Problem in circleBox!" << endl;
@@ -912,21 +833,49 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // Checks if box is pushable from all directions
     possiblePosition.first--;
     if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
+                    possiblePosition.first, possiblePosition.second)){
+        possiblePosition.first += 2;
+        if(possiblePosition != mPlayerPos){
+            possiblePosition.first -=2;
+            possiblePositions.push_back(possiblePosition);
+        }
+        else
+            possiblePosition.first -=2;
+    }
     possiblePosition.first += 2;
     if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
+                    possiblePosition.first, possiblePosition.second)){
+        possiblePosition.first -= 2;
+        if(possiblePosition != mPlayerPos){
+            possiblePosition.first += 2;
+            possiblePositions.push_back(possiblePosition);
+        }
+        else
+            possiblePosition.first += 2;
+    }
     possiblePosition.first--;
     possiblePosition.second--;
     if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
+                    possiblePosition.first, possiblePosition.second)){
+        possiblePosition.second += 2;
+        if(possiblePosition != mPlayerPos){
+            possiblePosition.second -= 2;
+            possiblePositions.push_back(possiblePosition);
+        }
+        else
+            possiblePosition.second -= 2;
+    }
     possiblePosition.second += 2;
     if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
+                    possiblePosition.first, possiblePosition.second)){
+        possiblePosition.second -= 2;
+        if(possiblePosition != mPlayerPos){
+            possiblePosition.second += 2;
+            possiblePositions.push_back(possiblePosition);
+        }
+        else
+            possiblePosition.second += 2;
+    }
 
     possiblePosition.second--;
     
@@ -996,6 +945,7 @@ void board::getPossibleStateChanges(vector<board> &moves){
     // on the board is investigated.
 
     struct possibleBoxPush currentBox;
+    pair<int, int> prevBoxPos;
     // Loop through all boxes on the board
     for(int i = 0; i < mBoxPositions.size(); i++){
         // Start by determining its coordinates
