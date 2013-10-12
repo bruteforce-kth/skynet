@@ -18,6 +18,7 @@ class solver {
         //VAIRABLES
         int h_coeff;
         int mBoardSize;
+        int mNumQueued;
         std::string mPath;
         bool mBoundUsed;
         std::pair<int,int> mBoxPos;
@@ -31,6 +32,7 @@ class solver {
         //FUNCTIONS
         std::string search(board &b, int depth);
         int distance(int i1, int j1, int i2, int j2);
+        int distance(std::pair<int,int> a, std::pair<int,int> b);
         int heuristicDistance(const board &b);
         void calculateDistances(const board &b);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
