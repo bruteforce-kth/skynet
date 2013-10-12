@@ -16,14 +16,18 @@
 .DS_Store
 maps/.DS_Store
 
-# Binary
+# binary files
 main
 
-# Kattis
+*.out
+
+# Solution file
+Path.txt
+
+# Kattis files
 .kattisrc
 submit.py
 submit.sh
 
-# maps and visualizer files
-Path.txt
-
+# scripts
+compileAndRun.sh
