@@ -12,8 +12,18 @@
 *.la
 *.a
 
-# Binary
-main
+# OS files
+.DS_Store
+maps/.DS_Store
 
 # Binary
 main
+
+# Kattis
+.kattisrc
+submit.py
+submit.sh
+
+# maps and visualizer files
+Path.txt
+
