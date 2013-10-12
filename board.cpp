@@ -150,7 +150,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
  * Custom comparator for A* that compares the f_score of two coordinates.
  */
  struct fcomparison {
-    bool operator() (pair<board,int> a, pair<board,int> b) {
+    bool operator() ( pair< pair<pair<int,int>, string> ,int> a, pair< pair<pair<int,int>, string> ,int> b) {
         return  a.second >= b.second ? true : false;
     }
 };
@@ -655,21 +655,21 @@ bool board::isBox(int row, int col) const{
     }
 }
 
-void board::getAllValidWalkMoves(vector<board> &moves) {
-    int row = getPlayerPosition().first;
-    int col = getPlayerPosition().second;
+void board::getAllValidWalkMoves(vector< pair<pair<int,int>, char> > &moves, pair<int,int> playerPos) {
+    int row = playerPos.first;
+    int col = playerPos.second;
     // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
     if (isWalkable(row-1, col)) {
-        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
+        moves.push_back(make_pair(make_pair(row-1,col), MOVE_UP));
     }
     if (isWalkable(row+1, col)) {
-        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
+        moves.push_back(make_pair(make_pair(row+1,col), MOVE_DOWN));
     }
     if (isWalkable(row, col-1)) {
-        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
+        moves.push_back(make_pair(make_pair(row,col-1), MOVE_LEFT));
     }
     if (isWalkable(row, col+1)) {
-        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
+        moves.push_back(make_pair(make_pair(row,col+1), MOVE_RIGHT));
     }
 }
 
@@ -997,50 +997,38 @@ void board::printBoard() const{
  */
  string board::boxAStar(pair<int,int> goalPos){
     pair<int,int> playerPos = getPlayerPosition();
+    string path = getPath();
     if (playerPos == goalPos) {
-        return getPath();
+        return path;
     }
-    // g = number of pushes made
-    std::unordered_map<std::string, int> g_score(1000);
-    // f = heuristic
-    std::unordered_map<std::string, int> f_score(1000);
-    // Keep track of visited states. Locally.
-    std::unordered_map<std::string, int> closed(1000);
-    priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
-
-    float starting_heuristic = 1 + distance(goalPos, playerPos);
-    g_score.insert(make_pair(getBoardString(), 1));
-    openQueue.push(make_pair(*this, starting_heuristic));
+    std::unordered_map<string, int> closed;
+    priority_queue<pair< pair<pair<int,int>, string> ,int>, vector<pair< pair<pair<int,int>, string> ,int> >, fcomparison> openQueue;
+    openQueue.push(make_pair(make_pair(playerPos, path), 1));
     
     while(!openQueue.empty()) {
-        board currentBoard = openQueue.top().first;
+        pair<pair<int,int>, string> currentPos = openQueue.top().first;
         openQueue.pop();
-        pair<int,int> currentPlayerPos = currentBoard.getPlayerPosition();
 
-        vector<board> moves;
-        currentBoard.getAllValidWalkMoves(moves);
-        std::unordered_map<std::string,int>::const_iterator map_it;
+        vector< pair<pair<int,int>, char> > moves;
+        getAllValidWalkMoves(moves, currentPos.first);
+        std::unordered_map<string,int>::const_iterator map_it;
         // Iterate through all valid moves (neighbours)
         for (int k = 0; k < moves.size(); ++k) {
-            board tempBoard = moves[k];
-            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
-            if (tempPlayerPos == goalPos) {
-                return tempBoard.getPath();
+            pair<int,int> tempPos = moves[k].first;
+            char direction = moves[k].second;
+            if (tempPos == goalPos) {
+                return currentPos.second + direction;
             }
-
-            int t_g_score = g_score.at(currentBoard.getBoardString()) + 1; 
-            int t_f_score = t_g_score + 4*distance(goalPos, tempPlayerPos);
-            map_it = closed.find(tempBoard.getBoardString());
+            string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
+            map_it = closed.find(key);
             if (map_it != closed.end()) {
-                if (f_score.at(tempBoard.getBoardString()) <= t_f_score ) {
-                    continue;
-                }
+                continue;
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
-            g_score.insert(make_pair(tempBoard.getBoardString(),t_g_score));
-            f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
-            openQueue.push(make_pair(tempBoard, t_f_score));
-            closed.insert(make_pair(tempBoard.getBoardString(), 0));
+            // if (goalPos == make_pair(1,5) && tempPos == make_pair(2,8))
+            //     cout << "added (2,8) to queue" << endl;
+            openQueue.push(make_pair(make_pair(tempPos, currentPos.second + direction), 1));
+            closed.insert(make_pair(key, 0));
         }
     }
     return "x";

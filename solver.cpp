@@ -20,7 +20,7 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    h_coeff = 2;
+    h_coeff = 10;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -52,7 +52,7 @@ using std::stack;
     // return mPath;
 
     // printMatrix(mDistanceMatrix);
-
+    
     // IDA
     return IDA(b);
 }
@@ -169,7 +169,7 @@ void solver::calculateDistances(const board &b) {
                     shortestDistance = d;
                 }
             }
-            mDistanceMatrix[i][j] = shortestDistance + mBoardSize;
+            mDistanceMatrix[i][j] = shortestDistance;
         }
     }
     for (int i = 0; i < mGoalPositions.size(); ++i) {
@@ -199,7 +199,7 @@ void solver::calculateDistances(const board &b) {
                     || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
-        mDistanceMatrix[goal.first][goal.second] -= 10*numBlocked + 100;
+        mDistanceMatrix[goal.first][goal.second] -= numBlocked;
     }
 }
 
@@ -233,7 +233,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h + 10;
+    int bound = h_coeff*start_h + mBoardSize/10;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -244,7 +244,7 @@ string solver::IDA(const board &b) {
 
 int solver::aStar(const board &b, int bound) {
     // cout << "RUNNING A*" << endl;
-    cout << "Running A* with bound: " << bound << endl;
+    // cout << "Running A* with bound: " << bound << endl;
     mBoundUsed = false;
     // minCost is the lowest f score skipped. Used by IDA in the next iteration.
     // Set to +inf here.
@@ -260,19 +260,11 @@ int solver::aStar(const board &b, int bound) {
     priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
     int start_h = heuristicDistance(b);
     g_score.insert(make_pair(b.getBoardString(), 1));
-    f_score.insert(make_pair(b.getBoardString(), 1 + start_h));
+    f_score.insert(make_pair(b.getBoardString(), mBoardSize/10 + start_h));
 
     openQueue.push(make_pair(b, start_h));
-    int numIters = 0;
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
-
-        // numIters++;
-        // if (numIters % 100 == 0) {s
-        //     cout << "Iterations: " << numIters << endl;
-        //     cout << "current solution length: " << currentBoard.getPath().size() << endl;
-        //     cout << "current f_score (g): " << openQueue.top().second << endl;
-        // }
 
         // cout << "f_score: " << openQueue.top().second << endl;
         // currentBoard.printBoard();
@@ -319,9 +311,9 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*(mBoardSize/10);
+            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score;
 
-            // cout << "g_score in f: " << t_g_score*(mBoardSize/10) << endl;
+            // cout << "g_score in f: " << t_g_score << endl;
             // cout << "h_score in f: " << h_coeff*heuristicDistance(tempBoard) << endl;
 
             // IDA bounds checking. If we're above bound, skip this push.
@@ -338,7 +330,7 @@ int solver::aStar(const board &b, int bound) {
                 f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
                 openQueue.push(make_pair(tempBoard, t_f_score));
                 ++mNumQueued;
-                cout << "mNumQueued: " << mNumQueued << endl;
+                // cout << "mNumQueued: " << mNumQueued << endl;
                 // Mark as processed
                 closed.insert(make_pair(tempBoard.getBoardString(), 0));
             }

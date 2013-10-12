@@ -67,7 +67,7 @@ class board {
         bool isGoal(int row, int col) const;
         bool isBox(int row, int col) const;
         void getAllValidMoves(std::vector<board> &moves);
-        void getAllValidWalkMoves(std::vector<board> &moves);
+        void getAllValidWalkMoves(std::vector< std::pair<std::pair<int,int>, char> > &moves, std::pair<int,int> playerPos);
         bool isFinished() const;
         bool isPush() const
         { return mWasPush; }
