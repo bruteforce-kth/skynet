@@ -150,8 +150,8 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
  * Custom comparator for A* that compares the f_score of two coordinates.
  */
  struct fcomparison {
-    bool operator() (pair<board,float> a, pair<board,float> b) {
-        return  a.second > b.second ? true : false;
+    bool operator() (pair<board,int> a, pair<board,int> b) {
+        return  a.second >= b.second ? true : false;
     }
 };
 
@@ -410,66 +410,66 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
     //cout << "boxPos: (" << boxPos.first << ", " << boxPos.second << ")" << endl;
 
     //printBoard();
-    if(mBoard[boxPos.first][boxPos.second] == GOAL) {
-        mBoard[boxPos.first][boxPos.second] = BOX_ON_GOAL;
-    }else if(mBoard[boxPos.first][boxPos.second] == FLOOR) {
-        mBoard[boxPos.first][boxPos.second] = BOX;
-    }
+    // if(mBoard[boxPos.first][boxPos.second] == GOAL) {
+    //     mBoard[boxPos.first][boxPos.second] = BOX_ON_GOAL;
+    // }else if(mBoard[boxPos.first][boxPos.second] == FLOOR) {
+    //     mBoard[boxPos.first][boxPos.second] = BOX;
+    // }
 
-    if(left == DEAD) {
-        if(isDeadspace(boxPos.first, boxPos.second-1)) {
-            //cout << "returning deadspace" << endl;
-            isAccessibleRestore(row, col);
-            if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-                mBoard[boxPos.first][boxPos.second] = GOAL;
-            }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-                mBoard[boxPos.first][boxPos.second] = FLOOR;
-            }
-            return true;
-        }
-    }
-    if(right == DEAD) {
-        if(isDeadspace(boxPos.first, boxPos.second+1)) {
-            //cout << "returning deadspace" << endl;
-            isAccessibleRestore(row, col);
-            if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-                mBoard[boxPos.first][boxPos.second] = GOAL;
-            }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-                mBoard[boxPos.first][boxPos.second] = FLOOR;
-            }
-            return true;
-        }
-    }
-    if(up == DEAD) {
-        if(isDeadspace(boxPos.first-1, boxPos.second)) {
-            //cout << "returning deadspace" << endl;
-            isAccessibleRestore(row, col);
-            if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-                mBoard[boxPos.first][boxPos.second] = GOAL;
-            }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-                mBoard[boxPos.first][boxPos.second] = FLOOR;
-            }
-            return true;
-        }
-    }
-    if(down == DEAD) {
-        if(isDeadspace(boxPos.first+1, boxPos.second)) {
-            //cout << "returning deadspace" << endl;
-            isAccessibleRestore(row, col);
-            if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-                mBoard[boxPos.first][boxPos.second] = GOAL;
-            }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-                mBoard[boxPos.first][boxPos.second] = FLOOR;
-            }
-            return true;
-        }
-    }
+    // if(left == DEAD) {
+    //     if(isDeadspace(boxPos.first, boxPos.second-1)) {
+    //         //cout << "returning deadspace" << endl;
+    //         isAccessibleRestore(row, col);
+    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+    //             mBoard[boxPos.first][boxPos.second] = GOAL;
+    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
+    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
+    //         }
+    //         return true;
+    //     }
+    // }
+    // if(right == DEAD) {
+    //     if(isDeadspace(boxPos.first, boxPos.second+1)) {
+    //         //cout << "returning deadspace" << endl;
+    //         isAccessibleRestore(row, col);
+    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+    //             mBoard[boxPos.first][boxPos.second] = GOAL;
+    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
+    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
+    //         }
+    //         return true;
+    //     }
+    // }
+    // if(up == DEAD) {
+    //     if(isDeadspace(boxPos.first-1, boxPos.second)) {
+    //         //cout << "returning deadspace" << endl;
+    //         isAccessibleRestore(row, col);
+    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+    //             mBoard[boxPos.first][boxPos.second] = GOAL;
+    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
+    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
+    //         }
+    //         return true;
+    //     }
+    // }
+    // if(down == DEAD) {
+    //     if(isDeadspace(boxPos.first+1, boxPos.second)) {
+    //         //cout << "returning deadspace" << endl;
+    //         isAccessibleRestore(row, col);
+    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+    //             mBoard[boxPos.first][boxPos.second] = GOAL;
+    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
+    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
+    //         }
+    //         return true;
+    //     }
+    // }
 
-    if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-        mBoard[boxPos.first][boxPos.second] = GOAL;
-    }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-        mBoard[boxPos.first][boxPos.second] = FLOOR;
-    }
+    // if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+    //     mBoard[boxPos.first][boxPos.second] = GOAL;
+    // }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
+    //     mBoard[boxPos.first][boxPos.second] = FLOOR;
+    // }
 
     //printBoard();
     // END DYNAMIC DEADLOCK
@@ -977,14 +977,14 @@ void board::printBoard() const{
     if (playerPos == goalPos) {
         return getPath();
     }
+    // g = number of pushes made
+    std::unordered_map<std::string, int> g_score(1000);
+    // f = heuristic
+    std::unordered_map<std::string, int> f_score(1000);
+    // Keep track of visited states. Locally.
+    std::unordered_map<std::string, int> closed(1000);
+    priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
 
-
-    unordered_map<string,int> g_score_map(200000);
-    priority_queue<pair<board,float>, vector< pair<board,float> >, fcomparison> openQueue;
-    std::unordered_map<std::string, int> g_score;
-    int px = playerPos.first;
-    int py = playerPos.second;
-    std::vector<std::pair<int,int> > boxPositions = getBoxPositions();
     float starting_heuristic = 1 + distance(goalPos, playerPos);
     g_score.insert(make_pair(getBoardString(), 1));
     openQueue.push(make_pair(*this, starting_heuristic));
@@ -993,42 +993,31 @@ void board::printBoard() const{
         board currentBoard = openQueue.top().first;
         openQueue.pop();
         pair<int,int> currentPlayerPos = currentBoard.getPlayerPosition();
-        int x = currentPlayerPos.first;
-        int y = currentPlayerPos.second;
 
-        // Iterate through all valid moves (neighbours)
-        // A move is a pair consisting of a pair of coordinates and the 
-        // direction taken to reach it from the current node.
         vector<board> moves;
         currentBoard.getAllValidWalkMoves(moves);
         std::unordered_map<std::string,int>::const_iterator map_it;
+        // Iterate through all valid moves (neighbours)
         for (int k = 0; k < moves.size(); ++k) {
             board tempBoard = moves[k];
             pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
             if (tempPlayerPos == goalPos) {
                 return tempBoard.getPath();
             }
-            int tempX = tempPlayerPos.first;
-            int tempY = tempPlayerPos.second;
 
-            int temp_g = g_score.at(currentBoard.getBoardString()) + 1; 
-            int current_g;
-            map_it = g_score.find(tempBoard.getBoardString());
-            if ( map_it != g_score.end() )
-                current_g = map_it->second;
-            else
-                current_g = 0;
-
-            // Skip move if it exists with a lower g_score
-            if (current_g > 0 && current_g <= temp_g ) {
-                continue;
+            int t_g_score = g_score.at(currentBoard.getBoardString()) + 1; 
+            int t_f_score = t_g_score + 4*distance(goalPos, tempPlayerPos);
+            map_it = closed.find(tempBoard.getBoardString());
+            if (map_it != closed.end()) {
+                if (f_score.at(tempBoard.getBoardString()) <= t_f_score ) {
+                    continue;
+                }
             }
             // Calculate path-cost, set parent (previous) position and add to possible moves
-            else {
-                float new_f = temp_g + distance(goalPos, tempPlayerPos);
-                g_score.insert(make_pair(tempBoard.getBoardString(),temp_g));
-                openQueue.push(make_pair(tempBoard, new_f));
-            }
+            g_score.insert(make_pair(tempBoard.getBoardString(),t_g_score));
+            f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
+            openQueue.push(make_pair(tempBoard, t_f_score));
+            closed.insert(make_pair(tempBoard.getBoardString(), 0));
         }
     }
     return "x";
