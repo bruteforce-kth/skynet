@@ -831,6 +831,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     boxPosition = currentBox.boxPosition;    
 
     // Checks if box is pushable from all directions
+    /*
     possiblePosition.first--;
     if(isAccessible(boxPosition.first, boxPosition.second,
                     possiblePosition.first, possiblePosition.second)){
@@ -877,7 +878,29 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             possiblePosition.second += 2;
     }
 
+    possiblePosition.second--;*/
+
+    possiblePosition.first--;
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.first += 2;
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.first--;
     possiblePosition.second--;
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+    possiblePosition.second += 2;
+    if(isAccessible(boxPosition.first, boxPosition.second,
+                    possiblePosition.first, possiblePosition.second))
+        possiblePositions.push_back(possiblePosition);
+
+    possiblePosition.second--;
+
+
     
     
     // Will hold the direction of the box relative to the player.
