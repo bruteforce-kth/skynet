@@ -684,14 +684,11 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
  vector<pair<int,int> > &possibles, vector<board> &moves, string path){
 
     for(int i = 0; i < possibles.size(); i++){
-        //Can we push the box from this position?
-
-            //cout << "ISACCESIBLE\n";
             
             if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
-                    //cout << "INSERTED INTO POSITIONSAROUNDBOX\n";
+
                     possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
-                    //cout << possibleBoxPush.positionsAroundBox.size() << endl;
+
                     std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
                                                   possibles[i],
                                                   possibleBoxPush.boxPosition);
@@ -830,7 +827,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     possiblePosition = currentBox.boxPosition;
     boxPosition = currentBox.boxPosition;    
 
-    // Checks if box is pushable from all directions
+    // BELOW CODE IS TRYING TO NOT DO IMMEDIATE REPEAT MOVES
     /*
     possiblePosition.first--;
     if(isAccessible(boxPosition.first, boxPosition.second,
@@ -916,20 +913,14 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             
             // Is the possiblePositions[i] reachable from our position?
             currPath = boxAStar(possiblePositions[i]);
-            // cout << "current player pos is: (" << getPlayerPosition().first << "," << getPlayerPosition().second << ")" << endl;  
+            
             
             currentBox.boxPosition = possiblePosition;
             if(currPath != "x"){
+                // UNCOMMENT TO UPDATE PLAYER POSITION BETWEEN EACH BOXASTAR RUN
                 //updatePlayerPosition(possiblePositions[i]);
                 //mPath = currPath;
-                // cout << "currPath: " << currPath << endl; 
-                // cout << "for this board: " << endl;
-                // printBoard();
-                // Set the player position to be the just searched for position
                 currentBox.playerPosition = possiblePositions[i];
-                
-                //cout << "PlayerPosition first: " << currentBox.playerPosition.first << " PlayerPosition.second: " << currentBox.playerPosition.second << endl;
-                //cout << "BoxPosition first: " << currentBox.boxPosition.first << " BoxPosition.second: " << currentBox.boxPosition.second << endl;
 
                 // Determine the relative position of the box
                 directionToBox = getDirectionToPos(currentBox.playerPosition,
@@ -939,21 +930,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
             }
         }
     }
-    //cout << currentBox.positionsAroundBox.size() << endl;
-    // Perform state changes on accepted positions and place them in moves
-    /*
-    for(int i = 0; i < currentBox.positionsAroundBox.size(); i++){
-
-        std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
-                                                  currentBox.positionsAroundBox[i],
-                                                  currentBox.boxPosition);
-
-        char lastMove = translateDirection(getDirectionToPos(currentBox.positionsAroundBox[i],
-                                          currentBox.boxPosition));
-
-        moves.push_back(*doLongMove(currentBox.boxPosition, 
-                                    pushedBoxCoordinates, possiblePaths[i], lastMove));
-    }*/
 }
 
 /*
