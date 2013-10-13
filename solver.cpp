@@ -263,6 +263,9 @@ int solver::aStar(const board &b, int bound) {
     f_score.insert(make_pair(b.getBoardString(), mBoardSize/10 + start_h));
 
     openQueue.push(make_pair(b, start_h));
+#if DEBUG 
+    int count = 0;
+#endif
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
@@ -295,6 +298,9 @@ int solver::aStar(const board &b, int bound) {
             // Finished? Set path and return
             if (tempBoard.isFinished()) {
                 mPath = tempBoard.getPath();
+#if DEBUG 
+                cout << "states explored: " << count << endl;
+#endif
                 return -1; 
             }
 
@@ -335,7 +341,13 @@ int solver::aStar(const board &b, int bound) {
                 closed.insert(make_pair(tempBoard.getBoardString(), 0));
             }
         }
+#if DEBUG 
+        count++;
+#endif
     }
+#if DEBUG 
+    cout << "states explored: " << count << endl;
+#endif
     mPath = "no path";
     return minCost;
 }
