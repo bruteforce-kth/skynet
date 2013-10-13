@@ -650,13 +650,13 @@ bool board::isDeadspace(int row, int col) {
 
         //DYNAMIC DEADLOCKS
         // Prepare mBoard
-        prepareDynamicDeadlock(row, col, boxPos);
-        if(isDynamicDeadlock(boxPos)){
-           //cout << "dynamic deadlock found" << endl;
-           restoreDynamicDeadlock(row, col, boxPos);
-           return false;
-        }
-        restoreDynamicDeadlock(row, col, boxPos);
+        // prepareDynamicDeadlock(row, col, boxPos);
+        // if(isDynamicDeadlock(boxPos)){
+        //    //cout << "dynamic deadlock found" << endl;
+        //    restoreDynamicDeadlock(row, col, boxPos);
+        //    return false;
+        // }
+        // restoreDynamicDeadlock(row, col, boxPos);
 
         if (mBoard[boxPos.first][boxPos.second] == GOAL){
             return true;        

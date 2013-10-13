@@ -19,7 +19,7 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    h_coeff = 10;
+    h_coeff = 3;
     mBoardSize = b.getBoardSize();
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -153,7 +153,7 @@ string solver::search(board &b, int depth) {
 //     return heuristic + totalDistances;
 // }
 
- void solver::calculateDistances(const board &b) {
+void solver::calculateDistances(const board &b) {
     vector<vector<char> > board = b.getBoardCharVector();
     mDistanceMatrix.resize(board.size());
 
@@ -164,39 +164,43 @@ string solver::search(board &b, int depth) {
             for(int k = 0; k < mGoalPositions.size(); k++) {
                 pair<int,int> goal = mGoalPositions[k];
                 int d = distance(i, j, goal.first, goal.second);
-                if(goal.first > 0
-                        && ( board[goal.first-1][goal.second] == WALL
-                            || board[goal.first-1][goal.second] == DEAD
-                            || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
-                    d--;
-                }
-                if(goal.first < board.size()-1
-                        && ( board[goal.first+1][goal.second] == WALL
-                            || board[goal.first+1][goal.second] == DEAD
-                            || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
-                    d--;
-                }
-                if(goal.second > 0
-                        && ( board[goal.first][goal.second-1] == WALL
-                            || board[goal.first][goal.second-1] == DEAD
-                            || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
-                    d--;
-                }
-                if(goal.second < board[goal.first].size()-1
-                        && ( board[goal.first][goal.second+1] == WALL
-                            || board[goal.first][goal.second+1] == DEAD
-                            || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
-                    d--;
-                }
                 if( d < shortestDistance) {
                     shortestDistance = d;
                 }
             }
-            mDistanceMatrix[i][j] = shortestDistance; //+ 3;
+            mDistanceMatrix[i][j] = shortestDistance + mBoardSize;
         }
     }
+    for (int i = 0; i < mGoalPositions.size(); ++i) {
+        int numBlocked = 0;
+        pair<int,int> goal = mGoalPositions[i];
+        if(goal.first > 0
+                && ( board[goal.first-1][goal.second] == WALL
+                    || board[goal.first-1][goal.second] == DEAD
+                    || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        if(goal.first < board.size()-1
+                && ( board[goal.first+1][goal.second] == WALL
+                    || board[goal.first+1][goal.second] == DEAD
+                    || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        if(goal.second > 0
+                && ( board[goal.first][goal.second-1] == WALL
+                    || board[goal.first][goal.second-1] == DEAD
+                    || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        if(goal.second < board[goal.first].size()-1
+                && ( board[goal.first][goal.second+1] == WALL
+                    || board[goal.first][goal.second+1] == DEAD
+                    || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        mDistanceMatrix[goal.first][goal.second] -= 100*numBlocked + 100;
+    }
 }
-
 
 /*
  * Returns the estimated distance between two positions
@@ -227,7 +231,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h;
+    int bound = h_coeff*start_h + mBoardSize/10;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -237,8 +241,10 @@ string solver::IDA(const board &b) {
 }
 
 int solver::aStar(const board &b, int bound) {
+#if DEBUG
     // cout << "RUNNING A*" << endl;
     cout << "Running A* with bound: " << bound << endl;
+#endif
     mBoundUsed = false;
     // minCost is the lowest f score skipped. Used by IDA in the next iteration.
     // Set to +inf here.
@@ -252,20 +258,20 @@ int solver::aStar(const board &b, int bound) {
 
     // A priority queue of moves that are sorted based on their heuristic
     priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
-    int start_h = h_coeff*heuristicDistance(b);
     g_score.insert(make_pair(b.getBoardString(), 1));
-    f_score.insert(make_pair(b.getBoardString(), 1 + start_h));
+    // f_score.insert(make_pair(b.getBoardString(), 1));
 
-    openQueue.push(make_pair(b, start_h));
+    openQueue.push(make_pair(b, 1));
 #if DEBUG 
     int count = 0;
 #endif
     while(!openQueue.empty()) {
         board currentBoard = openQueue.top().first;
 
+#if DEBUG
         // cout << "f_score: " << openQueue.top().second << endl;
         // currentBoard.printBoard();
-
+#endif
         openQueue.pop();
 
         vector<board> moves;
@@ -311,10 +317,12 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score;
+            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*(mBoardSize/10);
 
+#if DEBUG
             // cout << "g_score in f: " << t_g_score << endl;
             // cout << "h_score in f: " << h_coeff*heuristicDistance(tempBoard) << endl;
+#endif
 
             // IDA bounds checking. If we're above bound, skip this push.
             if (bound < t_f_score) {
@@ -329,7 +337,7 @@ int solver::aStar(const board &b, int bound) {
                 g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
                 f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
                 openQueue.push(make_pair(tempBoard, t_f_score));
-                ++mNumQueued;
+                // ++mNumQueued;
                 // cout << "mNumQueued: " << mNumQueued << endl;
                 // Mark as processed
                 closed.insert(make_pair(tempBoard.getBoardString(), 0));
