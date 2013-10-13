@@ -15,7 +15,6 @@ using std::stack;
  */
  solver::solver() {}
 
-
 /*
  * The solver method. It takes a board as a parameter and returns a solution
  */
@@ -26,7 +25,7 @@ using std::stack;
     calculateDistances(b);
     //printMatrix(mDistanceMatrix);
     
-    // int depth = 2;
+    // int depth = 2;c
     // string solution;
     // do {
     //     // cout << "Depth: " << depth << endl;
@@ -52,7 +51,8 @@ using std::stack;
     // return mPath;
 
     // printMatrix(mDistanceMatrix);
-    
+    // b.printBoard();
+
     // IDA
     return IDA(b);
 }
@@ -87,7 +87,7 @@ string solver::search(board &b, int depth) {
  */
  struct fcomparison {
     bool operator() (pair<board,int> a, pair<board,int> b) {
-        return a.second >= b.second ? true : false;
+        return a.second > b.second ? true : false;
     }
 };
 
@@ -120,11 +120,11 @@ string solver::search(board &b, int depth) {
 //     vector< pair<int,int> > boxPositions = b.getBoxPositions();
 //     vector< vector<char> > board = b.getBoardCharVector();
    
-//     for (int i = 0; i < boxPositions.size(); ++i) {
-//         if (board[boxPositions[i].first][boxPositions[i].second] == BOX_ON_GOAL)
-//             continue;
-//         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
-//     }
+//     // for (int i = 0; i < boxPositions.size(); ++i) {
+//     //     if (board[boxPositions[i].first][boxPositions[i].second] == BOX_ON_GOAL)
+//     //         continue;
+//     //     totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
+//     // }
 
 //     for (int i = 0; i < mGoalPositions.size(); ++i) {
 //         int closestBox = mBoardSize;
@@ -144,17 +144,16 @@ string solver::search(board &b, int depth) {
 //         }
 //         // Remove the closest box. each box is used once.
 //         boxPositions.erase(boxPositions.begin() + closestBoxIndex);
-//         heuristic += closestBox + mBoardSize/2;
+//         heuristic += closestBox + mBoardSize/10;
 //     }
 
-//     cout << "Heuristic = " << heuristic << " + " << totalDistances << endl;
-//     cout << "total: " << heuristic + totalDistances << endl;
-//     b.printBoard();
+//     // cout << "Heuristic = " << heuristic << " + " << totalDistances << endl;
+//     // cout << "total: " << heuristic + totalDistances << endl;
+//     // b.printBoard();
 //     return heuristic + totalDistances;
 // }
 
-
-void solver::calculateDistances(const board &b) {
+ void solver::calculateDistances(const board &b) {
     vector<vector<char> > board = b.getBoardCharVector();
     mDistanceMatrix.resize(board.size());
 
@@ -165,41 +164,36 @@ void solver::calculateDistances(const board &b) {
             for(int k = 0; k < mGoalPositions.size(); k++) {
                 pair<int,int> goal = mGoalPositions[k];
                 int d = distance(i, j, goal.first, goal.second);
+                if(goal.first > 0
+                        && ( board[goal.first-1][goal.second] == WALL
+                            || board[goal.first-1][goal.second] == DEAD
+                            || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.first < board.size()-1
+                        && ( board[goal.first+1][goal.second] == WALL
+                            || board[goal.first+1][goal.second] == DEAD
+                            || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.second > 0
+                        && ( board[goal.first][goal.second-1] == WALL
+                            || board[goal.first][goal.second-1] == DEAD
+                            || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
+                if(goal.second < board[goal.first].size()-1
+                        && ( board[goal.first][goal.second+1] == WALL
+                            || board[goal.first][goal.second+1] == DEAD
+                            || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+                    d--;
+                }
                 if( d < shortestDistance) {
                     shortestDistance = d;
                 }
             }
-            mDistanceMatrix[i][j] = shortestDistance;
+            mDistanceMatrix[i][j] = shortestDistance; //+ 3;
         }
-    }
-    for (int i = 0; i < mGoalPositions.size(); ++i) {
-        int numBlocked = 0;
-        pair<int,int> goal = mGoalPositions[i];
-        if(goal.first > 0
-                && ( board[goal.first-1][goal.second] == WALL
-                    || board[goal.first-1][goal.second] == DEAD
-                    || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        if(goal.first < board.size()-1
-                && ( board[goal.first+1][goal.second] == WALL
-                    || board[goal.first+1][goal.second] == DEAD
-                    || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        if(goal.second > 0
-                && ( board[goal.first][goal.second-1] == WALL
-                    || board[goal.first][goal.second-1] == DEAD
-                    || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        if(goal.second < board[goal.first].size()-1
-                && ( board[goal.first][goal.second+1] == WALL
-                    || board[goal.first][goal.second+1] == DEAD
-                    || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        mDistanceMatrix[goal.first][goal.second] -= numBlocked;
     }
 }
 
@@ -233,7 +227,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h + mBoardSize/10;
+    int bound = h_coeff*start_h;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -244,23 +238,23 @@ string solver::IDA(const board &b) {
 
 int solver::aStar(const board &b, int bound) {
     // cout << "RUNNING A*" << endl;
-    // cout << "Running A* with bound: " << bound << endl;
+    cout << "Running A* with bound: " << bound << endl;
     mBoundUsed = false;
     // minCost is the lowest f score skipped. Used by IDA in the next iteration.
     // Set to +inf here.
     int minCost = b.getBoardSize()*100;
     // g = number of pushes made
-    std::unordered_map<std::string, int> g_score(5000);
+    std::unordered_map<std::string, int> g_score;
     // f = heuristic
-    std::unordered_map<std::string, int> f_score(5000);
+    std::unordered_map<std::string, int> f_score;
     // Keep track of visited states. Locally.
-    std::unordered_map<std::string, int> closed(5000);
+    std::unordered_map<std::string, int> closed;
 
     // A priority queue of moves that are sorted based on their heuristic
     priority_queue<pair<board,int>, vector< pair<board,int> >, fcomparison> openQueue;
-    int start_h = heuristicDistance(b);
+    int start_h = h_coeff*heuristicDistance(b);
     g_score.insert(make_pair(b.getBoardString(), 1));
-    f_score.insert(make_pair(b.getBoardString(), mBoardSize/10 + start_h));
+    f_score.insert(make_pair(b.getBoardString(), 1 + start_h));
 
     openQueue.push(make_pair(b, start_h));
 #if DEBUG 

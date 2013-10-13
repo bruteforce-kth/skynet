@@ -231,7 +231,6 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
 
-#if DEBUG
     int size;
     for (int i = 0; i < newMap.size(); i++) {
         size += newMap[i].size();
@@ -240,8 +239,7 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
         }
         newBoardString += '\n';
     }
-#endif
-    
+
     return board(newMap, true, lastMove, path + lastMove, mCornerPositions, newBoardString,
                  mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions);        
 }
@@ -776,9 +774,6 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                     
             }
         }
-
-    
-
 }
 
 /*
@@ -1057,7 +1052,7 @@ void board::printBoard() const{
     std::unordered_map<string, int> closed;
 
     std::deque< pair<pair<int,int>, string> > q;
-    q.push_back(make_pair(playerPos, path));
+    q.push_front(make_pair(playerPos, path));
     
     while(!q.empty()) {
         pair<pair<int,int>, string> currentPos = q.front();
@@ -1079,28 +1074,12 @@ void board::printBoard() const{
                 continue;
             }
             string updatedPath = currentPos.second + direction;
-            q.push_back(make_pair(tempPos, updatedPath));
+            q.push_front(make_pair(tempPos, updatedPath));
             closed.insert(make_pair(key, 0));
         }
     }
     return "x";
 }
-
-/*
- * Heuristic for A* search. 
- * The heuristic value is the sum of 
- * all boxes shortest distance to a goal.
- */
-//  int board::heuristicDistanceToBox(const vector< pair<int,int> > &boxPositions, pair<int,int> currentPos) {
-//     vector<vector<char> > chars = b.getBoardCharVector();
-//     minDistance = b.getBoardSize();
-//     for (int i = 0; i < boxPositions.size(); ++i) {
-//         int boxDistance = distance(boxPositions[i], currentPos);
-//         if (boxDistance < minDistance)
-//             minDistance = boxDistance;
-//     }
-//     return minDistance;     
-// }
 
 /*
  * Returns the estimated distance between two positions
