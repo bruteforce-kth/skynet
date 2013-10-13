@@ -35,6 +35,7 @@ class board {
 
             std::pair<int, int> playerPosition;
             std::pair<int, int> boxPosition;
+            int movedBox_positionInVector;
             std::string path;
             std::vector<std::pair<int, int> > positionsAroundBox;
 
@@ -42,7 +43,11 @@ class board {
         board (const std::vector<std::vector<char> > &chars);
         board(const std::vector<std::vector<char> > &chars,
             bool wasPush, char whatGotMeHere, std::string path, 
-             std::vector<std::pair<int,int> > corners);
+             std::vector<std::pair<int,int> > corners,
+             std::string newBoardString, int boardSize,
+             std::vector<std::pair<int, int> > goalPositions,
+             std::pair<int, int> newPlayerPos,
+             std::vector<std::pair<int, int> > newBoxPositions);
         board (const board &source, bool wasPush, 
                char whatGotMeHere, std::pair<int,int> playerPos,
                std::vector<std::pair<int,int> > boxPositions);
@@ -79,7 +84,7 @@ class board {
         int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
         int distance(std::pair<int,int> i, std::pair<int,int> j);
         board doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         char lastMove, std::string path);
+                         char lastMove, std::string path, int i);
         void setBoxPositionsString();
         std::string getBoxString() const
         { return mBoxString; }

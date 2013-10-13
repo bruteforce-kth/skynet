@@ -19,13 +19,22 @@ board::board (const vector<vector<char> > &chars) {
 
 board::board (const vector<vector<char> > &chars, 
   bool wasPush, char whatGotMeHere,
-  string path, std::vector<std::pair<int,int> > corners){
+  string path, std::vector<std::pair<int,int> > corners, 
+  std::string newBoardString, int boardSize,
+  vector<pair<int, int> > goalPositions,
+  pair<int, int> newPlayerPosition,
+  vector<pair<int, int> > newBoxPositions){
     this->mBoard = chars;
     this->mCornerPositions = corners;
-    initializeIndexAndPositions(chars);
+    mGoalPositions = goalPositions;
+    mBoxPositions = newBoxPositions;
+    mPlayerPos = newPlayerPosition;
+    //initializeIndexAndPositions(chars);
     mWasPush = wasPush;
     mWhatGotMeHere = whatGotMeHere;
     mPath = path;
+    mBoardString = newBoardString;
+    mBoardSize = boardSize;
 }
 
 pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
@@ -191,15 +200,19 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
 board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
-                         char lastMove, string path){
+                         char lastMove, string path, int movedBox_positionInVector){
 
     
     // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
     // cout << "new playerpos: " << newPlayerPos.first << ", " << newPlayerPos.second << endl;
     std::vector<std::vector<char> > newMap = mBoard;
+    std::string newBoardString;
+    std::vector<std::pair<int,int> > newBoxPositions = mBoxPositions;
+    newBoxPositions[movedBox_positionInVector] = newBoxPos;
 
     if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
         newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+    
     else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
         newMap[mPlayerPos.first][mPlayerPos.second] = DEAD;
     else
@@ -216,8 +229,17 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
         newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
+
+    int size;
+    for (int i = 0; i < newMap.size(); i++) {
+        size += newMap[i].size();
+        for (int j = 0; j < newMap[i].size(); j++) {
+            newBoardString += newMap[i][j];
+        }
+    }
     
-    return board(newMap, true, lastMove, path + lastMove, mCornerPositions);        
+    return board(newMap, true, lastMove, path + lastMove, mCornerPositions, newBoardString,
+                 mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions);        
 }
 
 board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
@@ -287,8 +309,9 @@ board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
                 newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
         }
     }
-    return board(newMap, boxPush, direction, 
-                     getPath() + direction, mCornerPositions);
+    //return board(newMap, boxPush, direction, 
+    //                 getPath() + direction, mCornerPositions);
+    
 }
 
 void board::isAccessibleRestore(int row, int col){
@@ -696,7 +719,8 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                     char lastMove = translateDirection(getDirectionToPos(possibles[i],
                                           possibleBoxPush.boxPosition));
                     moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
-                                    pushedBoxCoordinates, lastMove, path));
+                                    pushedBoxCoordinates, lastMove, path, 
+                                    possibleBoxPush.movedBox_positionInVector));
                     
             }
         }
@@ -950,6 +974,7 @@ void board::getPossibleStateChanges(vector<board> &moves){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
         currentBox.positionsAroundBox.clear();
+        currentBox.movedBox_positionInVector = i;
         // Let's look at how many directions it can go
         
         investigatePushBoxDirections(currentBox, moves);
