@@ -1,3 +1,4 @@
+#include <deque>
 #include "board.h"
 using std::cout;
 using std::endl;
@@ -936,12 +937,12 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
         if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
             
             // Is the possiblePositions[i] reachable from our position?
-            currPath = boxAStar(possiblePositions[i]);
+            currPath = boxSearch(possiblePositions[i]);
             
             
             currentBox.boxPosition = possiblePosition;
             if(currPath != "x"){
-                // UNCOMMENT TO UPDATE PLAYER POSITION BETWEEN EACH BOXASTAR RUN
+                // UNCOMMENT TO UPDATE PLAYER POSITION BETWEEN EACH BOXSEARCH RUN
                 //updatePlayerPosition(possiblePositions[i]);
                 //mPath = currPath;
                 currentBox.playerPosition = possiblePositions[i];
@@ -996,19 +997,20 @@ void board::printBoard() const{
 /*
  * Finds pushable boxes using A*
  */
- string board::boxAStar(pair<int,int> goalPos){
+ string board::boxSearch(pair<int,int> goalPos){
     pair<int,int> playerPos = getPlayerPosition();
     string path = getPath();
     if (playerPos == goalPos) {
         return path;
     }
     std::unordered_map<string, int> closed;
-    priority_queue<pair< pair<pair<int,int>, string> ,int>, vector<pair< pair<pair<int,int>, string> ,int> >, fcomparison> openQueue;
-    openQueue.push(make_pair(make_pair(playerPos, path), 1));
+
+    std::deque< pair<pair<int,int>, string> > q;
+    q.push_back(make_pair(playerPos, path));
     
-    while(!openQueue.empty()) {
-        pair<pair<int,int>, string> currentPos = openQueue.top().first;
-        openQueue.pop();
+    while(!q.empty()) {
+        pair<pair<int,int>, string> currentPos = q.front();
+        q.pop_front();
 
         vector< pair<pair<int,int>, char> > moves;
         getAllValidWalkMoves(moves, currentPos.first);
@@ -1025,10 +1027,8 @@ void board::printBoard() const{
             if (map_it != closed.end()) {
                 continue;
             }
-            // Calculate path-cost, set parent (previous) position and add to possible moves
-            // if (goalPos == make_pair(1,5) && tempPos == make_pair(2,8))
-            //     cout << "added (2,8) to queue" << endl;
-            openQueue.push(make_pair(make_pair(tempPos, currentPos.second + direction), 1));
+            string updatedPath = currentPos.second + direction;
+            q.push_back(make_pair(tempPos, updatedPath));
             closed.insert(make_pair(key, 0));
         }
     }

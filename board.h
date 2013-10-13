@@ -80,7 +80,7 @@ class board {
         { return mWhatGotMeHere; }
         void printBoard() const;
         void getPossibleStateChanges(std::vector<board> &board);
-        std::string boxAStar(std::pair<int,int> goalBox);
+        std::string boxSearch(std::pair<int,int> goalBox);
         int heuristicDistanceToBox(const std::vector< std::pair<int,int> > &boxPositions, std::pair<int,int> currentPos);
         int distance(std::pair<int,int> i, std::pair<int,int> j);
         board doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
