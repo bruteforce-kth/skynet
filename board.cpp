@@ -1052,7 +1052,7 @@ void board::printBoard() const{
     std::unordered_map<string, int> closed;
 
     std::deque< pair<pair<int,int>, string> > q;
-    q.push_front(make_pair(playerPos, path));
+    q.push_back(make_pair(playerPos, path));
     
     while(!q.empty()) {
         pair<pair<int,int>, string> currentPos = q.front();
@@ -1074,7 +1074,7 @@ void board::printBoard() const{
                 continue;
             }
             string updatedPath = currentPos.second + direction;
-            q.push_front(make_pair(tempPos, updatedPath));
+            q.push_back(make_pair(tempPos, updatedPath));
             closed.insert(make_pair(key, 0));
         }
     }

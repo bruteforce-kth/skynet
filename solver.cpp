@@ -19,8 +19,9 @@ using std::stack;
  * The solver method. It takes a board as a parameter and returns a solution
  */
  string solver::solve(board &b) {
-    h_coeff = 3;
     mBoardSize = b.getBoardSize();
+    h_coeff = 2;
+    g_coeff = 1;
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
     //printMatrix(mDistanceMatrix);
@@ -166,9 +167,11 @@ void solver::calculateDistances(const board &b) {
                 int d = distance(i, j, goal.first, goal.second);
                 if( d < shortestDistance) {
                     shortestDistance = d;
+                    if (shortestDistance == 0)
+                        break;
                 }
             }
-            mDistanceMatrix[i][j] = shortestDistance + mBoardSize;
+            mDistanceMatrix[i][j] = shortestDistance;
         }
     }
     for (int i = 0; i < mGoalPositions.size(); ++i) {
@@ -198,7 +201,7 @@ void solver::calculateDistances(const board &b) {
                     || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
-        mDistanceMatrix[goal.first][goal.second] -= 100*numBlocked + 100;
+        mDistanceMatrix[goal.first][goal.second] -= 10*(numBlocked + 1);
     }
 }
 
@@ -231,7 +234,7 @@ string solver::IDA(const board &b) {
     mPath = "no path";
     int start_h = heuristicDistance(b);
     // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h + mBoardSize/10;
+    int bound = h_coeff*start_h + g_coeff;
     mBoundUsed = true;
     while(mPath == "no path" && mBoundUsed) {
         // A* returns the lowest f_score that was skipped
@@ -269,8 +272,8 @@ int solver::aStar(const board &b, int bound) {
         board currentBoard = openQueue.top().first;
 
 #if DEBUG
-        // cout << "f_score: " << openQueue.top().second << endl;
-        // currentBoard.printBoard();
+        cout << "f_score: " << openQueue.top().second << endl;
+        currentBoard.printBoard();
 #endif
         openQueue.pop();
 
@@ -317,10 +320,10 @@ int solver::aStar(const board &b, int bound) {
 
             // Calculate new g and f
             int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*(mBoardSize/10);
+            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*g_coeff;
 
 #if DEBUG
-            // cout << "g_score in f: " << t_g_score << endl;
+            // cout << "g_score in f: " << t_g_score*g_coeff << endl;
             // cout << "h_score in f: " << h_coeff*heuristicDistance(tempBoard) << endl;
 #endif
 

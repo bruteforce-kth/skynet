@@ -17,6 +17,7 @@ class solver {
     private:
         //VAIRABLES
         int h_coeff;
+        int g_coeff;
         int mBoardSize;
         int mNumQueued;
         std::string mPath;
