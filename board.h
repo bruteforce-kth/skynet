@@ -91,8 +91,9 @@ class board {
         std::string getBoxString() const
         { return mBoxString; }
     private:
-        bool isDynamicDeadlock(int row, int col, std::pair<int,int> boxPos);
-        void isAccessibleRestore(int row, int col);
+        void prepareDynamicDeadlock(int row, int col, std::pair<int,int> boxPos);
+        bool isDynamicDeadlock(std::pair<int,int> boxPos);
+        void restoreDynamicDeadlock(int row, int col, std::pair<int,int> boxPos);
         std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
         bool stillHuggingWall(char wallDirection, std::pair<int,int> position);
         bool investigateWall(char direction, char wallDirection, std::pair<int,int> position);

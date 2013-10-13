@@ -318,21 +318,74 @@ board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
     
 }
 
-void board::isAccessibleRestore(int row, int col){
+void board::prepareDynamicDeadlock(int row, int col, std::pair<int,int> boxPos) {
 
-    if(mBoard[row][col] == GOAL)
-        mBoard[row][col] = BOX_ON_GOAL;
-    else
-        mBoard[row][col] = BOX;
+    // REMOVE PLAYER
+    if(mBoard[mPlayerPos.first][mPlayerPos.second] == PLAYER) {
+        mBoard[mPlayerPos.first][mPlayerPos.second] = FLOOR;
+    }else if(mBoard[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_GOAL) {
+        mBoard[mPlayerPos.first][mPlayerPos.second] = GOAL;
+    }else if(mBoard[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD) {
+        mBoard[mPlayerPos.first][mPlayerPos.second] = DEAD;
+    }else{
+        cout << "no player found!!!!" << endl;
+    }
+
+    // SET FROM
+    if(mBoard[row][col] == BOX_ON_GOAL){
+        mBoard[row][col] = GOAL;
+    }else{
+        mBoard[row][col] = FLOOR;
+    }
+
+    // SET TO
+    if(mBoard[boxPos.first][boxPos.second] == GOAL) {
+        mBoard[boxPos.first][boxPos.second] = BOX_ON_GOAL;
+    }else{
+        mBoard[boxPos.first][boxPos.second] = BOX;
+    }
+
     return;
-
 }
 
-bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
-    if(mBoard[row][col] == BOX_ON_GOAL)
-            mBoard[row][col] = GOAL;
-    else
-        mBoard[row][col] = FLOOR;
+void board::restoreDynamicDeadlock(int row, int col, std::pair<int,int> boxPos) {
+    // RESTORE TO
+    if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+        mBoard[boxPos.first][boxPos.second] = GOAL;
+    }else{
+        mBoard[boxPos.first][boxPos.second] = FLOOR;
+    }
+
+    // RESTORE FROM
+    if(mBoard[row][col] == GOAL){
+        mBoard[row][col] = BOX_ON_GOAL;
+    }else{
+        mBoard[row][col] = BOX;
+    }
+
+    // RESTORE PLAYER
+    if(mBoard[mPlayerPos.first][mPlayerPos.second] == FLOOR) {
+        mBoard[mPlayerPos.first][mPlayerPos.second] = PLAYER;
+    }else if(mBoard[mPlayerPos.first][mPlayerPos.second] == GOAL){
+        mBoard[mPlayerPos.first][mPlayerPos.second] = PLAYER_ON_GOAL;
+    }else if(mBoard[mPlayerPos.first][mPlayerPos.second] == DEAD) {
+        mBoard[mPlayerPos.first][mPlayerPos.second] = PLAYER_ON_DEAD;
+    }else{
+        cout << "player on invalid cell!!!!!" << endl;
+    }
+
+    return;
+}
+
+bool board::isDynamicDeadlock(pair<int,int> boxPos){
+    char up = WALL;
+    char upr = WALL;
+    char upl = WALL;
+    char down = WALL;
+    char downr = WALL;
+    char downl = WALL;
+    char left = WALL;
+    char right = WALL;
 
     /* USED FOR DEBUG
     char orig1 = mBoard[boxPos.first][boxPos.second];
@@ -346,15 +399,6 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
     mBoard[boxPos.first][boxPos.second] = orig1;
     mBoard[row][col] = orig2;
     */
-
-    char up = WALL;
-    char upr = WALL;
-    char upl = WALL;
-    char down = WALL;
-    char downr = WALL;
-    char downl = WALL;
-    char left = WALL;
-    char right = WALL;
 
     if(boxPos.first > 0){                            // SET UP
         up = mBoard[boxPos.first-1][boxPos.second];
@@ -381,14 +425,54 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
         right = mBoard[boxPos.first][boxPos.second+1];
     }
 
+    // IF MOVING TO GOAL, CHECK FOR NEIGHBOURING BOXES WHICH COULD BE BLOCKED
+    if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
+        if(up == BOX && boxPos.first > 0) {
+            /*
+            cout << "REDIRECTING DYNAMIC DEADLOCK!!!!" << endl;
+            cout << upl << up << upr << endl;
+            cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
+            cout << downl << down << downr << endl;
+            */
+            return isDynamicDeadlock(make_pair(boxPos.first-1, boxPos.second));
+        }
+        if(down == BOX && boxPos.first < mBoard.size() - 1) {
+            /*
+            cout << "REDIRECTING DYNAMIC DEADLOCK!!!!" << endl;
+            cout << upl << up << upr << endl;
+            cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
+            cout << downl << down << downr << endl;
+            */
+            return isDynamicDeadlock(make_pair(boxPos.first+1, boxPos.second));
+        }
+        if(left == BOX && boxPos.second < 0) {
+            /*
+            cout << "REDIRECTING DYNAMIC DEADLOCK!!!!" << endl;
+            cout << upl << up << upr << endl;
+            cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
+            cout << downl << down << downr << endl;
+            */
+            return isDynamicDeadlock(make_pair(boxPos.first, boxPos.second-1));
+        }
+        if(right == BOX && boxPos.second < mBoard[boxPos.first].size() - 1) {
+            /*
+            cout << "REDIRECTING DYNAMIC DEADLOCK!!!!" << endl;
+            cout << upl << up << upr << endl;
+            cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
+            cout << downl << down << downr << endl;
+            */
+            return isDynamicDeadlock(make_pair(boxPos.first, boxPos.second+1));
+        }
+        return false;
+    }
+
     if(up == WALL || up == BOX || up == BOX_ON_GOAL) {
         if(upl == WALL || upl == BOX || upl == BOX_ON_GOAL) {
             if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
-                isAccessibleRestore(row, col);
                 /*
-                cout << "Deadlock 1" << endl;
+                cout << "Deadlock 1, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
-                cout << left << "O" << right << endl;
+                cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
                 cout << downl << down << downr << endl;
                 */
                 return true;
@@ -396,11 +480,10 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
         }
         if(upr == WALL || upr == BOX || upr == BOX_ON_GOAL) {
             if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
-                isAccessibleRestore(row, col);
                 /*
-                cout << "Deadlock 2" << endl;
+                cout << "Deadlock 2, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
-                cout << left << "O" << right << endl;
+                cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
                 cout << downl << down << downr << endl;
                 */
                 return true;
@@ -410,11 +493,10 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
     if(down == WALL || down == BOX || down == BOX_ON_GOAL){
         if(downl == WALL || downl == BOX || downl == BOX_ON_GOAL) {
             if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
-                isAccessibleRestore(row, col);
                 /*
-                cout << "Deadlock 3" << endl;
+                cout << "Deadlock 3, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
-                cout << left << "O" << right << endl;
+                cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
                 cout << downl << down << downr << endl;
                 */
                 return true;
@@ -422,11 +504,10 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
         }
         if(downr == WALL || downr == BOX || downr == BOX_ON_GOAL) {
             if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
-                isAccessibleRestore(row, col);
                 /*
-                cout << "Deadlock 4" << endl;
+                cout << "Deadlock 4, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
-                cout << left << "O" << right << endl;
+                cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
                 cout << downl << down << downr << endl;
                 */
                 return true;
@@ -437,72 +518,36 @@ bool board::isDynamicDeadlock(int row, int col, pair<int,int> boxPos){
     //cout << "boxPos: (" << boxPos.first << ", " << boxPos.second << ")" << endl;
 
     //printBoard();
-    // if(mBoard[boxPos.first][boxPos.second] == GOAL) {
-    //     mBoard[boxPos.first][boxPos.second] = BOX_ON_GOAL;
-    // }else if(mBoard[boxPos.first][boxPos.second] == FLOOR) {
-    //     mBoard[boxPos.first][boxPos.second] = BOX;
-    // }
 
-    // if(left == DEAD) {
-    //     if(isDeadspace(boxPos.first, boxPos.second-1)) {
-    //         //cout << "returning deadspace" << endl;
-    //         isAccessibleRestore(row, col);
-    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-    //             mBoard[boxPos.first][boxPos.second] = GOAL;
-    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
-    //         }
-    //         return true;
-    //     }
-    // }
-    // if(right == DEAD) {
-    //     if(isDeadspace(boxPos.first, boxPos.second+1)) {
-    //         //cout << "returning deadspace" << endl;
-    //         isAccessibleRestore(row, col);
-    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-    //             mBoard[boxPos.first][boxPos.second] = GOAL;
-    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
-    //         }
-    //         return true;
-    //     }
-    // }
-    // if(up == DEAD) {
-    //     if(isDeadspace(boxPos.first-1, boxPos.second)) {
-    //         //cout << "returning deadspace" << endl;
-    //         isAccessibleRestore(row, col);
-    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-    //             mBoard[boxPos.first][boxPos.second] = GOAL;
-    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
-    //         }
-    //         return true;
-    //     }
-    // }
-    // if(down == DEAD) {
-    //     if(isDeadspace(boxPos.first+1, boxPos.second)) {
-    //         //cout << "returning deadspace" << endl;
-    //         isAccessibleRestore(row, col);
-    //         if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-    //             mBoard[boxPos.first][boxPos.second] = GOAL;
-    //         }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-    //             mBoard[boxPos.first][boxPos.second] = FLOOR;
-    //         }
-    //         return true;
-    //     }
-    // }
+    if(left == DEAD) {
+        if(isDeadspace(boxPos.first, boxPos.second-1)) {
+            //cout << "returning deadspace" << endl;
+            return true;
+        }
+    }
+    if(right == DEAD) {
+        if(isDeadspace(boxPos.first, boxPos.second+1)) {
+            //cout << "returning deadspace" << endl;
+            return true;
+        }
+    }
+    if(up == DEAD) {
+        if(isDeadspace(boxPos.first-1, boxPos.second)) {
+            //cout << "returning deadspace" << endl;
+            return true;
+        }
+    }
+    if(down == DEAD) {
+        if(isDeadspace(boxPos.first+1, boxPos.second)) {
+            //cout << "returning deadspace" << endl;
+            return true;
+        }
+    }
 
-    // if(mBoard[boxPos.first][boxPos.second] == BOX_ON_GOAL) {
-    //     mBoard[boxPos.first][boxPos.second] = GOAL;
-    // }else if(mBoard[boxPos.first][boxPos.second] == BOX) {
-    //     mBoard[boxPos.first][boxPos.second] = FLOOR;
-    // }
 
     //printBoard();
     // END DYNAMIC DEADLOCK
     
-    isAccessibleRestore(row, col);
-
     return false;
 }
 
@@ -606,11 +651,14 @@ bool board::isDeadspace(int row, int col) {
 
 
         //DYNAMIC DEADLOCKS
-        /*
-        if(isDynamicDeadlock(row, col, boxPos)){
+        // Prepare mBoard
+        prepareDynamicDeadlock(row, col, boxPos);
+        if(isDynamicDeadlock(boxPos)){
            //cout << "dynamic deadlock found" << endl;
+           restoreDynamicDeadlock(row, col, boxPos);
            return false;
-        }*/
+        }
+        restoreDynamicDeadlock(row, col, boxPos);
 
         if (mBoard[boxPos.first][boxPos.second] == GOAL){
             return true;        
@@ -987,14 +1035,14 @@ void board::getPossibleStateChanges(vector<board> &moves){
 }
 
 void board::printBoard() const{
-    cout << mBoardString << endl;
-    // std::cout << "printBoard" << std::endl;
-    //for (int i = 0; i < mBoard.size(); i++) {
-    //    for (int j = 0; j < mBoard[i].size(); j++) {
-    //        cout << mBoard[i][j];
-    //    }
-    //    cout << '\n';
-    //}
+    //cout << mBoardString << endl;
+    //std::cout << "printBoard" << std::endl;
+    for (int i = 0; i < mBoard.size(); i++) {
+        for (int j = 0; j < mBoard[i].size(); j++) {
+            cout << mBoard[i][j];
+        }
+        cout << '\n';
+    }
 }
 
 /*
