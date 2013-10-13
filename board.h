@@ -18,6 +18,8 @@
 #define MOVE_LEFT       'L'
 #define MOVE_RIGHT      'R'
 
+#define DEBUG 1
+
 #include <iostream>
 #include <vector>
 #include <algorithm>

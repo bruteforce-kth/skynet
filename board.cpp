@@ -231,13 +231,16 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     else
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
 
+#if DEBUG
     int size;
     for (int i = 0; i < newMap.size(); i++) {
         size += newMap[i].size();
         for (int j = 0; j < newMap[i].size(); j++) {
             newBoardString += newMap[i][j];
         }
+        newBoardString += '\n';
     }
+#endif
     
     return board(newMap, true, lastMove, path + lastMove, mCornerPositions, newBoardString,
                  mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions);        
