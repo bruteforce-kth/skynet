@@ -135,7 +135,7 @@ class board {
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
         void addToMoves(struct possibleBoxPush &possibleBoxPush, 
                                       std::vector<board> &moves, std::string path);
-        bool vectorContainsPair(std::vector<std::pair<int,int> > &vector, std::pair<int, int> &pair);
+        
         std::pair<int,int> getPushCoordinates(std::pair<int,int> playerCoordinates,
                                     std::pair<int,int> boxCoordinates);
         

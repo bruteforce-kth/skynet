@@ -1061,16 +1061,6 @@ void board::printBoard() const{
 */
 }
 
-bool board::vectorContainsPair(vector<pair<int, int> > &vector, pair<int, int> &pair){
-
-    for(int i = 0; i < vector.size(); i++){
-        if(pair == vector[i])
-            return true;    
-    }
-
-    return false;
-}
-
 void board::setBoxPositionsString() {
     string boxString = "";
     for (int i = 0; i < mBoxPositions.size(); ++i) {
