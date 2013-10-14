@@ -190,16 +190,13 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
         sizeOfCurrRow = chars[i].size();
         for (int j = 0; j < chars[i].size(); j++) {
             boardString += chars[i][j];
-            /*
+            
             if(j == chars[i].size()-1){
-                cout << sizeOfCurrRow << endl;
-                cout << longestRow << endl;
                 while(sizeOfCurrRow < longestRow){
-                    cout << "!!\n";
                     boardString += '#';
                     sizeOfCurrRow++;
                 }          
-            }*/
+            }
             char c = chars[i][j];
             
             // Store goal positions
