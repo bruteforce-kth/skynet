@@ -543,19 +543,23 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
 bool board::isDeadspace(int row, int col) {
     //cout << "looking for deadspace from: (" << row << ", " << col << ")" << endl;
     std::queue<pair<int,int> > bfs_queue;
-    std::set<pair<int,int> > visited;
+    //std::set<pair<int,int> > visited;
+    std::unordered_map<string,int> visited;
     bfs_queue.push(make_pair(row,col));
-    visited.insert(make_pair(row,col));
+        
+    visited.insert(make_pair(std::to_string(row) + "-" + std::to_string(col),1));
     while(!bfs_queue.empty()) {
         pair<int,int> node = bfs_queue.front();
         //if(row == 1 && col == 5) {
             //cout << "bfsing position (" << node.first << ", " << node.second << ")" << endl;
         //}
         bfs_queue.pop();
-        visited.insert(node);
+        string key = std::to_string(node.first) + "-" + std::to_string(node.second);
+        visited.insert(make_pair(key,1));
         if(node.first > 0) {
             pair<int,int> up = make_pair(node.first-1, node.second);
-            if(visited.find(up) == visited.end()) {
+            string key_up = std::to_string(up.first) + "-" + std::to_string(up.second);
+            if(visited.find(key_up) == visited.end()) {
                 if(mBoard[up.first][up.second] == FLOOR || mBoard[up.first][up.second] == GOAL || mBoard[up.first][up.second] == PLAYER_ON_GOAL || mBoard[up.first][up.second] == PLAYER_ON_DEAD) {
                     //cout << "not deadspace up: (" << up.first << ", " << up.second << ")" << endl;
                     //printBoard();
@@ -586,7 +590,8 @@ bool board::isDeadspace(int row, int col) {
         }
         if(node.first < mBoard.size()-1) {
             pair<int,int> down = make_pair(node.first+1, node.second);
-            if(visited.find(down) == visited.end()) {
+            string key_down = std::to_string(down.first) + "-" + std::to_string(down.second);
+            if(visited.find(key_down) == visited.end()) {
                 if(mBoard[down.first][down.second] == FLOOR || mBoard[down.first][down.second] == GOAL || mBoard[down.first][down.second] == PLAYER_ON_GOAL || mBoard[down.first][down.second] == PLAYER_ON_DEAD) {
                     //cout << "not deadspace down: (" << down.first << ", " << down.second << ")" << endl;
                     //printBoard();
@@ -610,7 +615,8 @@ bool board::isDeadspace(int row, int col) {
         }
         if(node.second > 0) {
             pair<int,int> left = make_pair(node.first, node.second-1);
-            if(visited.find(left) == visited.end()) {
+            string key_left = std::to_string(left.first) + "-" + std::to_string(left.second);
+            if(visited.find(key_left) == visited.end()) {
                 if(mBoard[left.first][left.second] == FLOOR || mBoard[left.first][left.second] == GOAL || mBoard[left.first][left.second] == PLAYER_ON_GOAL || mBoard[left.first][left.second] == PLAYER_ON_DEAD) {
                     //cout << "not deadspace left: (" << left.first << ", " << left.second << ")" << endl;
                     //printBoard();
@@ -634,7 +640,8 @@ bool board::isDeadspace(int row, int col) {
         }
         if(node.second < mBoard[node.first].size()) {
             pair<int,int> right = make_pair(node.first, node.second+1);
-            if(visited.find(right) == visited.end()) {
+            string key_right = std::to_string(right.first) + "-" + std::to_string(right.second);
+            if(visited.find(key_right) == visited.end()) {
                 if(mBoard[right.first][right.second] == FLOOR || mBoard[right.first][right.second] == GOAL || mBoard[right.first][right.second] == PLAYER_ON_GOAL || mBoard[right.first][right.second] == PLAYER_ON_DEAD) {
                     //cout << "not deadspace right: (" << right.first << ", " << right.second << ")" << endl;
                     //printBoard();
