@@ -41,16 +41,16 @@ board::board (const vector<vector<char> > &chars,
 pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
     pair<int,int> newPos = position;
     switch(direction){
-        case 'N':
+        case 'U':
             newPos.first--;
             break;
-        case 'S':
+        case 'D':
             newPos.first++;
             break;
-        case 'W':
+        case 'L':
             newPos.second--;
             break;
-        case 'E':
+        case 'R':
             newPos.second++;
             break;
     }
@@ -100,14 +100,14 @@ void board::findWallDeadlocks(){
     pair<int,int> currentDeadPosition;
     for(int i = 0; i < mCornerPositions.size(); i++){
         currentDeadPosition = mCornerPositions[i];
-        investigateWall('N', 'W', currentDeadPosition);
-        investigateWall('N', 'E', currentDeadPosition);
-        investigateWall('S', 'W', currentDeadPosition);
-        investigateWall('S', 'E', currentDeadPosition);
-        investigateWall('W', 'N', currentDeadPosition);
-        investigateWall('W', 'S', currentDeadPosition);
-        investigateWall('E', 'N', currentDeadPosition);
-        investigateWall('E', 'S', currentDeadPosition);
+        investigateWall('U', 'L', currentDeadPosition);
+        investigateWall('U', 'R', currentDeadPosition);
+        investigateWall('D', 'L', currentDeadPosition);
+        investigateWall('D', 'R', currentDeadPosition);
+        investigateWall('L', 'U', currentDeadPosition);
+        investigateWall('L', 'D', currentDeadPosition);
+        investigateWall('R', 'U', currentDeadPosition);
+        investigateWall('R', 'D', currentDeadPosition);
     }
 }
 
@@ -838,8 +838,8 @@ void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
                                                   possibles[i],
                                                   possibleBoxPush.boxPosition);
 
-                    char lastMove = translateDirection(getDirectionToPos(possibles[i],
-                                          possibleBoxPush.boxPosition));
+                    char lastMove = getDirectionToPos(possibles[i],
+                                          possibleBoxPush.boxPosition);
                     moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
                                     pushedBoxCoordinates, lastMove, path, 
                                     possibleBoxPush.movedBox_positionInVector));
@@ -887,32 +887,14 @@ char board::getDirectionToPos(std::pair<int, int> player, std::pair<int, int> bo
         cout << "Player is not standing next to box!" << endl;
 
     if(rowDelta > 0)
-        return 'N';
+        return 'U';
     else if(rowDelta < 0)
-        return 'S';
+        return 'D';
     else if(colDelta > 0)
-        return 'W';
+        return 'L';
     else
-        return 'E';
+        return 'R';
 
-}
-
-char board::translateDirection(char nsew){
-
-    switch(nsew){
-        case 'N':
-            return 'U';
-            break;
-        case 'S':
-            return 'D';
-            break;
-        case 'E':
-            return 'R';
-            break;
-        case 'W':
-            return 'L';
-            break;    
-    }
 }
 
 std::pair<int,int> board::getPushCoordinates(std::pair<int,int> playerCoordinates,
@@ -922,11 +904,11 @@ std::pair<int,int> board::getPushCoordinates(std::pair<int,int> playerCoordinate
     
     char directionToBox = getDirectionToPos(playerCoordinates, boxCoordinates);
 
-    if(directionToBox == 'N')
+    if(directionToBox == 'U')
         pushedBoxCoordinates.first--;
-    else if(directionToBox == 'S')
+    else if(directionToBox == 'D')
         pushedBoxCoordinates.first++;
-    else if(directionToBox == 'W')
+    else if(directionToBox == 'L')
         pushedBoxCoordinates.second--;
     else 
         pushedBoxCoordinates.second++;
@@ -1085,17 +1067,15 @@ void board::getPossibleStateChanges(vector<board> &moves){
     // used on a per-box-basis.
     // A new one is set each time a new box
     // on the board is investigated.
-
     struct possibleBoxPush currentBox;
-    pair<int, int> prevBoxPos;
     // Loop through all boxes on the board
     for(int i = 0; i < mBoxPositions.size(); i++){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
+        // Clear needed between box rounds
         currentBox.positionsAroundBox.clear();
         currentBox.movedBox_positionInVector = i;
         // Let's look at how many directions it can go
-        
         investigatePushBoxDirections(currentBox, moves);
         
     }
