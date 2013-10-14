@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stack>
 #include "board.h"
+#include <chrono>
 
 class solver {
     public:
@@ -16,6 +17,7 @@ class solver {
 
     private:
         //VAIRABLES
+        long long int mTime;
         int h_coeff;
         int g_coeff;
         int mBoardSize;
