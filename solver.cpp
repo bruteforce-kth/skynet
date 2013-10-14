@@ -213,7 +213,7 @@ void solver::calculateDistances(const board &b) {
                     // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
-        mDistanceMatrix[goal.first][goal.second] -= numBlocked + 1;
+        mDistanceMatrix[goal.first][goal.second] -= pow(3,numBlocked+1);
     }
 }
 
