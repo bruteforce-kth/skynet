@@ -570,6 +570,24 @@ bool board::isDeadspace(int row, int col) {
                     //printBoard();
                     return false;
                 }
+                // CHECK FOR BOXES WHICH CAN BREAK DEADSPACE
+                // EXAMPLE:
+                // #x
+                // #x$
+                // ##x$ <- this deadspace can be broken by moving the box above
+                // ####
+                //
+                if(mBoard[up.first][up.second] == BOX || mBoard[up.first][up.second] == BOX_ON_GOAL) {
+                    //cout << "found box: (" << up.first << ", " << up.second << ")" << endl;
+                    if(up.second > 0 && up.second < mBoard[up.first].size()) {
+                        if(mBoard[up.first][up.second-1] != WALL && mBoard[up.first][up.second-1] != BOX && mBoard[up.first][up.second-1] != BOX_ON_GOAL) {
+                            if(mBoard[up.first][up.second+1] != WALL && mBoard[up.first][up.second+1] != BOX && mBoard[up.first][up.second+1] != BOX_ON_GOAL) {
+                                //cout << "BOX IS FREE!!! up" << endl;
+                                return false;
+                            }
+                        }
+                    }
+                }
                 if(mBoard[up.first][up.second] == DEAD) {
                     bfs_queue.push(up);
                 }
@@ -582,6 +600,17 @@ bool board::isDeadspace(int row, int col) {
                     //cout << "not deadspace down: (" << down.first << ", " << down.second << ")" << endl;
                     //printBoard();
                     return false;
+                }
+                if(mBoard[down.first][down.second] == BOX || mBoard[down.first][down.second] == BOX_ON_GOAL) {
+                    //cout << "found box: (" << down.first << ", " << down.second << ")" << endl;
+                    if(down.second > 0 && down.second < mBoard[down.first].size()) {
+                        if(mBoard[down.first][down.second-1] != WALL && mBoard[down.first][down.second-1] != BOX && mBoard[down.first][down.second-1] != BOX_ON_GOAL) {
+                            if(mBoard[down.first][down.second+1] != WALL && mBoard[down.first][down.second+1] != BOX && mBoard[down.first][down.second+1] != BOX_ON_GOAL) {
+                                //cout << "BOX IS FREE!!! down" << endl;
+                                return false;
+                            }
+                        }
+                    }
                 }
                 if(mBoard[down.first][down.second] == DEAD) {
                     bfs_queue.push(down);
@@ -596,6 +625,17 @@ bool board::isDeadspace(int row, int col) {
                     //printBoard();
                     return false;
                 }
+                if(mBoard[left.first][left.second] == BOX || mBoard[left.first][left.second] == BOX_ON_GOAL) {
+                    //cout << "found box: (" << left.first << ", " << left.second << ")" << endl;
+                    if(left.first > 0 && left.first < mBoard.size()) {
+                        if(mBoard[left.first-1][left.second] != WALL && mBoard[left.first-1][left.second] != BOX && mBoard[left.first-1][left.second] != BOX_ON_GOAL) {
+                            if(mBoard[left.first+1][left.second] != WALL && mBoard[left.first+1][left.second] != BOX && mBoard[left.first+1][left.second] != BOX_ON_GOAL) {
+                                //cout << "BOX IS FREE!!! left" << endl;
+                                return false;
+                            }
+                        }
+                    }
+                }
                 if(mBoard[left.first][left.second] == DEAD) {
                     bfs_queue.push(left);
                 }
@@ -608,6 +648,17 @@ bool board::isDeadspace(int row, int col) {
                     //cout << "not deadspace right: (" << right.first << ", " << right.second << ")" << endl;
                     //printBoard();
                     return false;
+                }
+                if(mBoard[right.first][right.second] == BOX || mBoard[right.first][right.second] == BOX_ON_GOAL) {
+                    //cout << "found box: (" << right.first << ", " << right.second << ")" << endl;
+                    if(right.first > 0 && right.first < mBoard.size()) {
+                        if(mBoard[right.first-1][right.second] != WALL && mBoard[right.first-1][right.second] != BOX && mBoard[right.first-1][right.second] != BOX_ON_GOAL) {
+                            if(mBoard[right.first+1][right.second] != WALL && mBoard[right.first+1][right.second] != BOX && mBoard[right.first+1][right.second] != BOX_ON_GOAL) {
+                                //cout << "BOX IS FREE!!! right" << endl;
+                                return false;
+                            }
+                        }
+                    }
                 }
                 if(mBoard[right.first][right.second] == DEAD) {
                     bfs_queue.push(right);
@@ -650,13 +701,13 @@ bool board::isDeadspace(int row, int col) {
 
         //DYNAMIC DEADLOCKS
         // Prepare mBoard
-        // prepareDynamicDeadlock(row, col, boxPos);
-        // if(isDynamicDeadlock(boxPos)){
-        //    //cout << "dynamic deadlock found" << endl;
-        //    restoreDynamicDeadlock(row, col, boxPos);
-        //    return false;
-        // }
-        // restoreDynamicDeadlock(row, col, boxPos);
+        prepareDynamicDeadlock(row, col, boxPos);
+        if(isDynamicDeadlock(boxPos)){
+           //cout << "dynamic deadlock found" << endl;
+           restoreDynamicDeadlock(row, col, boxPos);
+           return false;
+        }
+        restoreDynamicDeadlock(row, col, boxPos);
 
         if (mBoard[boxPos.first][boxPos.second] == GOAL){
             return true;        
