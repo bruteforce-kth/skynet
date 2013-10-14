@@ -42,7 +42,6 @@ class board {
             std::pair<int, int> boxPosition;
             int movedBox_positionInVector;
             std::string path;
-            std::vector<std::pair<int, int> > positionsAroundBox;
 
         };
         
@@ -84,7 +83,6 @@ class board {
 
         // OTHER GET-METHODS
         void getPossibleStateChanges(std::vector<board> &board);        
-        void getAllValidMoves(std::vector<board> &moves);
         void getAllValidWalkMoves(std::vector< std::pair<std::pair<int,int>, char> > &moves, 
         std::pair<int,int> playerPos);
 
@@ -131,21 +129,18 @@ class board {
         bool isDeadspace(int row, int col);
 
         // OTHER
-        board doMove(std::pair<int,int> newPlayerPos, char direction);
         std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);
         char getDirectionToPos(std::pair<int, int> player, std::pair<int, int> box);
-        void circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, 
-        std::vector<board> &moves, std::string path);
-        void investigateThesePositions(struct possibleBoxPush &possibleBoxPush,
-                                      std::vector<std::pair<int, int> > &possibles, 
+        void addToMoves(struct possibleBoxPush &possibleBoxPush, 
                                       std::vector<board> &moves, std::string path);
         bool vectorContainsPair(std::vector<std::pair<int,int> > &vector, std::pair<int, int> &pair);
         std::pair<int,int> getPushCoordinates(std::pair<int,int> playerCoordinates,
                                     std::pair<int,int> boxCoordinates);
         
         void updatePlayerPosition(std::pair<int, int> newPlayerPosition);
+        int twoDtoOneD(int row, int col);
 
         
 };

@@ -9,10 +9,12 @@ using std::string;
 using std::unordered_map;
 using std::priority_queue;
 
+int mRowL;
+
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
-    initializeIndexAndPositions(chars);
     findDeadlocks(chars);
+    initializeIndexAndPositions(chars);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -153,7 +155,6 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
         }
     }
     findWallDeadlocks();
-    //cout << "Size of mDeadPositions: " << mDeadPositions.size() << endl;
 }
 
 /*
@@ -173,10 +174,32 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
     std::string boardString = "";
     int index = 0;
     int size = 0;
+    int sizeOfCurrRow = 0;
+
+    int longestRow = 0;
+    
+    for (int i = 0; i < chars.size(); i++) {
+        sizeOfCurrRow = chars[i].size();
+        if(sizeOfCurrRow > longestRow)
+            longestRow = sizeOfCurrRow;
+    }
+    mRowL = longestRow;
+
     for (int i = 0; i < chars.size(); i++) {
         size += chars[i].size();
+        sizeOfCurrRow = chars[i].size();
         for (int j = 0; j < chars[i].size(); j++) {
             boardString += chars[i][j];
+            /*
+            if(j == chars[i].size()-1){
+                cout << sizeOfCurrRow << endl;
+                cout << longestRow << endl;
+                while(sizeOfCurrRow < longestRow){
+                    cout << "!!\n";
+                    boardString += '#';
+                    sizeOfCurrRow++;
+                }          
+            }*/
             char c = chars[i][j];
             
             // Store goal positions
@@ -192,11 +215,16 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
             }
             ++index;
         }
-        boardString += '\n';
+        //boardString += '\n';
     }
+
     mBoardString = boardString;
     mBoardSize = size;
     return;
+}
+
+int board::twoDtoOneD(int row, int col){
+    return row*mRowL + col;
 }
 
 // SHOULD ONLY BE CALLED IF THE MOVE INCLUDES A BOX PUSH
@@ -207,30 +235,47 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
     // cout << "new playerpos: " << newPlayerPos.first << ", " << newPlayerPos.second << endl;
     std::vector<std::vector<char> > newMap = mBoard;
-    std::string newBoardString;
+    std::string newBoardString = mBoardString;
     std::vector<std::pair<int,int> > newBoxPositions = mBoxPositions;
     newBoxPositions[movedBox_positionInVector] = newBoxPos;
 
-    if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
+    if(newMap[mPlayerPos.first][mPlayerPos.second] == '+'){
         newMap[mPlayerPos.first][mPlayerPos.second] = '.';
+        newBoardString[twoDtoOneD(mPlayerPos.first, mPlayerPos.second)] = '.';
+    }
     
-    else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
+    else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD){
         newMap[mPlayerPos.first][mPlayerPos.second] = DEAD;
-    else
+        newBoardString[twoDtoOneD(mPlayerPos.first, mPlayerPos.second)] = DEAD;
+    }
+    else{
         newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
+        newBoardString[twoDtoOneD(mPlayerPos.first, mPlayerPos.second)] = ' ';
+    }
 
-    if(newMap[newBoxPos.first][newBoxPos.second] == GOAL)
+    if(newMap[newBoxPos.first][newBoxPos.second] == GOAL){
         newMap[newBoxPos.first][newBoxPos.second] = '*';
-    else
+        newBoardString[twoDtoOneD(newBoxPos.first, newBoxPos.second)] = '*';
+    }
+    else{
         newMap[newBoxPos.first][newBoxPos.second] = '$';
+        newBoardString[twoDtoOneD(newBoxPos.first, newBoxPos.second)] = '$';
+    }
 
-    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL)
+    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL){
         newMap[newPlayerPos.first][newPlayerPos.second] = '+';
-    else if(newMap[newPlayerPos.first][newPlayerPos.second] == DEAD)
+        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = '+';
+    }
+    else if(newMap[newPlayerPos.first][newPlayerPos.second] == DEAD){
         newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
-    else
+        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = PLAYER_ON_DEAD;
+    }
+    else{
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
-
+        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = '@';
+    }
+    /*
+    newBoardString.clear();
     int size;
     for (int i = 0; i < newMap.size(); i++) {
         size += newMap[i].size();
@@ -238,82 +283,10 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
             newBoardString += newMap[i][j];
         }
         newBoardString += '\n';
-    }
+    }*/
 
     return board(newMap, true, lastMove, path + lastMove, mCornerPositions, newBoardString,
                  mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions);        
-}
-
-board board::doMove(std::pair<int,int> newPlayerPos, char direction) {
-    bool boxPush = false;
-    std::vector<std::vector<char> > newMap = mBoard;
-    if( isAccessible(newPlayerPos.first, newPlayerPos.second,
-       mPlayerPos.first, mPlayerPos.second) ){
-        // Has the player "moved into" a box (trying to push)?
-        if(isBox(newPlayerPos.first, newPlayerPos.second)){
-            boxPush = true;
-            std::pair<int,int> boxPos = make_pair(newPlayerPos.first,newPlayerPos.second);
-            switch(direction){            
-                case 'U':
-                boxPos.first--;
-                break;
-                case 'D':
-                boxPos.first++;
-                break;
-                case 'L':
-                boxPos.second--;
-                break;
-                case 'R':
-                boxPos.second++;
-                break;
-            }
-
-            /* IF PLAYER ON GOAL */
-            if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL)
-                newMap[newPlayerPos.first][newPlayerPos.second] = '+';
-            /* NORMAL PUSH */
-            else 
-                newMap[newPlayerPos.first][newPlayerPos.second] = '@';
-
-            /* IF BOX LANDED ON GOAL */                
-            if(newMap[boxPos.first][boxPos.second] == '.')
-                newMap[boxPos.first][boxPos.second] = '*';
-            /* NORMAL BOX MOVE */
-            else
-                newMap[boxPos.first][boxPos.second] = '$';
-
-            /* REMOVE OLD PLAYER */
-            /* DID WE LEAVE A GOAL POSITION */
-            if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
-                newMap[mPlayerPos.first][mPlayerPos.second] = '.';
-            /* PREVIOUS POSITION WAS NORMAL */
-            else
-                newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
-
-        //Just a normal move        
-        }else{
-            /* DID WE LAND ON A GOAL */
-            if(newMap[newPlayerPos.first][newPlayerPos.second] == '.')
-                newMap[newPlayerPos.first][newPlayerPos.second] = '+';
-            else if(newMap[newPlayerPos.first][newPlayerPos.second] == DEAD)
-                newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
-            /* NORMAL MOVE */
-            else
-                newMap[newPlayerPos.first][newPlayerPos.second] = '@';
-            
-            /* DID WE LEAVE A GOAL POSITION */
-            if(newMap[mPlayerPos.first][mPlayerPos.second] == '+')
-                newMap[mPlayerPos.first][mPlayerPos.second] = '.';
-            else if(newMap[mPlayerPos.first][mPlayerPos.second] == PLAYER_ON_DEAD)
-                newMap[mPlayerPos.first][mPlayerPos.second] = DEAD;
-            /* PREVIOUS POSITION WAS NORMAL */
-            else
-                newMap[mPlayerPos.first][mPlayerPos.second] = ' ';
-        }
-    }
-    //return board(newMap, boxPush, direction, 
-    //                 getPath() + direction, mCornerPositions);
-    
 }
 
 void board::prepareDynamicDeadlock(int row, int col, std::pair<int,int> boxPos) {
@@ -758,27 +731,6 @@ bool board::isBox(int row, int col) const{
     return false;
 }
 
-/*
- * Returns all valid moves from the specified position
- */
- void board::getAllValidMoves(vector<board> &moves) {
-    int row = getPlayerPosition().first;
-    int col = getPlayerPosition().second;
-    // std::cout << "getAllValidMoves(" << row << ", " << col << ")" << std::endl;
-    if (isAccessible(row-1, col, row, col)) {
-        moves.push_back(doMove(make_pair(row-1,col), MOVE_UP));
-    }
-    if (isAccessible(row+1, col, row, col)) {
-        moves.push_back(doMove(make_pair(row+1,col), MOVE_DOWN));
-    }
-    if (isAccessible(row, col-1, row, col)) {
-        moves.push_back(doMove(make_pair(row,col-1), MOVE_LEFT));
-    }
-    if (isAccessible(row, col+1, row, col)) {
-        moves.push_back(doMove(make_pair(row,col+1), MOVE_RIGHT));
-    }
-}
-
 void board::getAllValidWalkMoves(vector< pair<pair<int,int>, char> > &moves, pair<int,int> playerPos) {
     int row = playerPos.first;
     int col = playerPos.second;
@@ -804,53 +756,25 @@ void board::getAllValidWalkMoves(vector< pair<pair<int,int>, char> > &moves, pai
  * the box actually can be pushed. If they are, they
  * are added into possibleBoxPush.positionsAroundBox (if not already in there)
  */
-void board::investigateThesePositions(struct possibleBoxPush &possibleBoxPush, 
- vector<pair<int,int> > &possibles, vector<board> &moves, string path){
+void board::addToMoves(struct possibleBoxPush &possibleBoxPush, 
+    vector<board> &moves, string path){
 
-    for(int i = 0; i < possibles.size(); i++){
+
             
-            if(!vectorContainsPair(possibleBoxPush.positionsAroundBox, possibles[i])){
+    //possibleBoxPush.positionsAroundBox.push_back(possible);
 
-                    possibleBoxPush.positionsAroundBox.push_back(possibles[i]);
+    std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
+                                  possibleBoxPush.playerPosition,
+                                  possibleBoxPush.boxPosition);
 
-                    std::pair<int,int> pushedBoxCoordinates = getPushCoordinates(
-                                                  possibles[i],
-                                                  possibleBoxPush.boxPosition);
-
-                    char lastMove = getDirectionToPos(possibles[i],
-                                          possibleBoxPush.boxPosition);
-                    moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
-                                    pushedBoxCoordinates, lastMove, path, 
-                                    possibleBoxPush.movedBox_positionInVector));
+    char lastMove = getDirectionToPos(possibleBoxPush.playerPosition,
+                          possibleBoxPush.boxPosition);
+    moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
+                    pushedBoxCoordinates, lastMove, path, 
+                    possibleBoxPush.movedBox_positionInVector));
                     
-            }
-        }
-}
 
-/*
- * Do a local search on the box specified by possibleBoxPush.boxPosition.
- * The argument directionToBox specifies the location of the box
- * relative to the player specified by possibleBoxPush.playerPosition.
- */
-void board::circleBox(struct possibleBoxPush &possibleBoxPush, char directionToBox, vector<board> &moves, string path){
-
-    // Is the box on the same col or the same row?
-    char axis;
-    // Investigatorpos will hold the coordinates of the currently investigated
-    // adjacent position to box
-    pair<int, int> investigatorPos = possibleBoxPush.playerPosition;
-    // This vector will hold positions that are reachable by local
-    // search but are yet to be determined if the box can be pushed from that
-    // position.
-    vector<pair<int, int> > possiblePositions;
-
-    if(possiblePositions.size() > 3)
-        cout << "Problem in circleBox!" << endl;
-
-    
-    possiblePositions.push_back(possibleBoxPush.playerPosition);
-    investigateThesePositions(possibleBoxPush, possiblePositions, moves, path);
-    
+        
 }
 
 // Determine the position of box relative to player
@@ -927,7 +851,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     pair<int, int> boxPosition;
     // Will hold all the directly adjacent positions to the box (N S E W)
     vector<pair<int,int> > possiblePositions;
-    vector<std::string> possiblePaths;
     possiblePosition = currentBox.boxPosition;
     boxPosition = currentBox.boxPosition;    
 
@@ -1001,8 +924,6 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
 
     possiblePosition.second--;
 
-
-    
     
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
@@ -1011,27 +932,18 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // Loop through all of the directly adjacent positions to the box
     for(int i = 0; i < possiblePositions.size(); i++){
        
-        // If we've already determined that this position is reachable, 
-        // we don't need to do it again
-        if(!vectorContainsPair(currentBox.positionsAroundBox, possiblePositions[i])){
             
-            // Is the possiblePositions[i] reachable from our position?
-            currPath = boxSearch(possiblePositions[i]);
-            
-            
-            currentBox.boxPosition = possiblePosition;
-            if(currPath != "x"){
-                // UNCOMMENT TO UPDATE PLAYER POSITION BETWEEN EACH BOXSEARCH RUN
-                //updatePlayerPosition(possiblePositions[i]);
-                //mPath = currPath;
-                currentBox.playerPosition = possiblePositions[i];
+        // Is the possiblePositions[i] reachable from our position?
+        currPath = boxSearch(possiblePositions[i]);
+        
+        currentBox.boxPosition = possiblePosition;
+        if(currPath != "x"){
+            // UNCOMMENT TO UPDATE PLAYER POSITION BETWEEN EACH BOXSEARCH RUN
+            //updatePlayerPosition(possiblePositions[i]);
+            //mPath = currPath;
+            currentBox.playerPosition = possiblePositions[i];
 
-                // Determine the relative position of the box
-                directionToBox = getDirectionToPos(currentBox.playerPosition,
-                                                currentBox.boxPosition);
-                // Can we find adjacent positions through a local search?
-                circleBox(currentBox, directionToBox, moves, currPath);
-            }
+            addToMoves(currentBox, moves, currPath);
         }
     }
 }
@@ -1052,11 +964,9 @@ void board::getPossibleStateChanges(vector<board> &moves){
         // Start by determining its coordinates
         currentBox.boxPosition = mBoxPositions[i];
         // Clear needed between box rounds
-        currentBox.positionsAroundBox.clear();
         currentBox.movedBox_positionInVector = i;
         // Let's look at how many directions it can go
         investigatePushBoxDirections(currentBox, moves);
-        
     }
 }
 
