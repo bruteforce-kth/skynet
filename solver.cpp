@@ -29,7 +29,7 @@ using std::stack;
     g_coeff = 4;
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
-    //printMatrix(mDistanceMatrix);
+    // printMatrix(mDistanceMatrix);
     
     // int depth = 2;c
     // string solution;
@@ -49,7 +49,7 @@ using std::stack;
          cout << boards[i].getPath() << endl;
      }*/
     
-    //b.printBoard();
+    // b.printBoard();
     //return "no path";
 
     // A* only
@@ -166,12 +166,63 @@ int solver::heuristicDistance(const board &b) {
     return 5*heuristic + totalDistances;
 }
 
+int solver::distanceBFS(const vector<vector<char>> &board, pair<int,int> pos) {
+    std::queue<pair<pair<int,int>,int> > bfs_queue;
+    std::set<pair<int,int> > visited;
+
+    bfs_queue.push(make_pair(pos,0));
+    visited.insert(pos);
+    while(!bfs_queue.empty()) {
+        pair<pair<int,int>,int> node = bfs_queue.front();
+        bfs_queue.pop();
+        visited.insert(node.first);
+
+        if(board[node.first.first][node.first.second] == GOAL || board[node.first.first][node.first.second] == BOX_ON_GOAL || board[node.first.first][node.first.second] == PLAYER_ON_GOAL) {
+            return node.second;
+        }
+
+        if(node.first.first > 0) {
+            pair<int,int> up = make_pair(node.first.first-1, node.first.second);
+            if(visited.find(up) == visited.end()) {
+                if(board[up.first][up.second] != WALL && board[up.first][up.second] != DEAD && board[up.first][up.second] != PLAYER_ON_DEAD) {
+                    bfs_queue.push(make_pair(up,node.second+1));
+                }
+            }
+        }
+        if(node.first.first < board.size()-1) {
+            pair<int,int> down = make_pair(node.first.first+1, node.first.second);
+            if(visited.find(down) == visited.end()) {
+                if(board[down.first][down.second] != WALL && board[down.first][down.second] != DEAD && board[down.first][down.second] != PLAYER_ON_DEAD) {
+                    bfs_queue.push(make_pair(down,node.second+1));
+                }
+            }
+        }
+        if(node.first.second > 0) {
+            pair<int,int> left = make_pair(node.first.first, node.first.second-1);
+            if(visited.find(left) == visited.end()) {
+                if(board[left.first][left.second] != WALL && board[left.first][left.second] != DEAD && board[left.first][left.second] != PLAYER_ON_DEAD) {
+                    bfs_queue.push(make_pair(left,node.second+1));
+                }
+            }
+        }
+        if(node.first.first > 0) {
+            pair<int,int> right = make_pair(node.first.first, node.first.second+1);
+            if(visited.find(right) == visited.end()) {
+                if(board[right.first][right.second] != WALL && board[right.first][right.second] != DEAD && board[right.first][right.second] != PLAYER_ON_DEAD) {
+                    bfs_queue.push(make_pair(right,node.second+1));
+                }
+            }
+        }
+    }
+    return std::numeric_limits<int>::max();
+}
+
 void solver::calculateDistances(const board &b) {
     vector<vector<char> > board = b.getBoardCharVector();
     mDistanceMatrix.resize(board.size());
 
     for(int i = 0; i < board.size(); i++) {
-        mDistanceMatrix[i] = vector<int>(board[i].size());
+        mDistanceMatrix[i] = vector<int>(board[i].size(), std::numeric_limits<int>::max());
         for(int j = 0; j < board[i].size(); j++) {
             int shortestDistance = b.getBoardSize(); // Set to a high value
             for(int k = 0; k < mGoalPositions.size(); k++) {
@@ -184,6 +235,11 @@ void solver::calculateDistances(const board &b) {
                 }
             }
             mDistanceMatrix[i][j] = shortestDistance;
+            /*
+            if(board[i][j] != WALL && board[i][j] != DEAD && board[i][j] != PLAYER_ON_DEAD) {
+                mDistanceMatrix[i][j] = distanceBFS(board, make_pair(i,j));
+            }
+            */
         }
     }
     for (int i = 0; i < mGoalPositions.size(); ++i) {
