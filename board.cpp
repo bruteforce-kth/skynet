@@ -465,8 +465,8 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
     }
 
     if(up == WALL || up == BOX || up == BOX_ON_GOAL) {
-        if(upl == WALL || upl == BOX || upl == BOX_ON_GOAL) {
-            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+        if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+            if(upl == WALL || upl == BOX || upl == BOX_ON_GOAL) {
                 /*
                 cout << "Deadlock 1, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
@@ -475,9 +475,15 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
                 */
                 return true;
             }
+            //Check for L deadlock against wall
+            if(boxPos.first-1 > 0 && boxPos.second-1 > 0) {
+                if(mBoard[boxPos.first-2][boxPos.second-1] == WALL && mBoard[boxPos.first-1][boxPos.second-2] == WALL) {
+                    return true;
+                }
+            }
         }
-        if(upr == WALL || upr == BOX || upr == BOX_ON_GOAL) {
-            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+        if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+            if(upr == WALL || upr == BOX || upr == BOX_ON_GOAL) {
                 /*
                 cout << "Deadlock 2, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
@@ -486,11 +492,16 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
                 */
                 return true;
             }
+            if(boxPos.first-1 > 0 && boxPos.second+1 < mBoard[boxPos.first].size()-1) {
+                if(mBoard[boxPos.first-2][boxPos.second+1] == WALL && mBoard[boxPos.first-1][boxPos.second+2] == WALL) {
+                    return true;
+                }
+            }
         }
     }
     if(down == WALL || down == BOX || down == BOX_ON_GOAL){
-        if(downl == WALL || downl == BOX || downl == BOX_ON_GOAL) {
-            if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+        if(left == WALL || left == BOX || left == BOX_ON_GOAL) {
+            if(downl == WALL || downl == BOX || downl == BOX_ON_GOAL) {
                 /*
                 cout << "Deadlock 3, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
@@ -499,9 +510,14 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
                 */
                 return true;
             }
+            if(boxPos.first+1 < mBoard.size()-1 && boxPos.second-1 > 0) {
+                if(mBoard[boxPos.first+2][boxPos.second-1] == WALL && mBoard[boxPos.first+1][boxPos.second-2] == WALL) {
+                    return true;
+                }
+            }
         }
-        if(downr == WALL || downr == BOX || downr == BOX_ON_GOAL) {
-            if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+        if(right == WALL || right == BOX || right == BOX_ON_GOAL) {
+            if(downr == WALL || downr == BOX || downr == BOX_ON_GOAL) {
                 /*
                 cout << "Deadlock 4, boxPos: " << boxPos.first << ", " << boxPos.second << "" << endl;
                 cout << upl << up << upr << endl;
@@ -509,6 +525,11 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
                 cout << downl << down << downr << endl;
                 */
                 return true;
+            }
+            if(boxPos.first+1 < mBoard.size()-1 && boxPos.second+1 < mBoard[boxPos.first].size()-1) {
+                if(mBoard[boxPos.first+2][boxPos.second+1] == WALL && mBoard[boxPos.first+1][boxPos.second+2] == WALL) {
+                    return true;
+                }
             }
         }
     }
