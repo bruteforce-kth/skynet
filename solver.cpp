@@ -30,7 +30,7 @@ using std::stack;
     // To solve 001 fast: pow2, h_coeff 1, g_coeff 4, h1 4, t1 1
     h_coeff = 1;
     g_coeff = 5;
-    h1 = 5;
+    h1 = 7;
     t1 = 1;
     goalPow = 3;
 
@@ -183,35 +183,36 @@ int solver::distanceBFS(const vector< vector<char> > &board, pair<int,int> start
         || board[startPos.first][startPos.second] == GOAL
         || board[startPos.first][startPos.second] == PLAYER_ON_GOAL) {
         return 0;
-}
-std::unordered_map<string, int> closed;
-std::deque< pair< pair<int,int>, int> > q;
-q.push_back(make_pair(startPos, 0));
-
-while(!q.empty()) {
-    pair<pair<int,int>, int> currentPos = q.front();
-    q.pop_front();
-
-    vector< pair<int,int> > moves = getAllValidDirections(board, currentPos.first);
-    std::unordered_map<string,int>::const_iterator map_it;
-    for (int k = 0; k < moves.size(); ++k) {
-        pair<int,int> tempPos = moves[k];
-        if (board[tempPos.first][tempPos.second] == GOAL 
-            || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
-            || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
-
-            return currentPos.second + 1;
     }
-    string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
-    map_it = closed.find(key);
-    if (map_it != closed.end()) {
-        continue;
+    std::unordered_map<string, int> closed;
+    std::queue< pair< pair<int,int>, int> > q;
+    q.push(make_pair(startPos, 0));
+    pair<pair<int,int>, int> currentPos;
+    vector< pair<int,int> > moves;
+    pair<int,int> tempPos;
+    vector< vector<char> > scratchMap = board;
+    while(!q.empty()) {
+        currentPos = q.front();
+        q.pop();
+
+        moves = getAllValidDirections(board, currentPos.first);
+        std::unordered_map<string,int>::const_iterator map_it;
+        for (int k = 0; k < moves.size(); ++k) {
+            tempPos = moves[k];
+            if (board[tempPos.first][tempPos.second] == GOAL 
+                || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
+                || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
+                
+                return currentPos.second + 1;
+            }
+            if(scratchMap[tempPos.first][tempPos.second] == 'f')
+                continue;
+
+            q.push(make_pair(tempPos, currentPos.second + 1));
+            scratchMap[tempPos.first][tempPos.second] = 'f';
+        }
     }
-    q.push_back(make_pair(tempPos, currentPos.second + 1));
-    closed.insert(make_pair(key, 0));
-}
-}
-return mBoardSize*2;
+    return mBoardSize*2;
 }
 
 vector< pair<int,int> > solver::getAllValidDirections(const vector< vector<char> > &board, pair<int,int> pos) {
@@ -276,37 +277,35 @@ void solver::calculateDistances(const board &b) {
             }
         }
     }
-        for (int i = 0; i < mGoalPositions.size(); ++i) {
-            int numBlocked = 0;
-            pair<int,int> goal = mGoalPositions[i];
-            if(goal.first > 0
-                && ( board[goal.first-1][goal.second] == WALL
-                    || board[goal.first-1][goal.second] == DEAD)) {
-                    // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
-                ++numBlocked;
+    for (int i = 0; i < mGoalPositions.size(); ++i) {
+        int numBlocked = 0;
+        pair<int,int> goal = mGoalPositions[i];
+        if(goal.first > 0
+            && ( board[goal.first-1][goal.second] == WALL
+                || board[goal.first-1][goal.second] == DEAD)) {
+                // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
         }
         if(goal.first < board.size()-1
             && ( board[goal.first+1][goal.second] == WALL
                 || board[goal.first+1][goal.second] == DEAD)) {
                     // || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
+        }
+        if(goal.second > 0
+            && ( board[goal.first][goal.second-1] == WALL
+                || board[goal.first][goal.second-1] == DEAD)) {
+                        // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        if(goal.second < board[goal.first].size()-1
+            && ( board[goal.first][goal.second+1] == WALL
+                || board[goal.first][goal.second+1] == DEAD)) {
+                            // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+            ++numBlocked;
+        }
+        mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
     }
-    if(goal.second > 0
-        && ( board[goal.first][goal.second-1] == WALL
-            || board[goal.first][goal.second-1] == DEAD)) {
-                    // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
-        ++numBlocked;
-}
-if(goal.second < board[goal.first].size()-1
-    && ( board[goal.first][goal.second+1] == WALL
-        || board[goal.first][goal.second+1] == DEAD)) {
-                    // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
-    ++numBlocked;
-}
-
-mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
-
-}
 }
 
 /*
