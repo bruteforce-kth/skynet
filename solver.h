@@ -37,12 +37,16 @@ class solver {
         int distance(int i1, int j1, int i2, int j2);
         int distance(std::pair<int,int> a, std::pair<int,int> b);
         int heuristicDistance(const board &b);
+        int distanceBFS(const std::vector<std::vector<char>> &board, std::pair<int,int> startPos);
+        bool isPushable(char b);
+        std::vector< std::pair<int,int> > getAllValidDirections(const std::vector< std::vector<char> > &board, std::pair<int,int> pos);
         void calculateDistances(const board &b);
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
         bool isRepeatedMove(char a, char b);
         std::string IDA(const board &b);
         int aStar(const board &b, int bound);
+
 
         void printCoordinates(int x, int y);
         void printMatrix(std::vector<std::vector<int> > &m);
