@@ -11,6 +11,7 @@ using std::priority_queue;
 
 int mRowL;
 
+
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
     findDeadlocks(chars);
@@ -39,6 +40,8 @@ board::board (const vector<vector<char> > &chars,
     mBoardString = newBoardString;
     mBoardSize = boardSize;
 }
+
+
 
 pair<int,int> board::getRelativePosition(char direction, pair<int,int> position){
     pair<int,int> newPos = position;
@@ -235,7 +238,7 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     std::string newBoardString = mBoardString;
     std::vector<std::pair<int,int> > newBoxPositions = mBoxPositions;
     newBoxPositions[movedBox_positionInVector] = newBoxPos;
-
+    
     if(newMap[mPlayerPos.first][mPlayerPos.second] == '+'){
         newMap[mPlayerPos.first][mPlayerPos.second] = '.';
         newBoardString[twoDtoOneD(mPlayerPos.first, mPlayerPos.second)] = '.';
@@ -688,7 +691,7 @@ bool board::isDeadspace(int row, int col) {
         if (!isWalkable(boxPos.first,boxPos.second)){
             return false;
         }
-
+        
 
         //DYNAMIC DEADLOCKS
         // Prepare mBoard
@@ -699,7 +702,7 @@ bool board::isDeadspace(int row, int col) {
            return false;
         }
         restoreDynamicDeadlock(row, col, boxPos);
-
+        
         if (mBoard[boxPos.first][boxPos.second] == GOAL){
             return true;        
         }
@@ -867,6 +870,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
     // Temp variable
     pair<int, int> possiblePosition;
     pair<int, int> boxPosition;
+    pair<int, int> oldBoxPosition;
     // Will hold all the directly adjacent positions to the box (N S E W)
     vector<pair<int,int> > possiblePositions;
     possiblePosition = currentBox.boxPosition;
@@ -874,74 +878,77 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
 
     // BELOW CODE IS TRYING TO NOT DO IMMEDIATE REPEAT MOVES
     /*
-    possiblePosition.first--;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second)){
+    if(boxPosition != oldBoxPosition){
+    
+        possiblePosition.first--;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second)){
+            possiblePosition.first += 2;
+            if(possiblePosition != oldBoxPosition){
+                possiblePosition.first -=2;
+                possiblePositions.push_back(possiblePosition);
+            }
+            else
+                possiblePosition.first -=2;
+        }
         possiblePosition.first += 2;
-        if(possiblePosition != mPlayerPos){
-            possiblePosition.first -=2;
-            possiblePositions.push_back(possiblePosition);
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second)){
+            possiblePosition.first -= 2;
+            if(possiblePosition != oldBoxPosition){
+                possiblePosition.first += 2;
+                possiblePositions.push_back(possiblePosition);
+            }
+            else
+                possiblePosition.first += 2;
         }
-        else
-            possiblePosition.first -=2;
-    }
-    possiblePosition.first += 2;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second)){
-        possiblePosition.first -= 2;
-        if(possiblePosition != mPlayerPos){
-            possiblePosition.first += 2;
-            possiblePositions.push_back(possiblePosition);
+        possiblePosition.first--;
+        possiblePosition.second--;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second)){
+            possiblePosition.second += 2;
+            if(possiblePosition != oldBoxPosition){
+                possiblePosition.second -= 2;
+                possiblePositions.push_back(possiblePosition);
+            }
+            else
+                possiblePosition.second -= 2;
         }
-        else
-            possiblePosition.first += 2;
-    }
-    possiblePosition.first--;
-    possiblePosition.second--;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second)){
         possiblePosition.second += 2;
-        if(possiblePosition != mPlayerPos){
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second)){
             possiblePosition.second -= 2;
-            possiblePositions.push_back(possiblePosition);
+            if(possiblePosition != oldBoxPosition){
+                possiblePosition.second += 2;
+                possiblePositions.push_back(possiblePosition);
+            }
+            else
+                possiblePosition.second += 2;
         }
-        else
-            possiblePosition.second -= 2;
+        possiblePosition.second--;
     }
-    possiblePosition.second += 2;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second)){
-        possiblePosition.second -= 2;
-        if(possiblePosition != mPlayerPos){
-            possiblePosition.second += 2;
+    else{*/
+    
+    
+        possiblePosition.first--;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second))
             possiblePositions.push_back(possiblePosition);
-        }
-        else
-            possiblePosition.second += 2;
-    }
+        possiblePosition.first += 2;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second))
+            possiblePositions.push_back(possiblePosition);
+        possiblePosition.first--;
+        possiblePosition.second--;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second))
+            possiblePositions.push_back(possiblePosition);
+        possiblePosition.second += 2;
+        if(isAccessible(boxPosition.first, boxPosition.second,
+                        possiblePosition.first, possiblePosition.second))
+            possiblePositions.push_back(possiblePosition);
 
-    possiblePosition.second--;*/
-
-    possiblePosition.first--;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
-    possiblePosition.first += 2;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
-    possiblePosition.first--;
-    possiblePosition.second--;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
-    possiblePosition.second += 2;
-    if(isAccessible(boxPosition.first, boxPosition.second,
-                    possiblePosition.first, possiblePosition.second))
-        possiblePositions.push_back(possiblePosition);
-
-    possiblePosition.second--;
-
+        possiblePosition.second--;
     
     // Will hold the direction of the box relative to the player.
     // If the box is to the left ot the player directionToBox will be 'W' (west)
@@ -1010,31 +1017,42 @@ void board::printBoard() const{
     }
     std::unordered_map<string, int> closed;
 
-    std::deque< pair<pair<int,int>, string> > q;
-    q.push_back(make_pair(playerPos, path));
-    
+    std::queue< pair<pair<int,int>, string> > q;
+    q.push(make_pair(playerPos, path));
+    vector< pair<pair<int,int>, char> > moves;
+    pair<int,int> tempPos;
+    char direction;
+    string updatedPath;
+    pair<pair<int,int>, string> currentPos;
+    vector<vector<char> > scratchMap = mBoard;
     while(!q.empty()) {
-        pair<pair<int,int>, string> currentPos = q.front();
-        q.pop_front();
-
-        vector< pair<pair<int,int>, char> > moves;
+        currentPos = q.front();
+        q.pop();
+        
+        moves.clear();
         getAllValidWalkMoves(moves, currentPos.first);
         std::unordered_map<string,int>::const_iterator map_it;
         // Iterate through all valid moves (neighbours)
         for (int k = 0; k < moves.size(); ++k) {
-            pair<int,int> tempPos = moves[k].first;
-            char direction = moves[k].second;
+            tempPos = moves[k].first;
+            direction = moves[k].second;
             if (tempPos == goalPos) {
                 return currentPos.second + direction;
             }
-            string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
-            map_it = closed.find(key);
-            if (map_it != closed.end()) {
+            //key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
+            //map_it = closed.find(key);
+
+            if(scratchMap[tempPos.first][tempPos.second] == 'f')
                 continue;
-            }
-            string updatedPath = currentPos.second + direction;
-            q.push_back(make_pair(tempPos, updatedPath));
-            closed.insert(make_pair(key, 0));
+            /*if (map_it != closed.end()) {
+                continue;
+            }*/
+            
+            updatedPath = currentPos.second + direction;
+            q.push(make_pair(tempPos, updatedPath));
+            //closed.insert(make_pair(key, 0));
+            scratchMap[tempPos.first][tempPos.second] = 'f';
+            
         }
     }
     return "x";

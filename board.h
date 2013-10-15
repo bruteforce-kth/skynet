@@ -68,8 +68,6 @@ class board {
         { return mPlayerPos; }
         const int getBoardSize() const
         { return mBoardSize; }
-        std::string getBoardString() const
-        { return mBoardString; }
         std::string getPath() const 
         { return mPath; }
         bool isPush() const
@@ -80,6 +78,8 @@ class board {
         { return mBoxString; }        
         std::vector<std::vector<char> > getBoardCharVector() const
         {return mBoard; }
+        std::string getBoardString() const
+        { return mBoardString; }
 
         // OTHER GET-METHODS
         void getPossibleStateChanges(std::vector<board> &board);        
@@ -110,13 +110,16 @@ class board {
         std::string mBoxString;
         std::string mPath;
         std::vector<std::vector<char> > mBoard;
-        std::string mBoardString;
+
         int mBoardSize;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
+                
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
         char mWhatGotMeHere;
+        std::string mBoardString;
+        
 
         // DEADLOCK METHODS
         void prepareDynamicDeadlock(int row, int col, std::pair<int,int> boxPos);

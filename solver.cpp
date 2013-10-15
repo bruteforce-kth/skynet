@@ -280,8 +280,14 @@ int solver::aStar(const board &b, int bound) {
 #if DEBUG 
     int count = 0;
 #endif
+    board currentBoard = openQueue.top().first;;
+    vector<board> moves;
+    board tempBoard = currentBoard;
+    pair<int,int> tempPlayerPos;
+    int t_g_score;
+    int t_f_score;
     while(!openQueue.empty()) {
-        board currentBoard = openQueue.top().first;
+        currentBoard = openQueue.top().first;
 
 #if DEBUG
         cout << "f_score: " << openQueue.top().second << endl;
@@ -289,7 +295,7 @@ int solver::aStar(const board &b, int bound) {
 #endif
         openQueue.pop();
 
-        vector<board> moves;
+        moves.clear();
         std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
         // Check if the pushes for this state has already been calculated. 
         board_map_it = mTransTable.find(currentBoard.getBoardString());
@@ -308,9 +314,9 @@ int solver::aStar(const board &b, int bound) {
         // Loop over all possible pushes
         std::unordered_map<std::string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
-            board tempBoard = moves[k];
+            tempBoard = moves[k];
 
-            pair<int,int> tempPlayerPos = tempBoard.getPlayerPosition();
+            tempPlayerPos = tempBoard.getPlayerPosition();
 
             // Finished? Set path and return
             if (tempBoard.isFinished()) {
@@ -333,8 +339,8 @@ int solver::aStar(const board &b, int bound) {
             }
 
             // Calculate new g and f
-            int t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
-            int t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*g_coeff;
+            t_g_score = g_score.at(currentBoard.getBoardString()) + 1;
+            t_f_score = h_coeff*heuristicDistance(tempBoard) +  t_g_score*g_coeff;
 
 #if DEBUG
             // cout << "g_score in f: " << t_g_score*g_coeff << endl;
