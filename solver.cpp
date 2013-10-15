@@ -183,30 +183,36 @@ int solver::distanceBFS(const vector< vector<char> > &board, pair<int,int> start
         return 0;
     }
     std::unordered_map<string, int> closed;
-    std::deque< pair< pair<int,int>, int> > q;
-    q.push_back(make_pair(startPos, 0));
-
+    std::queue< pair< pair<int,int>, int> > q;
+    q.push(make_pair(startPos, 0));
+    pair<pair<int,int>, int> currentPos;
+    vector< pair<int,int> > moves;
+    pair<int,int> tempPos;
+    vector< vector<char> > scratchMap = board;
     while(!q.empty()) {
-        pair<pair<int,int>, int> currentPos = q.front();
-        q.pop_front();
+        currentPos = q.front();
+        q.pop();
 
-        vector< pair<int,int> > moves = getAllValidDirections(board, currentPos.first);
+        moves = getAllValidDirections(board, currentPos.first);
         std::unordered_map<string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
-            pair<int,int> tempPos = moves[k];
+            tempPos = moves[k];
             if (board[tempPos.first][tempPos.second] == GOAL 
                 || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
                 || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
                 
                 return currentPos.second + 1;
             }
-            string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
-            map_it = closed.find(key);
-            if (map_it != closed.end()) {
+            //string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
+            //map_it = closed.find(key);
+            if(scratchMap[tempPos.first][tempPos.second] == 'f')
                 continue;
-            }
-            q.push_back(make_pair(tempPos, currentPos.second + 1));
-            closed.insert(make_pair(key, 0));
+            /*if (map_it != closed.end()) {
+                continue;
+            }*/
+            q.push(make_pair(tempPos, currentPos.second + 1));
+            //closed.insert(make_pair(key, 0));
+            scratchMap[tempPos.first][tempPos.second] = 'f';
         }
     }
     return mBoardSize*2;
@@ -298,7 +304,7 @@ void solver::calculateDistances(const board &b) {
             ++numBlocked;
         }
 
-        mDistanceMatrix[goal.first][goal.second] -= pow(2,numBlocked + 1);
+        mDistanceMatrix[goal.first][goal.second] -= pow(3,numBlocked + 1);
 
     }
 }
