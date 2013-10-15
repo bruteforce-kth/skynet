@@ -405,7 +405,9 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
             cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
             cout << downl << down << downr << endl;
             */
-            return isDynamicDeadlock(make_pair(boxPos.first-1, boxPos.second));
+            if(isDynamicDeadlock(make_pair(boxPos.first-1, boxPos.second))) {
+                return true;
+            }
         }
         if(down == BOX && boxPos.first < mBoard.size() - 1) {
             /*
@@ -414,7 +416,9 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
             cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
             cout << downl << down << downr << endl;
             */
-            return isDynamicDeadlock(make_pair(boxPos.first+1, boxPos.second));
+            if(isDynamicDeadlock(make_pair(boxPos.first+1, boxPos.second))) {
+                return true;
+            }
         }
         if(left == BOX && boxPos.second < 0) {
             /*
@@ -423,7 +427,9 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
             cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
             cout << downl << down << downr << endl;
             */
-            return isDynamicDeadlock(make_pair(boxPos.first, boxPos.second-1));
+            if(isDynamicDeadlock(make_pair(boxPos.first, boxPos.second-1))) {
+                return true;
+            }
         }
         if(right == BOX && boxPos.second < mBoard[boxPos.first].size() - 1) {
             /*
@@ -432,7 +438,9 @@ bool board::isDynamicDeadlock(pair<int,int> boxPos){
             cout << left << mBoard[boxPos.first][boxPos.second] << right << endl;
             cout << downl << down << downr << endl;
             */
-            return isDynamicDeadlock(make_pair(boxPos.first, boxPos.second+1));
+            if(isDynamicDeadlock(make_pair(boxPos.first, boxPos.second+1))) {
+                return true;
+            }
         }
         return false;
     }

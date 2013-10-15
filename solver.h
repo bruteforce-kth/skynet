@@ -20,6 +20,8 @@ class solver {
         long long int mTime;
         int h_coeff;
         int g_coeff;
+        int h1;
+        int t1;
         int mBoardSize;
         int mNumQueued;
         std::string mPath;
@@ -43,6 +45,10 @@ class solver {
         bool isRepeatedMove(char a, char b);
         std::string IDA(const board &b);
         int aStar(const board &b, int bound);
+        int distanceBFS(const std::vector<std::vector<char> > &board, std::pair<int,int> startPos);
+        bool isPushable(char b);
+        std::vector<std::pair<int,int> > getAllValidDirections(
+            const std::vector<std::vector<char> > &board, std::pair<int,int> pos);
 
         void printCoordinates(int x, int y);
         void printMatrix(std::vector<std::vector<int> > &m);
