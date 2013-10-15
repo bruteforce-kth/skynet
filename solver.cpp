@@ -25,19 +25,11 @@ using std::stack;
  */
  string solver::solve(board &b) {
     mBoardSize = b.getBoardSize();
-
-    // To solve 004 fast: pow2, h_coeff 1, g_coeff 2, heuristic*5, total*1
     h_coeff = 1;
-    g_coeff = 2;
+    g_coeff = 4;
     mGoalPositions = b.getGoalPositions();
-    // steady_clock::time_point start = steady_clock::now();
     calculateDistances(b);
-    // steady_clock::time_point end = steady_clock::now();
-    // std::cout << "calculate distances took "
-    //     << duration_cast<microseconds>(end-start).count()
-    //     << " microseconds\n";
-
-    // printMatrix(mDistanceMatrix);
+    //printMatrix(mDistanceMatrix);
     
     // int depth = 2;c
     // string solution;
@@ -57,7 +49,7 @@ using std::stack;
          cout << boards[i].getPath() << endl;
      }*/
     
-    // b.printBoard();
+    //b.printBoard();
     //return "no path";
 
     // A* only
@@ -69,7 +61,13 @@ using std::stack;
 
     // IDA
     // mTime = 0;
+    // steady_clock::time_point start = steady_clock::now();
     string result = IDA(b);
+    // steady_clock::time_point end = steady_clock::now();
+    // std::cout << "IDA took "
+    //     << duration_cast<microseconds>(end-start).count()
+    //     << " microseconds\n";
+
     // cout << "something took: " << mTime << endl;
     return result;
 }
@@ -162,83 +160,10 @@ int solver::heuristicDistance(const board &b) {
         heuristic += closestBox;
     }
 
-    // cout << "Heuristic = " << 5*heuristic << " + " << totalDistances << endl;
+    // cout << "Heuristic = " << heuristic << " + " << 2*totalDistances << endl;
     // cout << "total: " << heuristic + totalDistances << endl;
     // b.printBoard();
     return 5*heuristic + totalDistances;
-}
-
-int solver::distanceBFS(const vector< vector<char> > &board, pair<int,int> startPos){
-    if (board[startPos.first][startPos.second] == BOX_ON_GOAL 
-        || board[startPos.first][startPos.second] == GOAL
-        || board[startPos.first][startPos.second] == PLAYER_ON_GOAL) {
-        return 0;
-    }
-    std::unordered_map<string, int> closed;
-    std::deque< pair< pair<int,int>, int> > q;
-    q.push_back(make_pair(startPos, 0));
-
-    while(!q.empty()) {
-        pair<pair<int,int>, int> currentPos = q.front();
-        q.pop_front();
-
-        vector< pair<int,int> > moves = getAllValidDirections(board, currentPos.first);
-        std::unordered_map<string,int>::const_iterator map_it;
-        for (int k = 0; k < moves.size(); ++k) {
-            pair<int,int> tempPos = moves[k];
-            if (board[tempPos.first][tempPos.second] == GOAL 
-                || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
-                || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
-                
-                return currentPos.second + 1;
-            }
-            string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
-            map_it = closed.find(key);
-            if (map_it != closed.end()) {
-                continue;
-            }
-            q.push_back(make_pair(tempPos, currentPos.second + 1));
-            closed.insert(make_pair(key, 0));
-        }
-    }
-    return mBoardSize*2;
-}
-
-vector< pair<int,int> > solver::getAllValidDirections(const vector< vector<char> > &board, pair<int,int> pos) {
-    vector< pair<int,int> > moves;
-    if ((pos.first-1) >= 0) {
-        char up = board[pos.first-1][pos.second];
-        if (isPushable(up))
-            moves.push_back(make_pair(pos.first-1, pos.second));
-    }
-    if ((pos.first+1) < board.size()) {
-        char down = board[pos.first+1][pos.second];
-        if (isPushable(down))
-            moves.push_back(make_pair(pos.first+1, pos.second));
-    }
-    if ((pos.second-1) >= 0) {
-        char left = board[pos.first][pos.second-1];
-        if (isPushable(left))
-            moves.push_back(make_pair(pos.first, pos.second-1));
-    }
-    if ((pos.second+1) < board[pos.first].size()) {
-        char right = board[pos.first][pos.second+1];
-        if (isPushable(right))
-            moves.push_back(make_pair(pos.first, pos.second+1));
-    }
-    return moves;
-} 
-
-bool solver::isPushable(char b) {
-    if (b != FLOOR 
-        && b != BOX
-        && b != BOX_ON_GOAL
-        && b != GOAL
-        && b != PLAYER
-        && b != PLAYER_ON_GOAL) {
-        return false;
-    }
-    return true;
 }
 
 void solver::calculateDistances(const board &b) {
@@ -246,23 +171,19 @@ void solver::calculateDistances(const board &b) {
     mDistanceMatrix.resize(board.size());
 
     for(int i = 0; i < board.size(); i++) {
-        mDistanceMatrix[i] = vector<int>(board[i].size(), mBoardSize*2);
+        mDistanceMatrix[i] = vector<int>(board[i].size());
         for(int j = 0; j < board[i].size(); j++) {
-            // int shortestDistance = b.getBoardSize(); // Set to a high value
-            // for(int k = 0; k < mGoalPositions.size(); k++) {
-            //     pair<int,int> goal = mGoalPositions[k];
-            //     int d = distance(i, j, goal.first, goal.second);
-            //     if( d < shortestDistance) {
-            //         shortestDistance = d;
-            //         if (shortestDistance == 0)
-            //             break;
-            //     }
-            // }
-            // mDistanceMatrix[i][j] = shortestDistance;
-            
-            if(board[i][j] != WALL && board[i][j] != DEAD && board[i][j] != PLAYER_ON_DEAD) {
-                mDistanceMatrix[i][j] = distanceBFS(board, make_pair(i,j));
+            int shortestDistance = b.getBoardSize(); // Set to a high value
+            for(int k = 0; k < mGoalPositions.size(); k++) {
+                pair<int,int> goal = mGoalPositions[k];
+                int d = distance(i, j, goal.first, goal.second);
+                if( d < shortestDistance) {
+                    shortestDistance = d;
+                    if (shortestDistance == 0)
+                        break;
+                }
             }
+            mDistanceMatrix[i][j] = shortestDistance;
         }
     }
     for (int i = 0; i < mGoalPositions.size(); ++i) {
@@ -270,29 +191,29 @@ void solver::calculateDistances(const board &b) {
         pair<int,int> goal = mGoalPositions[i];
         if(goal.first > 0
                 && ( board[goal.first-1][goal.second] == WALL
-                    || board[goal.first-1][goal.second] == DEAD
-                    || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+                    || board[goal.first-1][goal.second] == DEAD)) {
+                    // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.first < board.size()-1
                 && ( board[goal.first+1][goal.second] == WALL
-                    || board[goal.first+1][goal.second] == DEAD
-                    || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
+                    || board[goal.first+1][goal.second] == DEAD)) {
+                    // || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.second > 0
                 && ( board[goal.first][goal.second-1] == WALL
-                    || board[goal.first][goal.second-1] == DEAD
-                    || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+                    || board[goal.first][goal.second-1] == DEAD)) {
+                    // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.second < board[goal.first].size()-1
                 && ( board[goal.first][goal.second+1] == WALL
-                    || board[goal.first][goal.second+1] == DEAD
-                    || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+                    || board[goal.first][goal.second+1] == DEAD)) {
+                    // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
-        mDistanceMatrix[goal.first][goal.second] -= pow(2,numBlocked+1);
+        mDistanceMatrix[goal.first][goal.second] -= pow(3,numBlocked+1);
     }
 }
 
