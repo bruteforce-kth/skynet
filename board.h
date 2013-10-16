@@ -44,6 +44,13 @@ class board {
             std::string path;
 
         };
+
+        struct tunnel {
+            std::pair<int,int> start;
+            std::pair<int,int> end;
+            std::string path;
+            int length;
+        };
         
         // BOARD CONSTRUCTORS
         board (const std::vector<std::vector<char> > &chars);
@@ -112,8 +119,10 @@ class board {
         std::vector<std::vector<char> > mBoard;
 
         int mBoardSize;
+        int mLongestRow;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
+        std::unordered_map<std::string, tunnel> mTunnels;
                 
         std::pair<int,int> mPlayerPos;
         bool mWasPush;
@@ -132,6 +141,8 @@ class board {
         bool isDeadspace(int row, int col);
 
         // OTHER
+        void findTunnels(std::vector<std::vector<char> > board);
+        bool tunnelIsFree(const tunnel &t);
         std::pair<int,int> getRelativePosition(char direction, std::pair<int,int> position);
         void initializeIndexAndPositions(const std::vector<std::vector<char> > &chars);
         void investigatePushBoxDirections(struct possibleBoxPush &possibleBoxPush, std::vector<board> &moves);

@@ -14,8 +14,15 @@ int mRowL;
 
 board::board (const vector<vector<char> > &chars) {
     this->mBoard = chars;
+    mLongestRow = 0;
+    for(int i = 0; i < chars.size(); i++) {
+        if(chars[i].size() > mLongestRow) {
+            mLongestRow = chars[i].size();
+        }
+    }
     findDeadlocks(chars);
     initializeIndexAndPositions(chars);
+    findTunnels(mBoard);
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -221,6 +228,101 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
     mBoardString = boardString;
     mBoardSize = size;
     return;
+}
+
+void board::findTunnels(vector<vector<char> > board) {
+    // Check horizontal
+    for(int i = 1; i < board.size()-1; i++) {
+        int length = 0;
+        tunnel t;
+        for(int j = 0; j < board[i].size(); j++) {
+            if(board[i][j] == FLOOR || board[i][j] == BOX || board[i][j] == PLAYER) {
+                if(board[i-1][j] == WALL || board[i-1][j] == DEAD || board[i-1][j] == PLAYER_ON_DEAD) {
+                    if(board[i+1][j] == WALL || board[i+1][j] == DEAD || board[i+1][j] == PLAYER_ON_DEAD) {
+                        if(length == 0) {
+                            t.start = make_pair(i,j);
+                        }
+                        length++;
+                        continue;
+                    }
+                }
+            }
+            if(length > 2) {
+                t.end = make_pair(i,j);
+                t.length = t.end.second-t.start.second;
+                t.path = string(t.length, 'R');
+                
+                tunnel t_r;
+                t_r.start = t.end;
+                t_r.end = t.start;
+                t_r.length = t.length;
+                t_r.path = string(t.length, 'L');
+                mTunnels.insert(make_pair(std::to_string(t.start.first) + "-" + std::to_string(t.start.second), t));
+                mTunnels.insert(make_pair(std::to_string(t_r.start.first) + "-" + std::to_string(t_r.start.second), t_r));
+            }
+            length = 0;
+        }
+    }
+
+    // Check vertical
+    for(int j = 1; j < mLongestRow; j++) {
+        int length = 0;
+        tunnel t;
+        for(int i = 0; i < board.size(); i++) {
+            // Need to check since rows are of unequal size
+            if(board[i].size() < j+2) {
+                continue;
+            }
+            if(board[i][j] == FLOOR || board[i][j] == BOX || board[i][j] == PLAYER) {
+                if(board[i][j-1] == WALL || board[i][j-1] == DEAD || board[i][j-1] == PLAYER_ON_DEAD) {
+                    if(board[i][j+1] == WALL || board[i][j+1] == DEAD || board[i][j+1] == PLAYER_ON_DEAD) {
+                        if(length == 0) {
+                            t.start = make_pair(i,j);
+                        }
+                        length++;
+                        continue;
+                    }
+                }
+            }
+            if(length > 2) {
+                t.end = make_pair(i,j);
+                t.length = t.end.first-t.start.first;
+                t.path = string(t.length, 'D');
+
+                tunnel t_r;
+                t_r.start = t.end;
+                t_r.end = t.start;
+                t_r.length = t.length;
+                t_r.path = string(t.length, 'U');
+                mTunnels.insert(make_pair(std::to_string(t.start.first) + "-" + std::to_string(t.start.second), t));
+                mTunnels.insert(make_pair(std::to_string(t_r.start.first) + "-" + std::to_string(t_r.start.second), t_r));
+            }
+            length = 0;
+        }
+    }
+
+    for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
+        tunnel t = it->second;
+        cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
+        cout << "length = " << t.length  << " path: " << t.path << endl;
+    }
+}
+
+bool board::tunnelIsFree(const tunnel &t) {
+    if(t.start.first != t.end.first) {
+        for(int i = t.start.first; i < t.end.first+1; i++) {
+            if(mBoard[i][t.start.second] != FLOOR && mBoard[i][t.start.second] != PLAYER) {
+                return false;
+            }
+        }
+    }else{
+        for(int j = t.start.second; j < t.end.second+1; j++) {
+            if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 int board::twoDtoOneD(int row, int col){
