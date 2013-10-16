@@ -29,9 +29,10 @@ using std::stack;
     // To solve 004 fast: pow2, h_coeff 1, g_coeff 2, h1 5, t1 1
     // To solve 001 fast: pow2, h_coeff 1, g_coeff 4, h1 4, t1 1
     h_coeff = 1;
-    g_coeff = 4;
-    h1 = 4;
+    g_coeff = 5;
+    h1 = 7;
     t1 = 1;
+    goalPow = 3;
 
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
@@ -54,13 +55,13 @@ using std::stack;
          boards[i].printBoard();
          cout << boards[i].getPath() << endl;
      }*/
-    
+
     //b.printBoard();
     //return "no path";
 
     // A* only
-    // aStar(b, 99999999);
-    // return mPath;
+    aStar(b, 99999999);
+    return mPath;
 
     // printMatrix(mDistanceMatrix);
     // b.printBoard();
@@ -68,20 +69,20 @@ using std::stack;
     // IDA
     // mTime = 0;
     // steady_clock::time_point start = steady_clock::now();
-    string result = IDA(b);
+         // string result = IDA(b);
     // steady_clock::time_point end = steady_clock::now();
     // std::cout << "IDA took "
     //     << duration_cast<microseconds>(end-start).count()
     //     << " microseconds\n";
 
     // cout << "something took: " << mTime << endl;
-    return result;
-}
+         // return result;
+     }
 
 /*
  * Search the state space using dfs
  */
-string solver::search(board &b, int depth) {
+ string solver::search(board &b, int depth) {
     if (b.isFinished()) {
         // cout << "finished" << endl;
         return b.getPath();
@@ -134,19 +135,20 @@ string solver::search(board &b, int depth) {
  * The same box is NOT used twice.
  * (Assumes that numBoxes == numGoals)
  */
-int solver::heuristicDistance(const board &b) {
+ int solver::heuristicDistance(const board &b) {
     int heuristic = 0;
     int totalDistances = 0;
     int boxesOnGoal = 1;
     vector< pair<int,int> > boxPositions = b.getBoxPositions();
     vector< vector<char> > board = b.getBoardCharVector();
-   
+
     for (int i = 0; i < boxPositions.size(); ++i) {
         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
     }
-    if (totalDistances > 120) {
+    if (totalDistances > 90) {
         g_coeff = 2;
         h1 = 6;
+        t1 = 1;
     }
 
     for (int i = 0; i < mGoalPositions.size(); ++i) {
@@ -170,7 +172,7 @@ int solver::heuristicDistance(const board &b) {
         heuristic += closestBox;
     }
 
-    // cout << "Heuristic = " << heuristic << " + " << 2*totalDistances << endl;
+    // cout << "Heuristic = " << h1*heuristic << " + " << t1*totalDistances << endl;
     // cout << "total: " << heuristic + totalDistances << endl;
     // b.printBoard();
     return h1*heuristic + t1*totalDistances;
@@ -203,15 +205,10 @@ int solver::distanceBFS(const vector< vector<char> > &board, pair<int,int> start
                 
                 return currentPos.second + 1;
             }
-            //string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
-            //map_it = closed.find(key);
             if(scratchMap[tempPos.first][tempPos.second] == 'f')
                 continue;
-            /*if (map_it != closed.end()) {
-                continue;
-            }*/
+
             q.push(make_pair(tempPos, currentPos.second + 1));
-            //closed.insert(make_pair(key, 0));
             scratchMap[tempPos.first][tempPos.second] = 'f';
         }
     }
@@ -251,8 +248,8 @@ bool solver::isPushable(char b) {
         && b != PLAYER
         && b != PLAYER_ON_GOAL) {
         return false;
-    }
-    return true;
+}
+return true;
 }
 
 
@@ -263,49 +260,51 @@ void solver::calculateDistances(const board &b) {
     for(int i = 0; i < board.size(); i++) {
         mDistanceMatrix[i] = vector<int>(board[i].size());
         for(int j = 0; j < board[i].size(); j++) {
-            int shortestDistance = b.getBoardSize(); // Set to a high value
-            for(int k = 0; k < mGoalPositions.size(); k++) {
-                pair<int,int> goal = mGoalPositions[k];
-                int d = distance(i, j, goal.first, goal.second);
-                if( d < shortestDistance) {
-                    shortestDistance = d;
-                    if (shortestDistance == 0)
-                        break;
-                }
+        //     int shortestDistance = b.getBoardSize(); // Set to a high value
+        //     for(int k = 0; k < mGoalPositions.size(); k++) {
+        //         pair<int,int> goal = mGoalPositions[k];
+        //         int d = distance(i, j, goal.first, goal.second);
+        //         if( d < shortestDistance) {
+        //             shortestDistance = d;
+        //             if (shortestDistance == 0)
+        //                 break;
+        //         }
+        //     }
+        //     mDistanceMatrix[i][j] = shortestDistance;
+        // }
+            if(board[i][j] != WALL && board[i][j] != DEAD && board[i][j] != PLAYER_ON_DEAD) {
+                mDistanceMatrix[i][j] = distanceBFS(board, make_pair(i,j));
             }
-            mDistanceMatrix[i][j] = shortestDistance;
         }
     }
     for (int i = 0; i < mGoalPositions.size(); ++i) {
         int numBlocked = 0;
         pair<int,int> goal = mGoalPositions[i];
         if(goal.first > 0
-                && ( board[goal.first-1][goal.second] == WALL
-                    || board[goal.first-1][goal.second] == DEAD)) {
-                    // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+            && ( board[goal.first-1][goal.second] == WALL
+                || board[goal.first-1][goal.second] == DEAD)) {
+                // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.first < board.size()-1
-                && ( board[goal.first+1][goal.second] == WALL
-                    || board[goal.first+1][goal.second] == DEAD)) {
+            && ( board[goal.first+1][goal.second] == WALL
+                || board[goal.first+1][goal.second] == DEAD)) {
                     // || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.second > 0
-                && ( board[goal.first][goal.second-1] == WALL
-                    || board[goal.first][goal.second-1] == DEAD)) {
-                    // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+            && ( board[goal.first][goal.second-1] == WALL
+                || board[goal.first][goal.second-1] == DEAD)) {
+                        // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
         if(goal.second < board[goal.first].size()-1
-                && ( board[goal.first][goal.second+1] == WALL
-                    || board[goal.first][goal.second+1] == DEAD)) {
-                    // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+            && ( board[goal.first][goal.second+1] == WALL
+                || board[goal.first][goal.second+1] == DEAD)) {
+                            // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
             ++numBlocked;
         }
-
-        mDistanceMatrix[goal.first][goal.second] -= pow(3,numBlocked + 1);
-
+        mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
     }
 }
 
@@ -333,7 +332,7 @@ void solver::calculateDistances(const board &b) {
  * and the next iteration will run with the bound set to the lowest 
  * skipped f_score.
  */
-string solver::IDA(const board &b) {
+ string solver::IDA(const board &b) {
     mNumQueued = 0;
     mPath = "no path";
     int start_h = heuristicDistance(b);
@@ -426,7 +425,7 @@ int solver::aStar(const board &b, int bound) {
             if ( map_it != closed.end() ){
                 // Optional. Only skip visited states if we had a lower f
                 // if (f_score.at(tempBoard.getBoardString()) <= t_f_score ) {
-                    continue;
+                continue;
                 // }
             }
 
@@ -481,7 +480,7 @@ int solver::aStar(const board &b, int bound) {
 void solver::printMatrix(vector<vector<int> > &m) {
     for(int i = 0; i < m.size(); i++) {
         for(int j = 0; j < m[i].size(); j++) {
-                cout << m[i][j] << ", ";
+            cout << m[i][j] << ", ";
         }
         cout << endl;
     }

@@ -22,6 +22,7 @@ class solver {
         int g_coeff;
         int h1;
         int t1;
+        int goalPow;
         int mBoardSize;
         int mNumQueued;
         std::string mPath;
