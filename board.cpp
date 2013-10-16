@@ -34,9 +34,11 @@ board::board (const vector<vector<char> > &chars,
   std::string newBoardString, int boardSize,
   vector<pair<int, int> > goalPositions,
   pair<int, int> newPlayerPosition,
-  vector<pair<int, int> > newBoxPositions){
+  vector<pair<int, int> > newBoxPositions,
+  const unordered_map<string,tunnel> &tunnels){
     this->mBoard = chars;
     this->mCornerPositions = corners;
+    this->mTunnels = tunnels;
     mGoalPositions = goalPositions;
     mBoxPositions = newBoxPositions;
     mPlayerPos = newPlayerPosition;
@@ -236,7 +238,7 @@ void board::findTunnels(vector<vector<char> > board) {
         int length = 0;
         tunnel t;
         for(int j = 0; j < board[i].size(); j++) {
-            if(board[i][j] == FLOOR || board[i][j] == BOX || board[i][j] == PLAYER) {
+            if(board[i][j] == FLOOR || board[i][j] == PLAYER) { // || board[i][j] == BOX) {
                 if(board[i-1][j] == WALL || board[i-1][j] == DEAD || board[i-1][j] == PLAYER_ON_DEAD) {
                     if(board[i+1][j] == WALL || board[i+1][j] == DEAD || board[i+1][j] == PLAYER_ON_DEAD) {
                         if(length == 0) {
@@ -251,12 +253,16 @@ void board::findTunnels(vector<vector<char> > board) {
                 t.end = make_pair(i,j);
                 t.length = t.end.second-t.start.second;
                 t.path = string(t.length, 'R');
+                t.dir = 'R';
                 
                 tunnel t_r;
                 t_r.start = t.end;
+                t_r.start.second--;
                 t_r.end = t.start;
+                t_r.end.second--;
                 t_r.length = t.length;
                 t_r.path = string(t.length, 'L');
+                t_r.dir = 'L';
                 mTunnels.insert(make_pair(std::to_string(t.start.first) + "-" + std::to_string(t.start.second), t));
                 mTunnels.insert(make_pair(std::to_string(t_r.start.first) + "-" + std::to_string(t_r.start.second), t_r));
             }
@@ -273,7 +279,7 @@ void board::findTunnels(vector<vector<char> > board) {
             if(board[i].size() < j+2) {
                 continue;
             }
-            if(board[i][j] == FLOOR || board[i][j] == BOX || board[i][j] == PLAYER) {
+            if(board[i][j] == FLOOR || board[i][j] == PLAYER) { // || board[i][j] == BOX) {
                 if(board[i][j-1] == WALL || board[i][j-1] == DEAD || board[i][j-1] == PLAYER_ON_DEAD) {
                     if(board[i][j+1] == WALL || board[i][j+1] == DEAD || board[i][j+1] == PLAYER_ON_DEAD) {
                         if(length == 0) {
@@ -288,12 +294,16 @@ void board::findTunnels(vector<vector<char> > board) {
                 t.end = make_pair(i,j);
                 t.length = t.end.first-t.start.first;
                 t.path = string(t.length, 'D');
+                t.dir = 'D';
 
                 tunnel t_r;
                 t_r.start = t.end;
+                t_r.start.first--;
                 t_r.end = t.start;
+                t_r.end.first--;
                 t_r.length = t.length;
                 t_r.path = string(t.length, 'U');
+                t_r.dir = 'U';
                 mTunnels.insert(make_pair(std::to_string(t.start.first) + "-" + std::to_string(t.start.second), t));
                 mTunnels.insert(make_pair(std::to_string(t_r.start.first) + "-" + std::to_string(t_r.start.second), t_r));
             }
@@ -301,11 +311,15 @@ void board::findTunnels(vector<vector<char> > board) {
         }
     }
 
+    /*
+    cout << "mTunnels length = " << mTunnels.size() << endl;
     for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
         tunnel t = it->second;
         cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
+        cout << "key is " << it->first << endl;
         cout << "length = " << t.length  << " path: " << t.path << endl;
     }
+    */
 }
 
 bool board::tunnelIsFree(const tunnel &t) {
@@ -333,12 +347,105 @@ int board::twoDtoOneD(int row, int col){
 board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newBoxPos,
                          char lastMove, string path, int movedBox_positionInVector){
 
+    bool teleported = false;
     
     // cout << "old playerpos: " << mPlayerPos.first << ", " << mPlayerPos.second << endl;
     // cout << "new playerpos: " << newPlayerPos.first << ", " << newPlayerPos.second << endl;
     std::vector<std::vector<char> > newMap = mBoard;
     std::string newBoardString = mBoardString;
     std::vector<std::pair<int,int> > newBoxPositions = mBoxPositions;
+
+    // TUNNEL CHECKING
+    string key = std::to_string(newBoxPos.first) + "-" + std::to_string(newBoxPos.second);
+    std::unordered_map<string,tunnel>::const_iterator map_it = mTunnels.find(key);
+    if(map_it != mTunnels.end()) {
+        //cout << "at tunnel entrance!" << endl;
+        tunnel t = map_it->second;
+        if(tunnelIsFree(t)) {
+            //cout << "tunnel is free!! (" << t.start.first << ", " << t.start.second << ")" << endl;
+            if(t.dir == 'U') {
+                //cout << "dir is " << t.dir << endl;
+                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first+1 << " " << t.end.second << endl;
+                if(isAccessible(t.end.first, t.end.second, t.end.first+1, t.end.second)) {
+                    teleported = true;
+                    //cout << "TELEPORTING!!!!!!!" << endl;
+                    // Must erase old box
+                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                    }else{
+                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                    }
+                    newBoxPos = t.end;
+                    newPlayerPos = make_pair(t.end.first+1,t.end.second);
+                    path = path + t.path;
+                }
+            }else if(t.dir == 'D') {
+                //cout << "dir is " << t.dir << endl;
+                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first-1 << " " << t.end.second << endl;
+                if(isAccessible(t.end.first, t.end.second, t.end.first-1, t.end.second)) {
+                    teleported = true;
+                    //cout << "TELEPORTING!!!!!!!" << endl;
+                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                    }else{
+                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                    }
+                    newBoxPos = t.end;
+                    newPlayerPos = make_pair(t.end.first-1,t.end.second);
+                    path = path + t.path;
+                }
+            }else if(t.dir == 'L') {
+                //cout << "dir is " << t.dir << endl;
+                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second+1 << endl;
+                if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second+1)) {
+                    teleported = true;
+                    //cout << "TELEPORTING!!!!!!!" << endl;
+                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                    }else{
+                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                    }
+                    newBoxPos = t.end;
+                    newPlayerPos = make_pair(t.end.first,t.end.second+1);
+                    path = path + t.path;
+                }
+            }else if(t.dir == 'R') {
+                //cout << "dir is " << t.dir << endl;
+                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second-1 << endl;
+                if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second-1)) {
+                    teleported = true;
+                    //cout << "TELEPORTING!!!!!!!" << endl;
+                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                    }else{
+                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                    }
+                    newBoxPos = t.end;
+                    newPlayerPos = make_pair(t.end.first,t.end.second-1);
+                    //cout << "appending " << t.path << " to " << path << endl;
+                    path = path + t.path;
+                    //cout << "path is now " << path << endl;
+                }
+            }
+            if(teleported) {
+                //printBoard();
+                //cout << "to" << endl;
+            }
+        }else{
+            path = "X";
+        }
+    }else{
+        //cout << "regular move" << endl;
+    }
+
     newBoxPositions[movedBox_positionInVector] = newBoxPos;
     
     if(newMap[mPlayerPos.first][mPlayerPos.second] == '+'){
@@ -372,23 +479,28 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
         newMap[newPlayerPos.first][newPlayerPos.second] = PLAYER_ON_DEAD;
         newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = PLAYER_ON_DEAD;
     }
-    else{
+    else if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX || newMap[newPlayerPos.first][newPlayerPos.second] == FLOOR){
         newMap[newPlayerPos.first][newPlayerPos.second] = '@';
         newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = '@';
     }
+
     /*
-    newBoardString.clear();
-    int size;
-    for (int i = 0; i < newMap.size(); i++) {
-        size += newMap[i].size();
-        for (int j = 0; j < newMap[i].size(); j++) {
-            newBoardString += newMap[i][j];
+    if(teleported) {
+        string boardString;
+        int size;
+        for (int i = 0; i < newMap.size(); i++) {
+            size += newMap[i].size();
+            for (int j = 0; j < newMap[i].size(); j++) {
+                boardString += newMap[i][j];
+            }
+            boardString += '\n';
         }
-        newBoardString += '\n';
-    }*/
+        cout << boardString;
+    }
+    */
 
     return board(newMap, true, lastMove, path + lastMove, mCornerPositions, newBoardString,
-                 mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions);        
+                 mBoardSize, mGoalPositions, newPlayerPos, newBoxPositions, mTunnels);        
 }
 
 void board::prepareDynamicDeadlock(int row, int col, std::pair<int,int> boxPos) {
@@ -801,7 +913,7 @@ bool board::isDeadspace(int row, int col) {
         if (!isWalkable(boxPos.first,boxPos.second)){
             return false;
         }
-        
+
 
         //DYNAMIC DEADLOCKS
         // Prepare mBoard
@@ -900,10 +1012,12 @@ void board::addToMoves(struct possibleBoxPush &possibleBoxPush,
 
     char lastMove = getDirectionToPos(possibleBoxPush.playerPosition,
                           possibleBoxPush.boxPosition);
-    moves.push_back(doLongMove(possibleBoxPush.boxPosition, 
-                    pushedBoxCoordinates, lastMove, path, 
-                    possibleBoxPush.movedBox_positionInVector));
-                    
+    board b = doLongMove(possibleBoxPush.boxPosition, 
+                         pushedBoxCoordinates, lastMove, path, 
+                         possibleBoxPush.movedBox_positionInVector);
+    if(b.getPath()[0] != 'X') {
+        moves.push_back(b);
+    }                    
 
         
 }
@@ -1038,7 +1152,7 @@ void board::investigatePushBoxDirections(struct possibleBoxPush &currentBox, vec
         possiblePosition.second--;
     }
     else{*/
-    
+
     
         possiblePosition.first--;
         if(isAccessible(boxPosition.first, boxPosition.second,
