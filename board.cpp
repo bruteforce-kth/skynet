@@ -324,11 +324,13 @@ void board::findTunnels(vector<vector<char> > board) {
         cout << "key is " << it->first << endl;
         cout << "length = " << t.length  << " path: " << t.path << endl;
     }
+    printBoard();
     */
 }
 
 bool board::tunnelIsFree(const tunnel &t) {
     //cout << "running tunnelIsFree" << endl;
+    //printBoard();
     if(t.start.first != t.end.first) {
         //cout << "vertical" << endl;
         if(t.dir == 'D') {
@@ -351,8 +353,9 @@ bool board::tunnelIsFree(const tunnel &t) {
             }
         }
     }else{
+        //cout << "horizontal" << endl;
         if(t.dir == 'R'){
-            //cout << "horizontal" << endl;
+            //cout << "right" << endl;
             for(int j = t.start.second; j < t.end.second+1; j++) {
                 //cout << "checking tunnel at (" << t.start.first << ", " << j << ")" << endl;
                 if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER && mBoard[t.start.first][j] != GOAL) {
@@ -361,7 +364,7 @@ bool board::tunnelIsFree(const tunnel &t) {
                 }
             }
         }else{
-            //cout << "horizontal" << endl;
+            //cout << "left" << endl;
             for(int j = t.end.second; j < t.start.second+1; j++) {
                 //cout << "checking tunnel at (" << t.start.first << ", " << j << ")" << endl;
                 if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER && mBoard[t.start.first][j] != GOAL) {
@@ -396,89 +399,89 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     std::unordered_map<string,tunnel>::const_iterator map_it = mTunnels.find(key);
     if(map_it != mTunnels.end()) {
         tunnel t = map_it->second;
-        if(tunnelIsFree(t)) {
-            //cout << "tunnel is free!! (" << t.start.first << ", " << t.start.second << ")" << endl;
-            if(t.dir == 'U') {
-                //cout << "dir is " << t.dir << endl;
-                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first+1 << " " << t.end.second << endl;
-                if(isAccessible(t.end.first, t.end.second, t.end.first+1, t.end.second)) {
-                    teleported = true;
-                    //cout << "TELEPORTING!!!!!!!" << endl;
-                    // Must erase old box
-                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
-                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
-                    }else{
-                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+        if(t.dir == lastMove) {
+            if(tunnelIsFree(t)) {
+                //cout << "tunnel is free!! (" << t.start.first << ", " << t.start.second << ")" << endl;
+                if(t.dir == 'U') {
+                    //cout << "dir is " << t.dir << endl;
+                    //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first+1 << " " << t.end.second << endl;
+                    if(isAccessible(t.end.first, t.end.second, t.end.first+1, t.end.second)) {
+                        teleported = true;
+                        //cout << "TELEPORTING!!!!!!!" << endl;
+                        // Must erase old box
+                        if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                            newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                        }else{
+                            newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                        }
+                        newBoxPos = t.end;
+                        newPlayerPos = make_pair(t.end.first+1,t.end.second);
+                        path = path + t.path;
                     }
-                    newBoxPos = t.end;
-                    newPlayerPos = make_pair(t.end.first+1,t.end.second);
-                    path = path + t.path;
-                }
-            }else if(t.dir == 'D') {
-                //cout << "dir is " << t.dir << endl;
-                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first-1 << " " << t.end.second << endl;
-                if(isAccessible(t.end.first, t.end.second, t.end.first-1, t.end.second)) {
-                    teleported = true;
-                    //cout << "TELEPORTING!!!!!!!" << endl;
-                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
-                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
-                    }else{
-                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                }else if(t.dir == 'D') {
+                    //cout << "dir is " << t.dir << endl;
+                    //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first-1 << " " << t.end.second << endl;
+                    if(isAccessible(t.end.first, t.end.second, t.end.first-1, t.end.second)) {
+                        teleported = true;
+                        //cout << "TELEPORTING!!!!!!!" << endl;
+                        if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                            newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                        }else{
+                            newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                        }
+                        newBoxPos = t.end;
+                        newPlayerPos = make_pair(t.end.first-1,t.end.second);
+                        path = path + t.path;
                     }
-                    newBoxPos = t.end;
-                    newPlayerPos = make_pair(t.end.first-1,t.end.second);
-                    path = path + t.path;
-                }
-            }else if(t.dir == 'L') {
-                //cout << "dir is " << t.dir << endl;
-                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second+1 << endl;
-                if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second+1)) {
-                    teleported = true;
-                    //cout << "TELEPORTING!!!!!!!" << endl;
-                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
-                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
-                    }else{
-                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                }else if(t.dir == 'L') {
+                    //cout << "dir is " << t.dir << endl;
+                    //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second+1 << endl;
+                    if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second+1)) {
+                        teleported = true;
+                        //cout << "TELEPORTING!!!!!!!" << endl;
+                        if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                            newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                        }else{
+                            newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                        }
+                        newBoxPos = t.end;
+                        newPlayerPos = make_pair(t.end.first,t.end.second+1);
+                        path = path + t.path;
                     }
-                    newBoxPos = t.end;
-                    newPlayerPos = make_pair(t.end.first,t.end.second+1);
-                    path = path + t.path;
-                }
-            }else if(t.dir == 'R') {
-                //cout << "dir is " << t.dir << endl;
-                //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second-1 << endl;
-                if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second-1)) {
-                    teleported = true;
-                    //cout << "TELEPORTING!!!!!!!" << endl;
-                    if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
-                        newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
-                    }else{
-                        newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
-                        newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                }else if(t.dir == 'R') {
+                    //cout << "dir is " << t.dir << endl;
+                    //cout << "running isAccessble with: " << t.end.first << " " << t.end.second << " " << t.end.first << " " << t.end.second-1 << endl;
+                    if(isAccessible(t.end.first, t.end.second, t.end.first, t.end.second-1)) {
+                        teleported = true;
+                        //cout << "TELEPORTING!!!!!!!" << endl;
+                        if(newMap[newPlayerPos.first][newPlayerPos.second] == BOX_ON_GOAL) {
+                            newMap[newPlayerPos.first][newPlayerPos.second] = GOAL;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = GOAL;
+                        }else{
+                            newMap[newPlayerPos.first][newPlayerPos.second] = FLOOR;
+                            newBoardString[twoDtoOneD(newPlayerPos.first, newPlayerPos.second)] = FLOOR;
+                        }
+                        newBoxPos = t.end;
+                        newPlayerPos = make_pair(t.end.first,t.end.second-1);
+                        //cout << "appending " << t.path << " to " << path << endl;
+                        path = path + t.path;
+                        //cout << "path is now " << path << endl;
                     }
-                    newBoxPos = t.end;
-                    newPlayerPos = make_pair(t.end.first,t.end.second-1);
-                    //cout << "appending " << t.path << " to " << path << endl;
-                    path = path + t.path;
-                    //cout << "path is now " << path << endl;
                 }
+                if(teleported) {
+                    //printBoard();
+                    //cout << "to" << endl;
+                }
+            }else{
+                path = "X";
             }
-            if(teleported) {
-                //printBoard();
-                //cout << "to" << endl;
-            }
-        }else{
-            path = "X";
         }
-    }else{
-        //cout << "regular move" << endl;
     }
 #endif
 
