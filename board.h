@@ -19,6 +19,7 @@
 #define MOVE_RIGHT      'R'
 
 #define DEBUG 0
+#define TUNNELS 1
 
 #include <iostream>
 #include <vector>

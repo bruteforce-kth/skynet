@@ -22,7 +22,9 @@ board::board (const vector<vector<char> > &chars) {
     }
     findDeadlocks(chars);
     initializeIndexAndPositions(chars);
+#if TUNNELS
     findTunnels(mBoard);
+#endif
     mWasPush = false;
     mWhatGotMeHere = '\0';
     mPath = "";
@@ -388,6 +390,7 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     std::string newBoardString = mBoardString;
     std::vector<std::pair<int,int> > newBoxPositions = mBoxPositions;
 
+#if TUNNELS
     // TUNNEL CHECKING
     string key = std::to_string(newBoxPos.first) + "-" + std::to_string(newBoxPos.second);
     std::unordered_map<string,tunnel>::const_iterator map_it = mTunnels.find(key);
@@ -477,6 +480,7 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     }else{
         //cout << "regular move" << endl;
     }
+#endif
 
     newBoxPositions[movedBox_positionInVector] = newBoxPos;
     
