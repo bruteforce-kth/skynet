@@ -25,43 +25,18 @@ using std::stack;
  */
  string solver::solve(board &b) {
     mBoardSize = b.getBoardSize();
-
-    // To solve 004 fast: pow2, h_coeff 1, g_coeff 2, h1 5, t1 1
-    // To solve 001 fast: pow2, h_coeff 1, g_coeff 4, h1 4, t1 1
     h_coeff = 1;
     g_coeff = 5;
-    h1 = 7;
+    h1 = 6;
     t1 = 1;
-    goalPow = 3;
+    goalPow = 2;
 
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
     //printMatrix(mDistanceMatrix);
-    
-    // int depth = 2;c
-    // string solution;
-    // do {
-    //     // cout << "Depth: " << depth << endl;
-    //     solution = search(b, depth);
-    //     // cout << "Solution: " << solution << endl;
-    //     if(solution != "no path") {
-    //         return solution;
-    //     }
-    //     depth++;
-    // }while(depth < 100);
-     //vector<board> boards;
-     //b.getPossibleStateChanges(boards);
-     /*for(int i = 0; i < boards.size(); i++){
-         boards[i].printBoard();
-         cout << boards[i].getPath() << endl;
-     }*/
-
-    //b.printBoard();
-    //return "no path";
 
     // A* only
-    aStar(b, 99999999);
-    return mPath;
+    return aStar(b);
 
     // printMatrix(mDistanceMatrix);
     // b.printBoard();
@@ -77,31 +52,6 @@ using std::stack;
 
     // cout << "something took: " << mTime << endl;
          // return result;
-     }
-
-/*
- * Search the state space using dfs
- */
- string solver::search(board &b, int depth) {
-    if (b.isFinished()) {
-        // cout << "finished" << endl;
-        return b.getPath();
-    }else if(depth==0) {
-        //cout << "no path" << endl;
-        return "no path";
-    }
-
-    vector<board> moves;
-    b.getPossibleStateChanges(moves);
-    string path;
-
-    for (int i = 0; i < moves.size(); ++i) {
-        path = search(moves[i], depth-1);
-        if(path != "no path"){
-            return path;
-        }
-    }
-    return "no path";
 }
 
 /*
@@ -145,9 +95,9 @@ using std::stack;
     for (int i = 0; i < boxPositions.size(); ++i) {
         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
     }
-    if (totalDistances > 90) {
+    if (totalDistances > 100) {
         g_coeff = 2;
-        h1 = 6;
+        h1 = 5;
         t1 = 1;
     }
 
@@ -170,6 +120,8 @@ using std::stack;
         // Remove the closest box. each box is used once.
         boxPositions.erase(boxPositions.begin() + closestBoxIndex);
         heuristic += closestBox;
+        if (boxPositions.empty())
+            break;
     }
 
     // cout << "Heuristic = " << h1*heuristic << " + " << t1*totalDistances << endl;
@@ -183,36 +135,35 @@ int solver::distanceBFS(const vector< vector<char> > &board, pair<int,int> start
         || board[startPos.first][startPos.second] == GOAL
         || board[startPos.first][startPos.second] == PLAYER_ON_GOAL) {
         return 0;
-    }
-    std::unordered_map<string, int> closed;
-    std::queue< pair< pair<int,int>, int> > q;
-    q.push(make_pair(startPos, 0));
-    pair<pair<int,int>, int> currentPos;
-    vector< pair<int,int> > moves;
-    pair<int,int> tempPos;
-    vector< vector<char> > scratchMap = board;
-    while(!q.empty()) {
-        currentPos = q.front();
-        q.pop();
+}
+std::unordered_map<string, int> closed;
+std::deque< pair< pair<int,int>, int> > q;
+q.push_back(make_pair(startPos, 0));
 
-        moves = getAllValidDirections(board, currentPos.first);
-        std::unordered_map<string,int>::const_iterator map_it;
-        for (int k = 0; k < moves.size(); ++k) {
-            tempPos = moves[k];
-            if (board[tempPos.first][tempPos.second] == GOAL 
-                || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
-                || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
-                
-                return currentPos.second + 1;
-            }
-            if(scratchMap[tempPos.first][tempPos.second] == 'f')
-                continue;
+while(!q.empty()) {
+    pair<pair<int,int>, int> currentPos = q.front();
+    q.pop_front();
 
-            q.push(make_pair(tempPos, currentPos.second + 1));
-            scratchMap[tempPos.first][tempPos.second] = 'f';
-        }
+    vector< pair<int,int> > moves = getAllValidDirections(board, currentPos.first);
+    std::unordered_map<string,int>::const_iterator map_it;
+    for (int k = 0; k < moves.size(); ++k) {
+        pair<int,int> tempPos = moves[k];
+        if (board[tempPos.first][tempPos.second] == GOAL 
+            || board[tempPos.first][tempPos.second] == BOX_ON_GOAL 
+            || board[tempPos.first][tempPos.second] == PLAYER_ON_GOAL ) {
+
+            return currentPos.second + 1;
     }
-    return mBoardSize*2;
+    string key = std::to_string(tempPos.first) + "-" + std::to_string(tempPos.second);
+    map_it = closed.find(key);
+    if (map_it != closed.end()) {
+        continue;
+    }
+    q.push_back(make_pair(tempPos, currentPos.second + 1));
+    closed.insert(make_pair(key, 0));
+}
+}
+return mBoardSize*2;
 }
 
 vector< pair<int,int> > solver::getAllValidDirections(const vector< vector<char> > &board, pair<int,int> pos) {
@@ -277,35 +228,37 @@ void solver::calculateDistances(const board &b) {
             }
         }
     }
-    for (int i = 0; i < mGoalPositions.size(); ++i) {
-        int numBlocked = 0;
-        pair<int,int> goal = mGoalPositions[i];
-        if(goal.first > 0
-            && ( board[goal.first-1][goal.second] == WALL
-                || board[goal.first-1][goal.second] == DEAD)) {
-                // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
+        for (int i = 0; i < mGoalPositions.size(); ++i) {
+            int numBlocked = 0;
+            pair<int,int> goal = mGoalPositions[i];
+            if(goal.first > 0
+                && ( board[goal.first-1][goal.second] == WALL
+                    || board[goal.first-1][goal.second] == DEAD)) {
+                    // || board[goal.first-1][goal.second] == PLAYER_ON_DEAD)) {
+                ++numBlocked;
         }
         if(goal.first < board.size()-1
             && ( board[goal.first+1][goal.second] == WALL
                 || board[goal.first+1][goal.second] == DEAD)) {
                     // || board[goal.first+1][goal.second] == PLAYER_ON_DEAD)) {
             ++numBlocked;
-        }
-        if(goal.second > 0
-            && ( board[goal.first][goal.second-1] == WALL
-                || board[goal.first][goal.second-1] == DEAD)) {
-                        // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        if(goal.second < board[goal.first].size()-1
-            && ( board[goal.first][goal.second+1] == WALL
-                || board[goal.first][goal.second+1] == DEAD)) {
-                            // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
-            ++numBlocked;
-        }
-        mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
     }
+    if(goal.second > 0
+        && ( board[goal.first][goal.second-1] == WALL
+            || board[goal.first][goal.second-1] == DEAD)) {
+                    // || board[goal.first][goal.second-1] == PLAYER_ON_DEAD)) {
+        ++numBlocked;
+}
+if(goal.second < board[goal.first].size()-1
+    && ( board[goal.first][goal.second+1] == WALL
+        || board[goal.first][goal.second+1] == DEAD)) {
+                    // || board[goal.first][goal.second+1] == PLAYER_ON_DEAD)) {
+    ++numBlocked;
+}
+
+mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
+
+}
 }
 
 /*
@@ -332,29 +285,25 @@ void solver::calculateDistances(const board &b) {
  * and the next iteration will run with the bound set to the lowest 
  * skipped f_score.
  */
- string solver::IDA(const board &b) {
-    mNumQueued = 0;
-    mPath = "no path";
-    int start_h = heuristicDistance(b);
-    // Arbitrary start bound. Preferably board-dependent.
-    int bound = h_coeff*start_h -4;
-    mBoundUsed = true;
-    while(mPath == "no path" && mBoundUsed) {
-        // A* returns the lowest f_score that was skipped
-        bound = aStar(b, bound);
-    }
-    return mPath;
-}
+//  string solver::IDA(const board &b) {
+//     mNumQueued = 0;
+//     mPath = "no path";
+//     int start_h = heuristicDistance(b);
+//     // Arbitrary start bound. Preferably board-dependent.
+//     int bound = h_coeff*start_h -4;
+//     mBoundUsed = true;
+//     while(mPath == "no path" && mBoundUsed) {
+//         // A* returns the lowest f_score that was skipped
+//         bound = aStar(b, bound);
+//     }
+//     return mPath;
+// }
 
-int solver::aStar(const board &b, int bound) {
+string solver::aStar(const board &b) {
 #if DEBUG
     // cout << "RUNNING A*" << endl;
-    cout << "Running A* with bound: " << bound << endl;
 #endif
     mBoundUsed = false;
-    // minCost is the lowest f score skipped. Used by IDA in the next iteration.
-    // Set to +inf here.
-    int minCost = b.getBoardSize()*100;
     // g = number of pushes made
     std::unordered_map<std::string, int> g_score;
     // f = heuristic
@@ -371,7 +320,7 @@ int solver::aStar(const board &b, int bound) {
 #if DEBUG 
     int count = 0;
 #endif
-    board currentBoard = openQueue.top().first;;
+    board currentBoard = openQueue.top().first;
     vector<board> moves;
     board tempBoard = currentBoard;
     pair<int,int> tempPlayerPos;
@@ -385,23 +334,8 @@ int solver::aStar(const board &b, int bound) {
         currentBoard.printBoard();
 #endif
         openQueue.pop();
+        currentBoard.getPossibleStateChanges(moves);
 
-        moves.clear();
-        std::unordered_map<std::string, std::vector<board> >::const_iterator board_map_it;
-        // Check if the pushes for this state has already been calculated. 
-        board_map_it = mTransTable.find(currentBoard.getBoardString());
-        if(board_map_it != mTransTable.end()) {
-            // cout << "moves found!" << endl;
-            moves = board_map_it->second;
-        }
-        else{
-            // cout << "no moves found!" << endl;
-            // steady_clock::time_point start = steady_clock::now();
-            currentBoard.getPossibleStateChanges(moves);
-            // steady_clock::time_point end = steady_clock::now();
-            // mTime += duration_cast<microseconds>(end-start).count();
-            mTransTable.insert(make_pair(currentBoard.getBoardString(), moves));
-        }
         // Loop over all possible pushes
         std::unordered_map<std::string,int>::const_iterator map_it;
         for (int k = 0; k < moves.size(); ++k) {
@@ -411,11 +345,10 @@ int solver::aStar(const board &b, int bound) {
 
             // Finished? Set path and return
             if (tempBoard.isFinished()) {
-                mPath = tempBoard.getPath();
 #if DEBUG 
                 cout << "states explored: " << count << endl;
 #endif
-                return -1; 
+                return tempBoard.getPath();
             }
 
             // If f_score check is done, this code block has to be moved to after
@@ -438,25 +371,16 @@ int solver::aStar(const board &b, int bound) {
             // cout << "h_score in f: " << h_coeff*heuristicDistance(tempBoard) << endl;
 #endif
 
-            // IDA bounds checking. If we're above bound, skip this push.
-            if (bound < t_f_score) {
-                // Keep track of the lowest f_score skipped to use in the next iteration.
-                if (t_f_score < minCost)
-                    minCost = t_f_score;
-                mBoundUsed = true;
-                continue; 
-            }
-            else {
-                // Add the push to the queue and store g and f.
-                g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
-                f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
-                openQueue.push(make_pair(tempBoard, t_f_score));
-                // ++mNumQueued;
-                // cout << "mNumQueued: " << mNumQueued << endl;
-                // Mark as processed
-                closed.insert(make_pair(tempBoard.getBoardString(), 0));
-            }
+            // Add the push to the queue and store g and f.
+            g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
+            f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
+            openQueue.push(make_pair(tempBoard, t_f_score));
+            // ++mNumQueued;
+            // cout << "mNumQueued: " << mNumQueued << endl;
+            // Mark as processed
+            closed.insert(make_pair(tempBoard.getBoardString(), 0));
         }
+        moves.clear();
 
 #if DEBUG 
         count++;
@@ -465,8 +389,7 @@ int solver::aStar(const board &b, int bound) {
 #if DEBUG 
     cout << "states explored: " << count << endl;
 #endif
-    mPath = "no path";
-    return minCost;
+    return "no path";
 }
 
 

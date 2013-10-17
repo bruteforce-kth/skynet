@@ -238,7 +238,7 @@ void board::findTunnels(vector<vector<char> > board) {
     //cout << "finding tunnels" << endl;
     //printBoard();
     // Check horizontal
-    for(int i = 1; i < board.size()-1; i++) {
+    for(int i = 1; i < board.size()-2; i++) {
         int length = 0;
         tunnel t;
         for(int j = 0; j < board[i].size(); j++) {
