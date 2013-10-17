@@ -233,12 +233,14 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 }
 
 void board::findTunnels(vector<vector<char> > board) {
+    //cout << "finding tunnels" << endl;
+    //printBoard();
     // Check horizontal
     for(int i = 1; i < board.size()-1; i++) {
         int length = 0;
         tunnel t;
         for(int j = 0; j < board[i].size(); j++) {
-            if(board[i][j] == FLOOR || board[i][j] == PLAYER) { // || board[i][j] == BOX) {
+            if(board[i][j] == FLOOR || board[i][j] == PLAYER || board[i][j] == BOX) {
                 if(board[i-1][j] == WALL || board[i-1][j] == DEAD || board[i-1][j] == PLAYER_ON_DEAD) {
                     if(board[i+1][j] == WALL || board[i+1][j] == DEAD || board[i+1][j] == PLAYER_ON_DEAD) {
                         if(length == 0) {
@@ -279,10 +281,11 @@ void board::findTunnels(vector<vector<char> > board) {
             if(board[i].size() < j+2) {
                 continue;
             }
-            if(board[i][j] == FLOOR || board[i][j] == PLAYER) { // || board[i][j] == BOX) {
+            if(board[i][j] == FLOOR || board[i][j] == PLAYER || board[i][j] == BOX) {
                 if(board[i][j-1] == WALL || board[i][j-1] == DEAD || board[i][j-1] == PLAYER_ON_DEAD) {
                     if(board[i][j+1] == WALL || board[i][j+1] == DEAD || board[i][j+1] == PLAYER_ON_DEAD) {
                         if(length == 0) {
+                            //cout << "starting tunnel from " << i << " " << j << " " << board[i][j] << endl;
                             t.start = make_pair(i,j);
                         }
                         length++;
@@ -323,16 +326,46 @@ void board::findTunnels(vector<vector<char> > board) {
 }
 
 bool board::tunnelIsFree(const tunnel &t) {
+    //cout << "running tunnelIsFree" << endl;
     if(t.start.first != t.end.first) {
-        for(int i = t.start.first; i < t.end.first+1; i++) {
-            if(mBoard[i][t.start.second] != FLOOR && mBoard[i][t.start.second] != PLAYER) {
-                return false;
+        //cout << "vertical" << endl;
+        if(t.dir == 'D') {
+            //cout << "down" << endl;
+            for(int i = t.start.first; i < t.end.first+1; i++) {
+                //cout << "checking tunnel at (" << i << ", " << t.start.second << ")" << endl;
+                if(mBoard[i][t.start.second] != FLOOR && mBoard[i][t.start.second] != PLAYER && mBoard[i][t.start.second] != GOAL) {
+                    //cout << "obstructed" << endl;
+                    return false;
+                }
+            }
+        }else{
+            //cout << "up" << endl;
+            for(int i = t.end.first; i < t.start.first+1; i++) {
+                //cout << "checking tunnel at (" << i << ", " << t.start.second << ")" << endl;
+                if(mBoard[i][t.start.second] != FLOOR && mBoard[i][t.start.second] != PLAYER && mBoard[i][t.start.second] != GOAL) {
+                    //cout << "obstructed" << endl;
+                    return false;
+                }
             }
         }
     }else{
-        for(int j = t.start.second; j < t.end.second+1; j++) {
-            if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER) {
-                return false;
+        if(t.dir == 'R'){
+            //cout << "horizontal" << endl;
+            for(int j = t.start.second; j < t.end.second+1; j++) {
+                //cout << "checking tunnel at (" << t.start.first << ", " << j << ")" << endl;
+                if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER && mBoard[t.start.first][j] != GOAL) {
+                    //cout << "obstructed" << endl;
+                    return false;
+                }
+            }
+        }else{
+            //cout << "horizontal" << endl;
+            for(int j = t.end.second; j < t.start.second+1; j++) {
+                //cout << "checking tunnel at (" << t.start.first << ", " << j << ")" << endl;
+                if(mBoard[t.start.first][j] != FLOOR && mBoard[t.start.first][j] != PLAYER && mBoard[t.start.first][j] != GOAL) {
+                    //cout << "obstructed" << endl;
+                    return false;
+                }
             }
         }
     }
@@ -359,7 +392,6 @@ board board::doLongMove(std::pair<int,int> newPlayerPos, std::pair<int,int> newB
     string key = std::to_string(newBoxPos.first) + "-" + std::to_string(newBoxPos.second);
     std::unordered_map<string,tunnel>::const_iterator map_it = mTunnels.find(key);
     if(map_it != mTunnels.end()) {
-        //cout << "at tunnel entrance!" << endl;
         tunnel t = map_it->second;
         if(tunnelIsFree(t)) {
             //cout << "tunnel is free!! (" << t.start.first << ", " << t.start.second << ")" << endl;
