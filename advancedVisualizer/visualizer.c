@@ -28,7 +28,7 @@ void printMaze(WINDOW *win, char *fileName){
     int bufferSize = 512;
     int position = 0;
     char currentChar = 'x';
-    char *buffer = (char *)malloc(bufferSize);
+    char *buffer = (char *)malloc(bufferSize*sizeof(char));
     int row = 0;
     int col = 0;
     int counter = 0;
@@ -41,16 +41,19 @@ void printMaze(WINDOW *win, char *fileName){
 
     do{
         position = 0;
-        maze[row] = (char*)malloc(64);
+        maze[row] = (char*)malloc(128*sizeof(char));
             do{
                 currentChar = fgetc(file);
                 if(currentChar != EOF){ 
+                    if(currentChar == '\r') {
+                        continue;
+                    }
                     buffer[position++] = (char)currentChar;
                     if(currentChar == '@' || currentChar == '+'){
                         playerPos->row = row;
                         playerPos->col = col;
                     }
-                    if(currentChar != '\n'){
+                    if(currentChar != '\n' && currentChar != '\r'){
                         maze[row][col] = currentChar;
                     }
                     if(currentChar == '.' || '+' || '*'){/*
@@ -70,7 +73,7 @@ void printMaze(WINDOW *win, char *fileName){
         wprintw(win, "%s", buffer);
         row++;
         col = 0;
-        colLength++;
+        //colLength++;
     }while(currentChar != EOF);
     rowLength = row;
     fclose(file);
@@ -237,7 +240,7 @@ int main(int argc, char **argv){
     char *solutionFileName = NULL;
     bool fast = false;
     bool interactive = false;
-    maze = (char**)malloc(64);
+    maze = (char**)malloc(128*sizeof(char*));
     int c;
     rowLength = 0;
     colLength = 0;
