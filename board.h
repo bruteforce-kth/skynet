@@ -19,6 +19,7 @@
 #define MOVE_RIGHT      'R'
 
 #define DEBUG 0
+#define TUNNELS 1
 
 #include <iostream>
 #include <vector>
@@ -49,6 +50,7 @@ class board {
             std::pair<int,int> start;
             std::pair<int,int> end;
             std::string path;
+            char dir;
             int length;
         };
         
@@ -60,7 +62,8 @@ class board {
              std::string newBoardString, int boardSize,
              std::vector<std::pair<int, int> > goalPositions,
              std::pair<int, int> newPlayerPos,
-             std::vector<std::pair<int, int> > newBoxPositions);
+             std::vector<std::pair<int, int> > newBoxPositions,
+             const std::unordered_map<std::string,tunnel> &tunnels);
         board (const board &source, bool wasPush, 
                char whatGotMeHere, std::pair<int,int> playerPos,
                std::vector<std::pair<int,int> > boxPositions);
