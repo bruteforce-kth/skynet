@@ -17,7 +17,7 @@ class solver {
 
     private:
         //VAIRABLES
-        long long int mTime;
+        // long long int mTime;
         int h_coeff;
         int g_coeff;
         int h1;
@@ -30,7 +30,6 @@ class solver {
         std::pair<int,int> mBoxPos;
         std::pair<int,int> mPlayerPos;
         std::pair<int,int> mStartingPos;
-        std::unordered_map<std::string, std::vector<board> > mTransTable;
         std::vector<std::pair<int,int> > mGoalPositions;
         std::vector<std::pair<int,int> > mBoxPositions;
         std::vector< std::vector<int> > mDistanceMatrix;
@@ -44,8 +43,8 @@ class solver {
         int heuristicPlayerDistance(std::pair<int,int> from, std::pair<int,int> to);
         bool isReachable(const board &b, std::vector<std::pair<int,int> > playerPositions);
         bool isRepeatedMove(char a, char b);
-        std::string IDA(const board &b);
-        int aStar(const board &b, int bound);
+        // std::string IDA(const board &b);
+        std::string aStar(const board &b);
         int distanceBFS(const std::vector<std::vector<char> > &board, std::pair<int,int> startPos);
         bool isPushable(char b);
         std::vector<std::pair<int,int> > getAllValidDirections(

@@ -232,7 +232,7 @@ void board::findDeadlocks(const vector<vector<char> > &chars) {
 
 void board::findTunnels(vector<vector<char> > board) {
     // Check horizontal
-    for(int i = 1; i < board.size()-1; i++) {
+    for(int i = 1; i < board.size()-2; i++) {
         int length = 0;
         tunnel t;
         for(int j = 0; j < board[i].size(); j++) {
@@ -301,11 +301,11 @@ void board::findTunnels(vector<vector<char> > board) {
         }
     }
 
-    for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
-        tunnel t = it->second;
-        cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
-        cout << "length = " << t.length  << " path: " << t.path << endl;
-    }
+    // for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
+    //     tunnel t = it->second;
+    //     cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
+    //     cout << "length = " << t.length  << " path: " << t.path << endl;
+    // }
 }
 
 bool board::tunnelIsFree(const tunnel &t) {
