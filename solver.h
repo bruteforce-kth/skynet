@@ -23,6 +23,7 @@ class solver {
         int h1;
         int t1;
         int goalPow;
+        bool mFirstIter;
         int mBoardSize;
         int mNumQueued;
         std::string mPath;

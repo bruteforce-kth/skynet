@@ -25,33 +25,26 @@ using std::stack;
  */
  string solver::solve(board &b) {
     mBoardSize = b.getBoardSize();
+
     h_coeff = 1;
     g_coeff = 5;
     h1 = 6;
     t1 = 1;
-    goalPow = 2;
+    goalPow = 3;
+    
+    if (mBoardSize < 50) {
+        goalPow = 2;
+        g_coeff = 2;
+        h1 = 5;
+    }
 
     mGoalPositions = b.getGoalPositions();
     calculateDistances(b);
-    //printMatrix(mDistanceMatrix);
+    // printMatrix(mDistanceMatrix);
 
-    // A* only
+    // A*
     return aStar(b);
 
-    // printMatrix(mDistanceMatrix);
-    // b.printBoard();
-
-    // IDA
-    // mTime = 0;
-    // steady_clock::time_point start = steady_clock::now();
-         // string result = IDA(b);
-    // steady_clock::time_point end = steady_clock::now();
-    // std::cout << "IDA took "
-    //     << duration_cast<microseconds>(end-start).count()
-    //     << " microseconds\n";
-
-    // cout << "something took: " << mTime << endl;
-         // return result;
 }
 
 /*
@@ -62,23 +55,6 @@ using std::stack;
         return a.second >= b.second ? true : false;
     }
 };
-
-/*
- * Heuristic for A* search. 
- * The heuristic value is the sum of 
- * all boxes shortest distance to a goal.
- */
-//  int solver::heuristicDistance(const board &b) {
-//     vector <vector<char> > board = b.getBoardCharVector();
-//     int totalDistances = 0;
-//     vector< pair<int,int> > boxPositions = b.getBoxPositions();
-//     for (int i = 0; i < boxPositions.size(); ++i) {
-//         // if (board[boxPositions[i].first][boxPositions[i].second] == BOX_ON_GOAL)
-//         //     continue;
-//         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
-//     }
-//     return totalDistances;
-// }
 
 /**
  *  Test of new heuristic. Sum of goals distance to boxes.
@@ -94,11 +70,6 @@ using std::stack;
 
     for (int i = 0; i < boxPositions.size(); ++i) {
         totalDistances += mDistanceMatrix[boxPositions[i].first][boxPositions[i].second];
-    }
-    if (totalDistances > 100) {
-        g_coeff = 2;
-        h1 = 5;
-        t1 = 1;
     }
 
     for (int i = 0; i < mGoalPositions.size(); ++i) {
@@ -125,7 +96,7 @@ using std::stack;
     }
 
     // cout << "Heuristic = " << h1*heuristic << " + " << t1*totalDistances << endl;
-    // cout << "total: " << heuristic + totalDistances << endl;
+    // cout << "total: " << h1*heuristic + t1*totalDistances << endl;
     // b.printBoard();
     return h1*heuristic + t1*totalDistances;
 }
@@ -280,7 +251,9 @@ mDistanceMatrix[goal.first][goal.second] -= pow(goalPow,numBlocked + 1);
 
 /*
  * IDA*
- *
+ * (Assumes that aStar returns minimal pruned f_score. 
+ *  The current version does not, and doesn't take bound as an argument). 
+ * 
  * The A* will skip branches with f_score > bound,
  * and the next iteration will run with the bound set to the lowest 
  * skipped f_score.
@@ -303,7 +276,8 @@ string solver::aStar(const board &b) {
 #if DEBUG
     // cout << "RUNNING A*" << endl;
 #endif
-    mBoundUsed = false;
+    // mBoundUsed = false;
+    // int minCost = mBoardSize*100;
     // g = number of pushes made
     std::unordered_map<std::string, int> g_score;
     // f = heuristic
@@ -328,13 +302,22 @@ string solver::aStar(const board &b) {
     int t_f_score;
     while(!openQueue.empty()) {
         currentBoard = openQueue.top().first;
-
 #if DEBUG
-        cout << "f_score: " << openQueue.top().second << endl;
-        currentBoard.printBoard();
+        // cout << "f_score: " << openQueue.top().second << endl;
+        // currentBoard.printBoard();
 #endif
         openQueue.pop();
+
+        // Transposition table used with IDA* to avoid duplicate calls to getPossibleStateChanges().
+        // board_map_it = mTransTable.find(currentBoard.getBoardString());
+        // if(board_map_it != mTransTable.end()) {
+        //     // cout << "moves found!" << endl;
+        //     moves = board_map_it->second;
+        // }
+        // else{
         currentBoard.getPossibleStateChanges(moves);
+            // mTransTable.insert(make_pair(currentBoard.getBoardString(), moves));
+        // }
 
         // Loop over all possible pushes
         std::unordered_map<std::string,int>::const_iterator map_it;
@@ -346,7 +329,7 @@ string solver::aStar(const board &b) {
             // Finished? Set path and return
             if (tempBoard.isFinished()) {
 #if DEBUG 
-                cout << "states explored: " << count << endl;
+                // cout << "states explored: " << count << endl;
 #endif
                 return tempBoard.getPath();
             }
@@ -371,6 +354,13 @@ string solver::aStar(const board &b) {
             // cout << "h_score in f: " << h_coeff*heuristicDistance(tempBoard) << endl;
 #endif
 
+            // Used in IDA*
+            // if (bound < t_f_score) {
+            //     if (t_f_score < minCost)
+            //         minCost = t_f_score;
+            //     continue;
+            // }
+
             // Add the push to the queue and store g and f.
             g_score.insert(make_pair(tempBoard.getBoardString(), t_g_score));
             f_score.insert(make_pair(tempBoard.getBoardString(), t_f_score));
@@ -383,11 +373,11 @@ string solver::aStar(const board &b) {
         moves.clear();
 
 #if DEBUG 
-        count++;
+        // count++;
 #endif
     }
 #if DEBUG 
-    cout << "states explored: " << count << endl;
+    // cout << "states explored: " << count << endl;
 #endif
     return "no path";
 }

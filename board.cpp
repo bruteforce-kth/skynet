@@ -316,16 +316,17 @@ void board::findTunnels(vector<vector<char> > board) {
         }
     }
 
-    /*
-    cout << "mTunnels length = " << mTunnels.size() << endl;
-    for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
-        tunnel t = it->second;
-        cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
-        cout << "key is " << it->first << endl;
-        cout << "length = " << t.length  << " path: " << t.path << endl;
-    }
-    printBoard();
-    */
+
+#if DEBUG    
+    // cout << "mTunnels length = " << mTunnels.size() << endl;
+    // for(auto it = mTunnels.begin(); it != mTunnels.end(); ++it) {
+    //     tunnel t = it->second;
+    //     cout << "tunnel found! start: (" << t.start.first << ", " << t.start.second << ") end: (" << t.end.first << ", " << t.end.second << ")" << endl;
+    //     cout << "key is " << it->first << endl;
+    //     cout << "length = " << t.length  << " path: " << t.path << endl;
+    // }
+    // printBoard();
+#endif     
 }
 
 bool board::tunnelIsFree(const tunnel &t) {
