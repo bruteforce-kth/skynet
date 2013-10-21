@@ -30,12 +30,10 @@ using std::stack;
     g_coeff = 5;
     h1 = 6;
     t1 = 1;
-    goalPow = 3;
+    goalPow = 2;
     
     if (mBoardSize < 50) {
-        goalPow = 2;
-        g_coeff = 2;
-        h1 = 5;
+        goalPow = 3;
     }
 
     mGoalPositions = b.getGoalPositions();
@@ -291,9 +289,9 @@ string solver::aStar(const board &b) {
     // f_score.insert(make_pair(b.getBoardString(), 1));
 
     openQueue.push(make_pair(b, 1));
-#if DEBUG 
+// #if DEBUG 
     int count = 0;
-#endif
+// #endif
     board currentBoard = openQueue.top().first;
     vector<board> moves;
     board tempBoard = currentBoard;
@@ -303,8 +301,8 @@ string solver::aStar(const board &b) {
     while(!openQueue.empty()) {
         currentBoard = openQueue.top().first;
 #if DEBUG
-        // cout << "f_score: " << openQueue.top().second << endl;
-        // currentBoard.printBoard();
+        cout << "f_score: " << openQueue.top().second << endl;
+        currentBoard.printBoard();
 #endif
         openQueue.pop();
 
@@ -372,9 +370,17 @@ string solver::aStar(const board &b) {
         }
         moves.clear();
 
-#if DEBUG 
+// #if DEBUG 
         // count++;
-#endif
+        // if (currentBoard.getPath().size() > 100) {
+        //     cout << currentBoard.getPath() << endl;
+        //     cout << endl;
+        //     cout << endl;
+        //     cout << endl;
+        //     cout << endl;
+        // }
+
+// #endif
     }
 #if DEBUG 
     // cout << "states explored: " << count << endl;
