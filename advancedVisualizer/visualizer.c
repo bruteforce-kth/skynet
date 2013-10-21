@@ -92,16 +92,31 @@ void actuallyPrint(WINDOW *win, struct coordinate* box){
     lastVisited = maze[playerPos->row][playerPos->col];
     wmove(win, playerPos->row, playerPos->col);
     attron(COLOR_PAIR(1));
-    if(maze[playerPos->row][playerPos->col] == '.')
+    if(lastVisited == '.'){
         wprintw(win, "%c", '+');
-    else
+        maze[playerPos->row][playerPos->col] = '+';
+    }
+    else if(lastVisited == '*'){
+        wprintw(win, "%c", '+');
+        maze[playerPos->row][playerPos->col] = '+';
+    }
+    else{
         wprintw(win, "%c", '@');
+        maze[playerPos->row][playerPos->col] = '@';
+    }
 
     attroff(COLOR_PAIR(1));
     if(lastVisited == '$'){
                 
         wmove(win, box->row, box->col);
         if(maze[box->row][box->col] == '.'){
+            //wmove(win, 0, 0);
+            /*
+            wprintw(win, "%c", '!');
+            refresh();
+            sleep(2);
+            wprintw(win, "%c", '#');*/
+            //wmove(win, playerPos->row, playerPos->col);
             attron(COLOR_PAIR(3));
             wprintw(win, "%c", '*');
             attroff(COLOR_PAIR(3)); 
@@ -132,7 +147,7 @@ void actuallyPrint(WINDOW *win, struct coordinate* box){
             attron(COLOR_PAIR(2));
             wprintw(win, "%c", '$');
             attroff(COLOR_PAIR(2));
-            maze[box->row][box->col] = '.';
+            maze[box->row][box->col] = '$';
         }
         lastVisited = '.';
     }
